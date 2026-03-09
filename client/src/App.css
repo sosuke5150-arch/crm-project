@@ -96,3 +96,35 @@ select.status-select {
   font-size: 12px;
   cursor: pointer;
 }
+
+.link {
+  color: #c0521f;
+  cursor: pointer;
+  font-weight: 600;
+}
+.link:hover { text-decoration: underline; }
+
+.btn-back {
+  background: none;
+  border: 1px solid #f0c4a8;
+  color: #8b3a1e;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.btn-back:hover { background: #fdf3ec; }
+
+.detail-table { width: auto; margin-bottom: 0; }
+.detail-table th {
+  width: 100px;
+  color: #888;
+  font-weight: 600;
+  padding: 8px 16px 8px 0;
+  border: none;
+}
+.detail-table td {
+  padding: 8px 0;
+  border: none;
+}

@@ -10,7 +10,7 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-export default function CustomerList() {
+export default function CustomerList({ onSelect }) {
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '' });
 
@@ -53,7 +53,7 @@ export default function CustomerList() {
           <tbody>
             {customers.map(c => (
               <tr key={c.id}>
-                <td>{c.name}</td>
+                <td><span className="link" onClick={() => onSelect(c.id)}>{c.name}</span></td>
                 <td>{c.company || '-'}</td>
                 <td>{c.email || '-'}</td>
                 <td>{formatPhone(c.phone)}</td>

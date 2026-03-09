@@ -2,14 +2,23 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// 一覧取得（顧客名付き）
+// 一覧取得（顧客名付き、customer_idでフィルタ可能）
 router.get('/', (req, res) => {
-  const deals = db.prepare(`
-    SELECT deals.*, customers.name as customer_name
-    FROM deals
-    JOIN customers ON deals.customer_id = customers.id
-    ORDER BY deals.created_at DESC
-  `).all();
+  const { customer_id } = req.query;
+  const deals = customer_id
+    ? db.prepare(`
+        SELECT deals.*, customers.name as customer_name
+        FROM deals
+        JOIN customers ON deals.customer_id = customers.id
+        WHERE deals.customer_id = ?
+        ORDER BY deals.created_at DESC
+      `).all(customer_id)
+    : db.prepare(`
+        SELECT deals.*, customers.name as customer_name
+        FROM deals
+        JOIN customers ON deals.customer_id = customers.id
+        ORDER BY deals.created_at DESC
+      `).all();
   res.json(deals);
 });
 

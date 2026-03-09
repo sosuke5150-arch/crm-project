@@ -19,6 +19,13 @@ router.post('/', (req, res) => {
   res.status(201).json(customer);
 });
 
+// 1件取得
+router.get('/:id', (req, res) => {
+  const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+  if (!customer) return res.status(404).json({ error: '顧客が見つかりません' });
+  res.json(customer);
+});
+
 // 削除
 router.delete('/:id', (req, res) => {
   db.prepare('DELETE FROM deals WHERE customer_id = ?').run(req.params.id);
