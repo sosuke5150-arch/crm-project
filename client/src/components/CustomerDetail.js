@@ -10,7 +10,7 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-const STATUS_LABELS = { open: '進行中', won: '受注', lost: '失注' };
+const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', monthly: '月額', done: '完了', lost: '失注' };
 
 export default function CustomerDetail({ customerId, onBack }) {
   const [customer, setCustomer] = useState(null);
@@ -35,21 +35,26 @@ export default function CustomerDetail({ customerId, onBack }) {
   if (!customer) return <div>読み込み中...</div>;
 
   const totalAmount = deals.filter(d => d.status === 'won').reduce((sum, d) => sum + d.amount, 0);
+  const fullAddress = [customer.postal_code ? `〒${customer.postal_code}` : null, customer.prefecture, customer.address, customer.building]
+    .filter(Boolean).join(' ') || '-';
 
   return (
     <div>
+      <h2>顧客詳細</h2>
       <button className="btn-back" onClick={onBack}>← 顧客一覧に戻る</button>
 
-      <h2>{customer.name}</h2>
+      <h2>{customer.company}</h2>
 
       <div className="card">
         <h3 style={{ marginBottom: '16px' }}>基本情報</h3>
         <table className="detail-table">
           <tbody>
             <tr><th>会社名</th><td>{customer.company || '-'}</td></tr>
-            <tr><th>メール</th><td>{customer.email || '-'}</td></tr>
-            <tr><th>電話番号</th><td>{formatPhone(customer.phone)}</td></tr>
-            <tr><th>登録日</th><td>{new Date(customer.created_at).toLocaleDateString('ja-JP')}</td></tr>
+            <tr><th>郵便番号</th><td>{customer.postal_code || '-'}</td></tr>
+            <tr><th>都道府県</th><td>{customer.prefecture || '-'}</td></tr>
+            <tr><th>住所</th><td>{customer.address || '-'}</td></tr>
+            <tr><th>建物名</th><td>{customer.building || '-'}</td></tr>
+            <tr><th>URL</th><td>{customer.url ? <a href={customer.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{customer.url}</a> : '-'}</td></tr>
           </tbody>
         </table>
       </div>
@@ -57,7 +62,7 @@ export default function CustomerDetail({ customerId, onBack }) {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3>案件一覧</h3>
-          <span style={{ fontSize: '13px', color: '#888' }}>受注合計：<strong style={{ color: '#8b3a1e' }}>¥{totalAmount.toLocaleString()}</strong></span>
+          <span style={{ fontSize: '13px', color: '#6b7fa3' }}>受注合計：<strong style={{ color: '#00d4ff' }}>¥{totalAmount.toLocaleString()}</strong></span>
         </div>
         <table>
           <thead>
@@ -80,7 +85,7 @@ export default function CustomerDetail({ customerId, onBack }) {
                 <td>{new Date(d.created_at).toLocaleDateString('ja-JP')}</td>
               </tr>
             ))}
-            {deals.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#aaa' }}>案件がありません</td></tr>}
+            {deals.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#4a5f82' }}>案件がありません</td></tr>}
           </tbody>
         </table>
       </div>

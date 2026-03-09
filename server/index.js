@@ -18,5 +18,17 @@ app.get('/summary', (req, res) => {
   res.json({ customerCount, dealCount, totalAmount, openDeals });
 });
 
+// 検収月別売上集計
+app.get('/summary/by-month', (req, res) => {
+  const db = require('./db');
+  const rows = db.prepare(`
+    SELECT inspection_date as month, SUM(amount) as total
+    FROM deals
+    WHERE inspection_date IS NOT NULL AND inspection_date != ''
+    GROUP BY inspection_date
+  `).all();
+  res.json(rows);
+});
+
 const PORT = 3001;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

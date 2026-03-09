@@ -22,4 +22,18 @@ db.exec(`
   );
 `);
 
+// 新カラムを追加（既存DBへの対応）
+['postal_code', 'prefecture', 'address', 'building', 'url'].forEach(col => {
+  try { db.exec(`ALTER TABLE customers ADD COLUMN ${col} TEXT`); } catch {}
+});
+
+try { db.exec(`ALTER TABLE customers ADD COLUMN sort_order INTEGER`); } catch {}
+// sort_orderが未設定の行を初期化
+db.exec(`UPDATE customers SET sort_order = id WHERE sort_order IS NULL`);
+
+try { db.exec(`ALTER TABLE deals ADD COLUMN inspection_date TEXT`); } catch {}
+try { db.exec(`ALTER TABLE deals ADD COLUMN topics TEXT`); } catch {}
+try { db.exec(`ALTER TABLE deals ADD COLUMN sort_order INTEGER`); } catch {}
+db.exec(`UPDATE deals SET sort_order = id WHERE sort_order IS NULL`);
+
 module.exports = db;
