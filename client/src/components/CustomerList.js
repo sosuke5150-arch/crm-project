@@ -2,6 +2,14 @@ import { useEffect, useState } from 'react';
 
 const API = 'http://localhost:3001';
 
+const formatPhone = (phone) => {
+  if (!phone) return '-';
+  const n = phone.replace(/\D/g, '');
+  if (n.length === 11) return `${n.slice(0,3)}-${n.slice(3,7)}-${n.slice(7)}`;
+  if (n.length === 10) return `${n.slice(0,3)}-${n.slice(3,6)}-${n.slice(6)}`;
+  return phone;
+};
+
 export default function CustomerList() {
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '' });
@@ -48,7 +56,7 @@ export default function CustomerList() {
                 <td>{c.name}</td>
                 <td>{c.company || '-'}</td>
                 <td>{c.email || '-'}</td>
-                <td>{c.phone || '-'}</td>
+                <td>{formatPhone(c.phone)}</td>
                 <td>{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
                 <td><button className="btn-delete" onClick={() => handleDelete(c.id)}>削除</button></td>
               </tr>
