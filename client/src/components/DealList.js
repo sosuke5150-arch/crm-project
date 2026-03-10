@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const API = 'http://localhost:3001';
 
-const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', monthly: '月額', done: '完了', lost: '失注' };
+const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', monthly: '月額', done: '完了', forecast: '見込' };
+const STATUS_COLORS = { developing: '#facc15', forecast: '#ff4d6a' };
 
 const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
 
@@ -11,16 +12,16 @@ const emptyForm = { customer_id: '', title: '', status: 'proposing', amount: '',
 const currentMonth = `${new Date().getMonth() + 1}月検収`;
 
 const MONTH_COLORS = {
-  '9月検収':  '#8b5cf6',
-  '10月検収': '#6366f1',
-  '11月検収': '#3b82f6',
+  '9月検収':  '#e879f9',
+  '10月検収': '#84cc16',
+  '11月検収': '#38bdf8',
   '12月検収': '#06b6d4',
   '1月検収':  '#f59e0b',
   '2月検収':  '#34d399',
   '3月検収':  '#facc15',
   '4月検収':  '#fb923c',
-  '5月検収':  '#f97316',
-  '6月検収':  '#ef4444',
+  '5月検収':  '#2dd4bf',
+  '6月検収':  '#f43f5e',
   '7月検収':  '#ec4899',
   '8月検収':  '#a78bfa',
   [currentMonth]: '#00d4ff',
@@ -131,13 +132,22 @@ export default function DealList() {
   const removeFilter = (key, val) => setFilters(f => ({ ...f, [key]: f[key].filter(v => v !== val) }));
   const clearFilters = () => setFilters({ customer: [], title: [], status: [], inspection_date: [], topics: [] });
   const dragIndex = useRef(null);
+  const currentMonthRef = useRef(null);
 
   const load = () => {
-    fetch(`${API}/deals`).then(r => r.json()).then(setDeals);
+    fetch(`${API}/deals`).then(r => r.json()).then(data => {
+      setDeals(data);
+    });
     fetch(`${API}/customers`).then(r => r.json()).then(setCustomers);
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (currentMonthRef.current) {
+      currentMonthRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [deals]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,6 +172,22 @@ export default function DealList() {
   const handleDelete = async (id) => {
     if (!window.confirm('削除しますか？')) return;
     await fetch(`${API}/deals/${id}`, { method: 'DELETE' });
+    load();
+  };
+
+  const handleDuplicate = async (d) => {
+    await fetch(`${API}/deals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_id: d.customer_id,
+        title: d.title,
+        status: d.status,
+        amount: d.amount,
+        inspection_date: d.inspection_date,
+        topics: d.topics,
+      }),
+    });
     load();
   };
 
@@ -217,7 +243,7 @@ export default function DealList() {
 
   return (
     <div>
-      <h2>案件管理一覧</h2>
+      <h2>案件管理　売上一覧</h2>
       <div style={{ display:'flex', gap:'10px', marginBottom:'16px', flexWrap:'wrap', alignItems:'flex-start' }}>
         <TagFilter placeholder="顧客" tags={filters.customer} onAdd={v => addFilter('customer', v)} onRemove={v => removeFilter('customer', v)} suggestions={[...new Set(deals.map(d => d.customer_name).filter(Boolean))]} />
         <TagFilter placeholder="案件名" tags={filters.title} onAdd={v => addFilter('title', v)} onRemove={v => removeFilter('title', v)} suggestions={[...new Set(deals.map(d => d.title).filter(Boolean))]} />
@@ -246,7 +272,7 @@ export default function DealList() {
                 </td>
                 <td><input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} style={{width:'100%'}} /></td>
                 <td>
-                  <select className="status-select" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
+                  <select className="status-select" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})} style={STATUS_COLORS[editForm.status] ? { color: STATUS_COLORS[editForm.status] } : {}}>
                     {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                 </td>
@@ -266,6 +292,7 @@ export default function DealList() {
             ) : (
               <tr
                 key={d.id}
+                ref={d.inspection_date === currentMonth && filtered.findIndex(x => x.inspection_date === currentMonth) === index ? currentMonthRef : null}
                 draggable
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={e => e.preventDefault()}
@@ -280,15 +307,16 @@ export default function DealList() {
                     <td style={s}>{d.customer_name}</td>
                     <td style={s}>{d.title}</td>
                     <td>
-                      <select className="status-select" value={d.status} onChange={e => handleStatus(d.id, e.target.value)}>
+                      <select className="status-select" value={d.status} onChange={e => handleStatus(d.id, e.target.value)} style={STATUS_COLORS[d.status] ? { color: STATUS_COLORS[d.status] } : {}}>
                         {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                       </select>
                     </td>
-                    <td style={s}>{d.amount ? `¥${Number(d.amount).toLocaleString()}` : '-'}</td>
+                    <td style={{...s, textAlign:'right'}}>{d.amount ? `¥${Number(d.amount).toLocaleString()}` : '-'}</td>
                     <td style={s}>{d.inspection_date || '-'}</td>
                     <td style={{...s, whiteSpace:'pre-wrap', maxWidth:'200px'}}>{d.topics || '-'}</td>
                     <td style={{whiteSpace:'nowrap'}}>
                       <button className="btn-edit" onClick={() => handleEditStart(d)}>修正</button>
+                      <button className="btn-edit" onClick={() => handleDuplicate(d)}>複製</button>
                       <button className="btn-delete" onClick={() => handleDelete(d.id)}>削除</button>
                     </td>
                   </>);
@@ -300,7 +328,7 @@ export default function DealList() {
             {filtered.length > 0 && (
               <tr>
                 <td colSpan={4} style={{textAlign:'right', color:'#6b7fa3', fontWeight:600, paddingTop:'16px'}}>合計</td>
-                <td style={{color:'#00d4ff', fontWeight:700, paddingTop:'16px'}}>
+                <td style={{color:'#00d4ff', fontWeight:700, paddingTop:'16px', textAlign:'right'}}>
                   ¥{filtered.reduce((sum, d) => sum + (Number(d.amount) || 0), 0).toLocaleString()}
                 </td>
                 <td colSpan={3}></td>

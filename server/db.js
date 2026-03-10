@@ -36,4 +36,14 @@ try { db.exec(`ALTER TABLE deals ADD COLUMN topics TEXT`); } catch {}
 try { db.exec(`ALTER TABLE deals ADD COLUMN sort_order INTEGER`); } catch {}
 db.exec(`UPDATE deals SET sort_order = id WHERE sort_order IS NULL`);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS targets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    month TEXT NOT NULL,
+    amount INTEGER DEFAULT 0,
+    UNIQUE(customer_id, month)
+  );
+`);
+
 module.exports = db;

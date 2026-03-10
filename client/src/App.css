@@ -3,6 +3,13 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background: #0a0e1a; color: #c9d1e8; }
 
+/* スクロールバー */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0d1120; }
+::-webkit-scrollbar-thumb { background: #1e2a45; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2a3a5a; }
+::-webkit-scrollbar-corner { background: #0d1120; }
+
 .app { display: flex; height: 100vh; }
 
 .sidebar {

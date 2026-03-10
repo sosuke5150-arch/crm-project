@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard';
 import CustomerList from './components/CustomerList';
 import CustomerDetail from './components/CustomerDetail';
 import DealList from './components/DealList';
+import SalesTable from './components/SalesTable';
 import './App.css';
 
 function App() {
@@ -26,12 +27,14 @@ function App() {
         <button className={page === 'dashboard' ? 'active' : ''} onClick={() => setPage('dashboard')}>ダッシュボード</button>
         <button className={['customers', 'customer-detail'].includes(page) ? 'active' : ''} onClick={goToCustomerList}>顧客管理</button>
         <button className={page === 'deals' ? 'active' : ''} onClick={() => setPage('deals')}>案件管理</button>
+        <button className={page === 'sales' ? 'active' : ''} onClick={() => setPage('sales')}>売上管理表</button>
       </nav>
       <main className="content">
         {page === 'dashboard' && <Dashboard />}
         {page === 'customers' && <CustomerList onSelect={goToCustomer} />}
         {page === 'customer-detail' && <CustomerDetail customerId={selectedCustomerId} onBack={goToCustomerList} />}
         {page === 'deals' && <DealList />}
+        {page === 'sales' && <SalesTable />}
       </main>
     </div>
   );
