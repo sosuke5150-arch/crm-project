@@ -18,10 +18,11 @@ app.get('/summary', (req, res) => {
   const doneCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('done','monthly')").get().count;
   const developingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status = 'developing'").get().count;
   const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('proposing','planned')").get().count;
+  const forecastCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('forecast','developing')").get().count;
   const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('won','done','monthly','shikakake')").get().total || 0;
   const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('forecast','developing')").get().total || 0;
   const totalTarget = db.prepare("SELECT SUM(amount) as total FROM targets").get().total || 0;
-  res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, totalAmount, totalForecast, totalTarget });
+  res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, forecastCount, totalAmount, totalForecast, totalTarget });
 });
 
 // 検収月別売上集計（実績・見込み別）

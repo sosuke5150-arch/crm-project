@@ -46,7 +46,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState({ customerCount: 0, dealCount: 0, doneCount: 0, developingCount: 0, proposingCount: 0, totalAmount: 0, totalForecast: 0, totalTarget: 0 });
+  const [summary, setSummary] = useState({ customerCount: 0, dealCount: 0, doneCount: 0, forecastCount: 0, proposingCount: 0, totalAmount: 0, totalForecast: 0, totalTarget: 0 });
   const [monthlyData, setMonthlyData] = useState([]);
   const [yojitsuData, setYojitsuData] = useState([]);
   const [customerData, setCustomerData] = useState([]);
@@ -97,8 +97,8 @@ export default function Dashboard() {
           <div className="stat-value">{summary.doneCount}</div>
         </div>
         <div className="stat">
-          <div className="stat-label">開発中</div>
-          <div className="stat-value">{summary.developingCount}</div>
+          <div className="stat-label">見込数</div>
+          <div className="stat-value">{summary.forecastCount}</div>
         </div>
         <div className="stat">
           <div className="stat-label">提案中</div>

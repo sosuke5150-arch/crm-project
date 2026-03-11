@@ -181,6 +181,13 @@ td input:focus, td select:focus {
 }
 td select option { background: #141929; }
 
+/* number input のスピナー矢印をダーク化 */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  opacity: 0.2;
+  filter: invert(1);
+}
+
 .btn-edit {
   background: none;
   border: 1px solid #2a3a58;

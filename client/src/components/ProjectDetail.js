@@ -77,7 +77,11 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
     estimated_expenses: '',
     estimated_indirect: '',
     notes: '',
+    project_code: '',
+    order_date: '',
+    acceptance_date: '',
   });
+  const [infoEditing, setInfoEditing] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
   const [metaEditing, setMetaEditing] = useState(false);
 
@@ -126,6 +130,9 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           estimated_expenses: detailRes.meta.estimated_expenses ?? '',
           estimated_indirect: detailRes.meta.estimated_indirect ?? '',
           notes: detailRes.meta.notes ?? '',
+          project_code: detailRes.meta.project_code ?? '',
+          order_date: detailRes.meta.order_date ?? '',
+          acceptance_date: detailRes.meta.acceptance_date ?? '',
         });
       }
     } catch (err) {
@@ -168,6 +175,9 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           estimated_expenses: Number(metaForm.estimated_expenses) || 0,
           estimated_indirect: Number(metaForm.estimated_indirect) || 0,
           notes: metaForm.notes,
+          project_code: metaForm.project_code,
+          order_date: metaForm.order_date,
+          acceptance_date: metaForm.acceptance_date,
         }),
       });
       setMetaEditing(false);
@@ -419,7 +429,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
 
       {/* 1. プロジェクト情報 */}
       <div className="card">
-        <h3 style={{ marginBottom: '16px' }}>プロジェクト情報</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3>プロジェクト情報</h3>
+          {!infoEditing && <button className="btn-edit" onClick={() => setInfoEditing(true)}>編集</button>}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           <div>
             <span style={labelStyle}>顧客名</span>
@@ -437,7 +450,44 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <span style={labelStyle}>検収月</span>
             <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{deal.inspection_date || '-'}</div>
           </div>
+          {infoEditing ? (
+            <>
+              <div>
+                <span style={labelStyle}>プロジェクトコード</span>
+                <input style={inputStyle} value={metaForm.project_code} onChange={e => setMetaForm({ ...metaForm, project_code: e.target.value })} placeholder="例: PRJ-2025-001" />
+              </div>
+              <div>
+                <span style={labelStyle}>受注日</span>
+                <input style={inputStyle} type="date" value={metaForm.order_date} onChange={e => setMetaForm({ ...metaForm, order_date: e.target.value })} />
+              </div>
+              <div>
+                <span style={labelStyle}>検収完了日</span>
+                <input style={inputStyle} type="date" value={metaForm.acceptance_date} onChange={e => setMetaForm({ ...metaForm, acceptance_date: e.target.value })} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <span style={labelStyle}>プロジェクトコード</span>
+                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.project_code || '-'}</div>
+              </div>
+              <div>
+                <span style={labelStyle}>受注日</span>
+                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.order_date || '-'}</div>
+              </div>
+              <div>
+                <span style={labelStyle}>検収完了日</span>
+                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.acceptance_date || '-'}</div>
+              </div>
+            </>
+          )}
         </div>
+        {infoEditing && (
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button className="btn-edit" onClick={async () => { await saveMeta(); setInfoEditing(false); }}>保存</button>
+            <button className="btn-delete" onClick={() => setInfoEditing(false)}>キャンセル</button>
+          </div>
+        )}
       </div>
 
       {/* 2. 見積原価 */}

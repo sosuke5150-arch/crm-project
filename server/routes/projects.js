@@ -20,6 +20,7 @@ router.get('/', (req, res) => {
       WHERE d.amount >= 500000
         AND d.title NOT LIKE 'マイコンパス月次保守開発%'
         AND d.title NOT LIKE 'B2-Online%定期開発%'
+        AND d.status NOT IN ('proposing', 'planned', 'forecast')
       ORDER BY CASE d.inspection_date
         WHEN '9月検収' THEN 1 WHEN '10月検収' THEN 2 WHEN '11月検収' THEN 3
         WHEN '12月検収' THEN 4 WHEN '1月検収' THEN 5 WHEN '2月検収' THEN 6
@@ -132,7 +133,7 @@ router.get('/:dealId', (req, res) => {
 router.put('/:dealId/meta', (req, res) => {
   try {
     const { dealId } = req.params;
-    const { estimated_hours, estimated_labor, estimated_outsourcing, estimated_expenses, estimated_indirect, notes } = req.body;
+    const { estimated_hours, estimated_labor, estimated_outsourcing, estimated_expenses, estimated_indirect, notes, project_code, order_date, acceptance_date } = req.body;
 
     const existing = db.prepare('SELECT id FROM project_meta WHERE deal_id = ?').get(dealId);
     if (existing) {
@@ -143,7 +144,10 @@ router.put('/:dealId/meta', (req, res) => {
           estimated_outsourcing = ?,
           estimated_expenses = ?,
           estimated_indirect = ?,
-          notes = ?
+          notes = ?,
+          project_code = ?,
+          order_date = ?,
+          acceptance_date = ?
         WHERE deal_id = ?
       `).run(
         estimated_hours ?? 0,
@@ -152,12 +156,15 @@ router.put('/:dealId/meta', (req, res) => {
         estimated_expenses ?? 0,
         estimated_indirect ?? 0,
         notes ?? '',
+        project_code ?? '',
+        order_date ?? '',
+        acceptance_date ?? '',
         dealId
       );
     } else {
       db.prepare(`
-        INSERT INTO project_meta (deal_id, estimated_hours, estimated_labor, estimated_outsourcing, estimated_expenses, estimated_indirect, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO project_meta (deal_id, estimated_hours, estimated_labor, estimated_outsourcing, estimated_expenses, estimated_indirect, notes, project_code, order_date, acceptance_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         dealId,
         estimated_hours ?? 0,
@@ -165,7 +172,10 @@ router.put('/:dealId/meta', (req, res) => {
         estimated_outsourcing ?? 0,
         estimated_expenses ?? 0,
         estimated_indirect ?? 0,
-        notes ?? ''
+        notes ?? '',
+        project_code ?? '',
+        order_date ?? '',
+        acceptance_date ?? ''
       );
     }
 
