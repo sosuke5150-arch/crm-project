@@ -81,7 +81,7 @@ export default function SalesTable() {
     whiteSpace: 'nowrap', ...extra,
   });
   const td = (extra={}) => ({
-    padding: '4px 8px', border, fontSize: '12px',
+    padding: '8px 8px', border, fontSize: '12px',
     textAlign: 'right', whiteSpace: 'nowrap', ...extra,
   });
   const sectionTd = (bg, color) => ({
@@ -95,16 +95,16 @@ export default function SalesTable() {
   const totalTd = (bg, color) => ({ ...td(), background: bg, color, fontWeight: 700 });
   const diffTd = (v, bg) => ({ ...td(), background: bg, color: v > 0 ? '#34d399' : v < 0 ? '#ff4d6a' : '#6b7fa3', fontWeight: 700 });
 
-  const BG_TARGET   = '#060e1a';
-  const BG_ACTUAL   = '#060d0a';
-  const BG_FORECAST = '#0e0a04';
-  const BG_TOTAL_T  = '#0a1525';
-  const BG_TOTAL_A  = '#0a1a10';
-  const BG_TOTAL_F  = '#1a1005';
-  const BG_DIFF     = '#141000';
-  const BG_SUB_T    = '#0c1830';
-  const BG_SUB_A    = '#0c1a14';
-  const BG_SUB_F    = '#1a1208';
+  const BG_TARGET   = 'rgba(74,158,186,0.06)';
+  const BG_ACTUAL   = 'rgba(52,211,153,0.06)';
+  const BG_FORECAST = 'rgba(251,146,60,0.06)';
+  const BG_TOTAL_T  = 'rgba(74,158,186,0.13)';
+  const BG_TOTAL_A  = 'rgba(52,211,153,0.13)';
+  const BG_TOTAL_F  = 'rgba(251,146,60,0.13)';
+  const BG_DIFF     = 'rgba(250,204,21,0.07)';
+  const BG_SUB_T    = 'rgba(74,158,186,0.10)';
+  const BG_SUB_A    = 'rgba(52,211,153,0.10)';
+  const BG_SUB_F    = 'rgba(251,146,60,0.10)';
 
   const EditCell = ({ cid, month, bg }) => {
     const key = `${cid}_${month}`;
@@ -143,7 +143,6 @@ export default function SalesTable() {
               <th style={th({ background: '#060a14' })} colSpan={2} rowSpan={3}>受託開発</th>
               <th style={th()} colSpan={4}>2025年</th>
               <th style={th()} colSpan={11}>2026年</th>
-              <th style={th({ color: '#3d4f6e', fontSize: '10px' })} rowSpan={3}>(税別)</th>
             </tr>
             {/* ヘッダー行2: 期 */}
             <tr>
@@ -163,7 +162,7 @@ export default function SalesTable() {
             {/* ===== 目標 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`t_${row.id}`}>
-                {i === 0 && <td style={sectionTd('#060e1a', '#4a9eba')} rowSpan={ROWS.length + 1}>目標</td>}
+                {i === 0 && <td style={sectionTd('rgba(74,158,186,0.12)', '#4a9eba')} rowSpan={ROWS.length + 1}>目　標</td>}
                 <td style={nameTd(BG_TARGET)}>{row.name}</td>
                 {UPPER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TARGET} />)}
                 <td style={subtotalTd(BG_SUB_T)}>{yen(sumRow(getTarget, row.id, UPPER))}</td>
@@ -185,7 +184,7 @@ export default function SalesTable() {
             {/* ===== 実績 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`a_${row.id}`}>
-                {i === 0 && <td style={sectionTd('#060d0a', '#34d399')} rowSpan={ROWS.length + 1}>実績</td>}
+                {i === 0 && <td style={sectionTd('rgba(52,211,153,0.12)', '#34d399')} rowSpan={ROWS.length + 1}>実　績</td>}
                 <td style={nameTd(BG_ACTUAL)}>{row.name}</td>
                 {UPPER.map(m => <td key={m} style={numTd(BG_ACTUAL)}>{yen(getActual(row.id, m))}</td>)}
                 <td style={subtotalTd(BG_SUB_A)}>{yen(sumRow(getActual, row.id, UPPER))}</td>
@@ -217,7 +216,7 @@ export default function SalesTable() {
             {/* ===== 見込 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`f_${row.id}`}>
-                {i === 0 && <td style={sectionTd('#0e0a04', '#fb923c')} rowSpan={ROWS.length + 1}>見込</td>}
+                {i === 0 && <td style={sectionTd('rgba(251,146,60,0.12)', '#fb923c')} rowSpan={ROWS.length + 1}>見　込</td>}
                 <td style={nameTd(BG_FORECAST)}>{row.name}</td>
                 {UPPER.map(m => <td key={m} style={numTd(BG_FORECAST)}>{yen(getForecast(row.id, m))}</td>)}
                 <td style={subtotalTd(BG_SUB_F)}>{yen(sumRow(getForecast, row.id, UPPER))}</td>

@@ -160,6 +160,7 @@ td {
   padding: 13px 12px;
   border-bottom: 1px solid #131825;
   font-size: 13px;
+  font-weight: 500;
   color: #a8b6d0;
 }
 tr:hover td { background: rgba(0, 212, 255, 0.03); color: #c9d1e8; }

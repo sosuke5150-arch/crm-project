@@ -262,7 +262,15 @@ export default function DealList() {
             <tr><th></th><th>顧客</th><th>案件名</th><th>ステータス</th><th>金額</th><th>検収月</th><th>トピックス</th><th></th></tr>
           </thead>
           <tbody>
-            {filtered.map((d, index) => editId === d.id ? (
+            {filtered.flatMap((d, index) => {
+              const rows = [];
+              const isLastOfMonth = d.inspection_date &&
+                (index === filtered.length - 1 || filtered[index + 1].inspection_date !== d.inspection_date);
+              const monthTotal = isLastOfMonth
+                ? filtered.filter(x => x.inspection_date === d.inspection_date).reduce((s, x) => s + (Number(x.amount) || 0), 0)
+                : 0;
+              const c = getMonthColor(d.inspection_date);
+              rows.push(editId === d.id ? (
               <tr key={d.id}>
                 <td></td>
                 <td>
@@ -283,7 +291,7 @@ export default function DealList() {
                     {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </td>
-                <td><textarea value={editForm.topics} onChange={e => setEditForm({...editForm, topics: e.target.value})} rows={2} style={{width:'100%', resize:'vertical'}} /></td>
+                <td><textarea value={editForm.topics} onChange={e => setEditForm({...editForm, topics: e.target.value})} rows={2} style={{width:'100%', resize:'vertical', background:'#0d1120', color:'#c9d1e8', border:'1px solid #1e2a45', borderRadius:'4px', padding:'4px 8px', fontFamily:'Inter,sans-serif', fontSize:'13px'}} /></td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditSave(d.id)}>保存</button>
                   <button className="btn-delete" onClick={() => setEditId(null)}>キャンセル</button>
@@ -322,7 +330,22 @@ export default function DealList() {
                   </>);
                 })()}
               </tr>
-            ))}
+            ));
+              if (isLastOfMonth) {
+                rows.push(
+                  <tr key={`subtotal_${d.inspection_date}_${index}`}>
+                    <td colSpan={4} style={{textAlign:'right', color:'#facc15', fontWeight:600, fontSize:'12px', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid #1e2a45'}}>
+                      {d.inspection_date} 小計
+                    </td>
+                    <td style={{textAlign:'right', fontWeight:700, fontSize:'12px', color:'#facc15', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid #1e2a45'}}>
+                      ¥{monthTotal.toLocaleString()}
+                    </td>
+                    <td colSpan={3} style={{borderBottom:'1px solid #1e2a45'}}></td>
+                  </tr>
+                );
+              }
+              return rows;
+            })}
             {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'#4a5f82'}}>{Object.values(filters).some(f => f.length > 0) ? '検索結果がありません' : '案件データがありません'}</td></tr>}
 
             {filtered.length > 0 && (
