@@ -11,15 +11,21 @@ const formatPhone = (phone) => {
 };
 
 const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
+const STATUS_COLORS = { proposing: '#f9a8d4', planned: '#f9a8d4', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
 
-export default function CustomerDetail({ customerId, onBack }) {
+export default function CustomerDetail({ customerId, onBack, onNavigate }) {
   const [customer, setCustomer] = useState(null);
   const [deals, setDeals] = useState([]);
+  const [customerIds, setCustomerIds] = useState([]);
 
   const load = () => {
     fetch(`${API}/customers/${customerId}`).then(r => r.json()).then(setCustomer);
     fetch(`${API}/deals?customer_id=${customerId}`).then(r => r.json()).then(setDeals);
   };
+
+  useEffect(() => {
+    fetch(`${API}/customers`).then(r => r.json()).then(data => setCustomerIds(data.map(c => c.id)));
+  }, []);
 
   useEffect(() => { load(); }, [customerId]);
 
@@ -34,14 +40,24 @@ export default function CustomerDetail({ customerId, onBack }) {
 
   if (!customer) return <div>読み込み中...</div>;
 
-  const totalAmount = deals.filter(d => d.status === 'won').reduce((sum, d) => sum + d.amount, 0);
+  const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
+  const totalAmount = deals.filter(d => ACTUAL_STATUSES.has(d.status)).reduce((sum, d) => sum + d.amount, 0);
   const fullAddress = [customer.postal_code ? `〒${customer.postal_code}` : null, customer.prefecture, customer.address, customer.building]
     .filter(Boolean).join(' ') || '-';
 
+  const currentIdx = customerIds.indexOf(customerId);
+  const prevId = currentIdx > 0 ? customerIds[currentIdx - 1] : null;
+  const nextId = currentIdx >= 0 && currentIdx < customerIds.length - 1 ? customerIds[currentIdx + 1] : null;
+
   return (
     <div>
-      <h2>顧客詳細</h2>
-      <button className="btn-back" onClick={onBack}>← 顧客一覧に戻る</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <button className="btn-back" onClick={onBack}>← 顧客一覧に戻る</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => prevId && onNavigate(prevId)} disabled={!prevId} style={{ padding: '6px 14px', background: prevId ? '#1a2540' : '#111827', border: '1px solid #2a3a58', color: prevId ? '#c9d1e8' : '#3a4a6a', borderRadius: '6px', cursor: prevId ? 'pointer' : 'default', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>← 前の顧客</button>
+          <button onClick={() => nextId && onNavigate(nextId)} disabled={!nextId} style={{ padding: '6px 14px', background: nextId ? '#1a2540' : '#111827', border: '1px solid #2a3a58', color: nextId ? '#c9d1e8' : '#3a4a6a', borderRadius: '6px', cursor: nextId ? 'pointer' : 'default', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>次の顧客 →</button>
+        </div>
+      </div>
 
       <h2>{customer.company}</h2>
 
@@ -61,12 +77,12 @@ export default function CustomerDetail({ customerId, onBack }) {
 
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3>案件一覧</h3>
+          <h3>取引一覧</h3>
           <span style={{ fontSize: '13px', color: '#6b7fa3' }}>受注合計：<strong style={{ color: '#00d4ff' }}>¥{totalAmount.toLocaleString()}</strong></span>
         </div>
         <table>
           <thead>
-            <tr><th>案件名</th><th>金額</th><th>ステータス</th><th>登録日</th></tr>
+            <tr><th>案件名</th><th>金額</th><th>ステータス</th><th>検収月</th></tr>
           </thead>
           <tbody>
             {deals.map(d => (
@@ -78,11 +94,12 @@ export default function CustomerDetail({ customerId, onBack }) {
                     className="status-select"
                     value={d.status}
                     onChange={e => handleStatusChange(d.id, e.target.value)}
+                    style={STATUS_COLORS[d.status] ? { color: STATUS_COLORS[d.status] } : {}}
                   >
                     {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                 </td>
-                <td>{new Date(d.created_at).toLocaleDateString('ja-JP')}</td>
+                <td>{d.inspection_date || '-'}</td>
               </tr>
             ))}
             {deals.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#4a5f82' }}>案件がありません</td></tr>}

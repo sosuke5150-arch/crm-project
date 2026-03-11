@@ -8,6 +8,7 @@ app.use(express.json());
 app.use('/customers', require('./routes/customers'));
 app.use('/deals', require('./routes/deals'));
 app.use('/targets', require('./routes/targets'));
+app.use('/projects', require('./routes/projects'));
 
 // ダッシュボード用サマリー
 app.get('/summary', (req, res) => {

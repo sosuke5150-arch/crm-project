@@ -35,6 +35,7 @@ try { db.exec(`ALTER TABLE deals ADD COLUMN inspection_date TEXT`); } catch {}
 try { db.exec(`ALTER TABLE deals ADD COLUMN topics TEXT`); } catch {}
 try { db.exec(`ALTER TABLE deals ADD COLUMN sort_order INTEGER`); } catch {}
 db.exec(`UPDATE deals SET sort_order = id WHERE sort_order IS NULL`);
+try { db.exec(`ALTER TABLE project_meta ADD COLUMN estimated_indirect INTEGER DEFAULT 0`); } catch {}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS targets (
@@ -43,6 +44,53 @@ db.exec(`
     month TEXT NOT NULL,
     amount INTEGER DEFAULT 0,
     UNIQUE(customer_id, month)
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS project_meta (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deal_id INTEGER UNIQUE,
+    estimated_hours REAL DEFAULT 0,
+    estimated_labor INTEGER DEFAULT 0,
+    estimated_outsourcing INTEGER DEFAULT 0,
+    estimated_expenses INTEGER DEFAULT 0,
+    indirect_rate REAL DEFAULT 6.5,
+    estimated_indirect INTEGER DEFAULT 0,
+    notes TEXT DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS direct_costs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deal_id INTEGER,
+    month TEXT,
+    member TEXT,
+    hours REAL DEFAULT 0,
+    unit_price INTEGER DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS outsourcing_costs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deal_id INTEGER,
+    date TEXT,
+    vendor TEXT,
+    description TEXT,
+    amount INTEGER DEFAULT 0,
+    notes TEXT DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS project_expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deal_id INTEGER,
+    date TEXT,
+    user_name TEXT,
+    item TEXT,
+    purpose TEXT,
+    amount INTEGER DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS indirect_costs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deal_id INTEGER,
+    month TEXT,
+    unit_price INTEGER DEFAULT 0,
+    hours REAL DEFAULT 0
   );
 `);
 

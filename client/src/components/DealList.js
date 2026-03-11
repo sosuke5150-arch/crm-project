@@ -324,7 +324,7 @@ export default function DealList() {
                     <td style={{...s, whiteSpace:'pre-wrap', maxWidth:'200px'}}>{d.topics || '-'}</td>
                     <td style={{whiteSpace:'nowrap'}}>
                       <button className="btn-edit" onClick={() => handleEditStart(d)}>修正</button>
-                      <button className="btn-edit" onClick={() => handleDuplicate(d)}>複製</button>
+                      <button className="btn-edit" onClick={() => handleDuplicate(d)} style={{ color: '#a78bfa' }}>複製</button>
                       <button className="btn-delete" onClick={() => handleDelete(d.id)}>削除</button>
                     </td>
                   </>);
