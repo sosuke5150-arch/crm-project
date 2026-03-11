@@ -24,7 +24,7 @@ function App() {
     <div className="app">
       <nav className="sidebar">
         <div className="logo">25期受託開発案件分析</div>
-        <button className={page === 'dashboard' ? 'active' : ''} onClick={() => setPage('dashboard')}>ダッシュボード</button>
+        <button className={page === 'dashboard' ? 'active' : ''} onClick={() => setPage('dashboard')}>Dashboard</button>
         <button className={['customers', 'customer-detail'].includes(page) ? 'active' : ''} onClick={goToCustomerList}>顧客管理</button>
         <button className={page === 'deals' ? 'active' : ''} onClick={() => setPage('deals')}>案件管理</button>
         <button className={page === 'sales' ? 'active' : ''} onClick={() => setPage('sales')}>売上管理表</button>

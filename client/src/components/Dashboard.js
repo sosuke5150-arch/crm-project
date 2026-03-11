@@ -86,7 +86,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2>ダッシュボード</h2>
+      <h2 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00d4ff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>DASHBOARD</h2>
       <div className="stats">
         <div className="stat">
           <div className="stat-label">案件数</div>

@@ -10,7 +10,7 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', monthly: '月額', done: '完了', forecast: '見込' };
+const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
 
 export default function CustomerDetail({ customerId, onBack }) {
   const [customer, setCustomer] = useState(null);

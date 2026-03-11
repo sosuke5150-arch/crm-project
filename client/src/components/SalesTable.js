@@ -14,8 +14,8 @@ const MAIN_IDS = new Set(MAIN_CUSTOMERS.map(c => c.id));
 const KAIHATSU_ID = 0;
 const ROWS = [...MAIN_CUSTOMERS, { id: KAIHATSU_ID, name: '開発案件' }];
 
-const ACTUAL_STATUSES = new Set(['won','done','monthly','developing']);
-const FORECAST_STATUSES = new Set(['forecast']);
+const ACTUAL_STATUSES = new Set(['won','done','monthly','shikakake']);
+const FORECAST_STATUSES = new Set(['forecast','developing']);
 
 const toMonth = s => s?.replace('検収','') || null;
 const yen = v => `¥${(Number(v)||0).toLocaleString()}`;
@@ -163,11 +163,11 @@ export default function SalesTable() {
             {ROWS.map((row, i) => (
               <tr key={`t_${row.id}`}>
                 {i === 0 && <td style={sectionTd('rgba(74,158,186,0.12)', '#4a9eba')} rowSpan={ROWS.length + 1}>目　標</td>}
-                <td style={nameTd(BG_TARGET)}>{row.name}</td>
-                {UPPER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TARGET} />)}
-                <td style={subtotalTd(BG_SUB_T)}>{yen(sumRow(getTarget, row.id, UPPER))}</td>
-                {LOWER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TARGET} />)}
-                <td style={subtotalTd(BG_SUB_T)}>{yen(sumRow(getTarget, row.id, LOWER))}</td>
+                <td style={nameTd(BG_TOTAL_T)}>{row.name}</td>
+                {UPPER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TOTAL_T} />)}
+                <td style={subtotalTd(BG_TOTAL_T)}>{yen(sumRow(getTarget, row.id, UPPER))}</td>
+                {LOWER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TOTAL_T} />)}
+                <td style={subtotalTd(BG_TOTAL_T)}>{yen(sumRow(getTarget, row.id, LOWER))}</td>
                 <td style={totalTd(BG_TOTAL_T, '#7ec8e3')}>{yen(sumRow(getTarget, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}
@@ -185,11 +185,11 @@ export default function SalesTable() {
             {ROWS.map((row, i) => (
               <tr key={`a_${row.id}`}>
                 {i === 0 && <td style={sectionTd('rgba(52,211,153,0.12)', '#34d399')} rowSpan={ROWS.length + 1}>実　績</td>}
-                <td style={nameTd(BG_ACTUAL)}>{row.name}</td>
-                {UPPER.map(m => <td key={m} style={numTd(BG_ACTUAL)}>{yen(getActual(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_SUB_A)}>{yen(sumRow(getActual, row.id, UPPER))}</td>
-                {LOWER.map(m => <td key={m} style={numTd(BG_ACTUAL)}>{yen(getActual(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_SUB_A)}>{yen(sumRow(getActual, row.id, LOWER))}</td>
+                <td style={nameTd(BG_TOTAL_A)}>{row.name}</td>
+                {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_A)}>{yen(getActual(row.id, m))}</td>)}
+                <td style={subtotalTd(BG_TOTAL_A)}>{yen(sumRow(getActual, row.id, UPPER))}</td>
+                {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_A)}>{yen(getActual(row.id, m))}</td>)}
+                <td style={subtotalTd(BG_TOTAL_A)}>{yen(sumRow(getActual, row.id, LOWER))}</td>
                 <td style={totalTd(BG_TOTAL_A, '#34d399')}>{yen(sumRow(getActual, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}
@@ -217,11 +217,11 @@ export default function SalesTable() {
             {ROWS.map((row, i) => (
               <tr key={`f_${row.id}`}>
                 {i === 0 && <td style={sectionTd('rgba(251,146,60,0.12)', '#fb923c')} rowSpan={ROWS.length + 1}>見　込</td>}
-                <td style={nameTd(BG_FORECAST)}>{row.name}</td>
-                {UPPER.map(m => <td key={m} style={numTd(BG_FORECAST)}>{yen(getForecast(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_SUB_F)}>{yen(sumRow(getForecast, row.id, UPPER))}</td>
-                {LOWER.map(m => <td key={m} style={numTd(BG_FORECAST)}>{yen(getForecast(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_SUB_F)}>{yen(sumRow(getForecast, row.id, LOWER))}</td>
+                <td style={nameTd(BG_TOTAL_F)}>{row.name}</td>
+                {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_F)}>{yen(getForecast(row.id, m))}</td>)}
+                <td style={subtotalTd(BG_TOTAL_F)}>{yen(sumRow(getForecast, row.id, UPPER))}</td>
+                {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_F)}>{yen(getForecast(row.id, m))}</td>)}
+                <td style={subtotalTd(BG_TOTAL_F)}>{yen(sumRow(getForecast, row.id, LOWER))}</td>
                 <td style={totalTd(BG_TOTAL_F, '#fb923c')}>{yen(sumRow(getForecast, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}

@@ -17,8 +17,8 @@ app.get('/summary', (req, res) => {
   const doneCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('done','monthly')").get().count;
   const developingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status = 'developing'").get().count;
   const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('proposing','planned')").get().count;
-  const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('won','done','monthly','developing')").get().total || 0;
-  const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('forecast')").get().total || 0;
+  const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('won','done','monthly','shikakake')").get().total || 0;
+  const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('forecast','developing')").get().total || 0;
   const totalTarget = db.prepare("SELECT SUM(amount) as total FROM targets").get().total || 0;
   res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, totalAmount, totalForecast, totalTarget });
 });
@@ -29,8 +29,8 @@ app.get('/summary/by-month', (req, res) => {
   const rows = db.prepare(`
     SELECT
       inspection_date as month,
-      SUM(CASE WHEN status IN ('won','done','monthly','developing') THEN amount ELSE 0 END) as actual,
-      SUM(CASE WHEN status IN ('forecast') THEN amount ELSE 0 END) as forecast
+      SUM(CASE WHEN status IN ('won','done','monthly','shikakake') THEN amount ELSE 0 END) as actual,
+      SUM(CASE WHEN status IN ('forecast','developing') THEN amount ELSE 0 END) as forecast
     FROM deals
     WHERE inspection_date IS NOT NULL AND inspection_date != ''
     GROUP BY inspection_date
@@ -44,14 +44,14 @@ app.get('/summary/yojitsu', (req, res) => {
   const actuals = db.prepare(`
     SELECT inspection_date as month, SUM(amount) as total
     FROM deals
-    WHERE status IN ('won','done','monthly','developing')
+    WHERE status IN ('won','done','monthly','shikakake')
       AND inspection_date IS NOT NULL AND inspection_date != ''
     GROUP BY inspection_date
   `).all();
   const forecasts = db.prepare(`
     SELECT inspection_date as month, SUM(amount) as total
     FROM deals
-    WHERE status IN ('forecast')
+    WHERE status IN ('forecast','developing')
       AND inspection_date IS NOT NULL AND inspection_date != ''
     GROUP BY inspection_date
   `).all();
@@ -70,7 +70,7 @@ app.get('/summary/by-customer', (req, res) => {
     SELECT c.company as customer, SUM(d.amount) as total
     FROM deals d
     JOIN customers c ON d.customer_id = c.id
-    WHERE d.status IN ('won','done','monthly','developing')
+    WHERE d.status IN ('won','done','monthly','shikakake')
     GROUP BY d.customer_id
     ORDER BY total DESC
   `).all();
