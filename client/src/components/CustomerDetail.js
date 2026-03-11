@@ -13,10 +13,16 @@ const formatPhone = (phone) => {
 const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
 const STATUS_COLORS = { proposing: '#f9a8d4', planned: '#f9a8d4', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
 
+const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
+
 export default function CustomerDetail({ customerId, onBack, onNavigate }) {
   const [customer, setCustomer] = useState(null);
   const [deals, setDeals] = useState([]);
   const [customerIds, setCustomerIds] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [customerForm, setCustomerForm] = useState({});
 
   const load = () => {
     fetch(`${API}/customers/${customerId}`).then(r => r.json()).then(setCustomer);
@@ -35,6 +41,44 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
+    load();
+  };
+
+  const handleCustomerEditStart = () => {
+    setCustomerForm({
+      company: customer.company || '',
+      postal_code: customer.postal_code || '',
+      prefecture: customer.prefecture || '',
+      address: customer.address || '',
+      building: customer.building || '',
+      url: customer.url || '',
+      phone: customer.phone || '',
+    });
+    setEditingCustomer(true);
+  };
+
+  const handleCustomerSave = async () => {
+    await fetch(`${API}/customers/${customerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customerForm),
+    });
+    setEditingCustomer(false);
+    load();
+  };
+
+  const handleEditStart = (d) => {
+    setEditId(d.id);
+    setEditForm({ title: d.title, amount: d.amount || '', status: d.status, inspection_date: d.inspection_date || '', topics: d.topics || '' });
+  };
+
+  const handleEditSave = async (id) => {
+    await fetch(`${API}/deals/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    });
+    setEditId(null);
     load();
   };
 
@@ -62,17 +106,39 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
       <h2>{customer.company}</h2>
 
       <div className="card">
-        <h3 style={{ marginBottom: '16px' }}>基本情報</h3>
-        <table className="detail-table">
-          <tbody>
-            <tr><th>会社名</th><td>{customer.company || '-'}</td></tr>
-            <tr><th>郵便番号</th><td>{customer.postal_code || '-'}</td></tr>
-            <tr><th>都道府県</th><td>{customer.prefecture || '-'}</td></tr>
-            <tr><th>住所</th><td>{customer.address || '-'}</td></tr>
-            <tr><th>建物名</th><td>{customer.building || '-'}</td></tr>
-            <tr><th>URL</th><td>{customer.url ? <a href={customer.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{customer.url}</a> : '-'}</td></tr>
-          </tbody>
-        </table>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3>基本情報</h3>
+          {!editingCustomer && <button className="btn-edit" onClick={handleCustomerEditStart}>編集</button>}
+        </div>
+        {editingCustomer ? (
+          <>
+            <table className="detail-table">
+              <tbody>
+                <tr><th>会社名</th><td><input value={customerForm.company} onChange={e => setCustomerForm({...customerForm, company: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>郵便番号</th><td><input value={customerForm.postal_code} onChange={e => setCustomerForm({...customerForm, postal_code: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>都道府県</th><td><input value={customerForm.prefecture} onChange={e => setCustomerForm({...customerForm, prefecture: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>住所</th><td><input value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>建物名</th><td><input value={customerForm.building} onChange={e => setCustomerForm({...customerForm, building: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>URL</th><td><input value={customerForm.url} onChange={e => setCustomerForm({...customerForm, url: e.target.value})} style={{ width: '100%' }} /></td></tr>
+              </tbody>
+            </table>
+            <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+              <button className="btn-edit" onClick={handleCustomerSave}>保存</button>
+              <button className="btn-delete" onClick={() => setEditingCustomer(false)}>キャンセル</button>
+            </div>
+          </>
+        ) : (
+          <table className="detail-table">
+            <tbody>
+              <tr><th>会社名</th><td>{customer.company || '-'}</td></tr>
+              <tr><th>郵便番号</th><td>{customer.postal_code || '-'}</td></tr>
+              <tr><th>都道府県</th><td>{customer.prefecture || '-'}</td></tr>
+              <tr><th>住所</th><td>{customer.address || '-'}</td></tr>
+              <tr><th>建物名</th><td>{customer.building || '-'}</td></tr>
+              <tr><th>URL</th><td>{customer.url ? <a href={customer.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{customer.url}</a> : '-'}</td></tr>
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div className="card">
@@ -82,10 +148,30 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
         </div>
         <table>
           <thead>
-            <tr><th>案件名</th><th>金額</th><th>ステータス</th><th>検収月</th></tr>
+            <tr><th>案件名</th><th>金額</th><th>ステータス</th><th>検収月</th><th></th></tr>
           </thead>
           <tbody>
-            {deals.map(d => (
+            {deals.map(d => editId === d.id ? (
+              <tr key={d.id}>
+                <td><input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} style={{ width: '100%' }} /></td>
+                <td><input type="number" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} style={{ width: '100%' }} /></td>
+                <td>
+                  <select className="status-select" value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})} style={STATUS_COLORS[editForm.status] ? { color: STATUS_COLORS[editForm.status] } : {}}>
+                    {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </td>
+                <td>
+                  <select value={editForm.inspection_date} onChange={e => setEditForm({...editForm, inspection_date: e.target.value})}>
+                    <option value=""></option>
+                    {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn-edit" onClick={() => handleEditSave(d.id)}>保存</button>
+                  <button className="btn-delete" onClick={() => setEditId(null)}>キャンセル</button>
+                </td>
+              </tr>
+            ) : (
               <tr key={d.id}>
                 <td>{d.title}</td>
                 <td>{d.amount ? `¥${Number(d.amount).toLocaleString()}` : '-'}</td>
@@ -100,9 +186,10 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
                   </select>
                 </td>
                 <td>{d.inspection_date || '-'}</td>
+                <td><button className="btn-edit" onClick={() => handleEditStart(d)}>編集</button></td>
               </tr>
             ))}
-            {deals.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#4a5f82' }}>案件がありません</td></tr>}
+            {deals.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#4a5f82' }}>案件がありません</td></tr>}
           </tbody>
         </table>
       </div>
