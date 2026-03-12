@@ -42,27 +42,29 @@ export default function UpperHalfSales() {
 
   const totalSales = upperDeals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
 
-  // 上期予算: 全顧客の上期月の目標合計
   const totalBudget = Object.entries(targets)
     .filter(([key]) => UPPER_MONTHS.some(m => key.endsWith(`_${m}`)))
     .reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
 
   const diff = totalSales - totalBudget;
 
-  const border = '1px solid #1e2a45';
+  const border = '1px solid var(--border)';
   const thStyle = (extra = {}) => ({
-    padding: '8px 12px', border, color: '#8a9bc0',
-    fontSize: '12px', background: '#0d1120',
+    padding: '8px 12px', border, color: 'var(--text-mid)',
+    fontSize: '12px', background: 'var(--bg-panel)',
     whiteSpace: 'nowrap', ...extra,
+  });
+  const footerCell = (extra = {}) => ({
+    padding: '10px 12px', border, background: 'var(--bg-panel)', ...extra,
   });
 
   return (
     <div style={{ padding: '24px' }}>
-      <h2 style={{ color: '#e2e8f0', marginBottom: '16px', fontSize: '16px' }}>
+      <h2 style={{ color: 'var(--text-heading)', marginBottom: '16px', fontSize: '16px' }}>
         上期　売上一覧
       </h2>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: '13px', background: '#0a0e1a', minWidth: '700px' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: '13px', background: 'var(--bg-inner)', minWidth: '700px' }}>
           <thead>
             <tr>
               <th style={{ ...thStyle(), textAlign: 'left', minWidth: '130px' }}>顧客</th>
@@ -76,19 +78,19 @@ export default function UpperHalfSales() {
             {upperDeals.map((deal, i) => {
               const isShikakake = deal.status === 'shikakake';
               const isNew = deal.topics && deal.topics.toUpperCase().includes('NEW');
-              const bg = i % 2 === 0 ? '#0a0e1a' : 'rgba(255,255,255,0.018)';
+              const bg = i % 2 === 0 ? 'var(--bg-inner)' : 'var(--bg-input)';
               return (
                 <tr key={deal.id} style={{ background: bg }}>
-                  <td style={{ padding: '7px 12px', border, color: '#4a9eba', fontWeight: 500 }}>
+                  <td style={{ padding: '7px 12px', border, color: 'var(--customer-color)', fontWeight: 500 }}>
                     {deal.customer_name}
                   </td>
-                  <td style={{ padding: '7px 12px', border, color: '#c9d1e8' }}>
+                  <td style={{ padding: '7px 12px', border, color: 'var(--text-body)' }}>
                     {deal.title}
                   </td>
-                  <td style={{ padding: '7px 12px', border, color: '#c9d1e8', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                  <td style={{ padding: '7px 12px', border, color: 'var(--text-body)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {commas(deal.amount)}
                   </td>
-                  <td style={{ padding: '7px 12px', border, color: '#8a9bc0', textAlign: 'center' }}>
+                  <td style={{ padding: '7px 12px', border, color: 'var(--text-muted)', textAlign: 'center' }}>
                     {deal.inspection_date}
                   </td>
                   <td style={{ padding: '7px 12px', border, textAlign: 'center' }}>
@@ -109,36 +111,36 @@ export default function UpperHalfSales() {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={2} style={{ padding: '10px 12px', border, textAlign: 'right', color: '#8a9bc0', fontSize: '12px', background: '#0d1120' }}>
+              <td colSpan={2} style={{ ...footerCell(), textAlign: 'right', color: 'var(--text-muted)', fontSize: '12px' }}>
                 上期売上合計
               </td>
-              <td style={{ padding: '10px 12px', border, textAlign: 'right', color: '#c9d1e8', fontWeight: 700, background: '#0d1120', fontVariantNumeric: 'tabular-nums' }}>
+              <td style={{ ...footerCell(), textAlign: 'right', color: 'var(--text-body)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                 {commas(totalSales)}
               </td>
-              <td colSpan={2} style={{ border, background: '#0d1120' }} />
+              <td colSpan={2} style={{ ...footerCell() }} />
             </tr>
             <tr>
-              <td colSpan={2} style={{ padding: '10px 12px', border, textAlign: 'right', color: '#8a9bc0', fontSize: '12px', background: '#0d1120' }}>
+              <td colSpan={2} style={{ ...footerCell(), textAlign: 'right', color: 'var(--text-muted)', fontSize: '12px' }}>
                 上期予算
               </td>
-              <td style={{ padding: '10px 12px', border, textAlign: 'right', color: '#c9d1e8', fontWeight: 700, background: '#0d1120', fontVariantNumeric: 'tabular-nums' }}>
+              <td style={{ ...footerCell(), textAlign: 'right', color: 'var(--text-body)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                 {commas(totalBudget)}
               </td>
-              <td colSpan={2} style={{ border, background: '#0d1120' }} />
+              <td colSpan={2} style={{ ...footerCell() }} />
             </tr>
             <tr>
-              <td colSpan={2} style={{ padding: '10px 12px', border, textAlign: 'right', color: '#8a9bc0', fontSize: '12px', background: '#0d1120' }}>
+              <td colSpan={2} style={{ ...footerCell(), textAlign: 'right', color: 'var(--text-muted)', fontSize: '12px' }}>
                 差異
               </td>
               <td style={{
-                padding: '10px 12px', border, textAlign: 'right', fontWeight: 700,
-                fontVariantNumeric: 'tabular-nums',
-                background: diff > 0 ? 'rgba(250,204,21,0.12)' : diff < 0 ? 'rgba(255,77,106,0.12)' : '#0d1120',
-                color: diff > 0 ? '#facc15' : diff < 0 ? '#ff4d6a' : '#6b7fa3',
+                ...footerCell(),
+                textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+                background: diff > 0 ? 'rgba(250,204,21,0.12)' : diff < 0 ? 'rgba(255,77,106,0.12)' : 'var(--bg-panel)',
+                color: diff > 0 ? '#facc15' : diff < 0 ? '#ff4d6a' : 'var(--text-muted)',
               }}>
                 {commas(diff)}
               </td>
-              <td colSpan={2} style={{ border, background: '#0d1120' }} />
+              <td colSpan={2} style={{ ...footerCell() }} />
             </tr>
           </tfoot>
         </table>

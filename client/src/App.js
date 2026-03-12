@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import CustomerList from './components/CustomerList';
 import CustomerDetail from './components/CustomerDetail';
@@ -10,35 +10,53 @@ import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import './App.css';
 
+const THEMES = [
+  { id: 'dark',  label: 'ダーク',   cls: 't-dark',  swatch: ['#0d1120','#1e2a45','#00d4ff'] },
+  { id: 'excel', label: 'エクセル', cls: 't-excel', swatch: ['#1f3864','#ffffff','#2e75b6'] },
+  { id: 'earth', label: 'アース',   cls: 't-earth', swatch: ['#3d2b1f','#faf6ef','#b5651d'] },
+];
+
 function App() {
   const [page, setPage] = useState('dashboard');
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [projectDealId, setProjectDealId] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark');
 
-  const goToCustomer = (id) => {
-    setSelectedCustomerId(id);
-    setPage('customer-detail');
-  };
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('crm-theme', theme);
+  }, [theme]);
 
-  const goToCustomerList = () => {
-    setSelectedCustomerId(null);
-    setPage('customers');
-  };
-
-  const goToProject = (dealId) => {
-    setProjectDealId(dealId);
-    setPage('project-detail');
-  };
-
-  const goToProjectList = () => {
-    setProjectDealId(null);
-    setPage('projects');
-  };
+  const goToCustomer = (id) => { setSelectedCustomerId(id); setPage('customer-detail'); };
+  const goToCustomerList = () => { setSelectedCustomerId(null); setPage('customers'); };
+  const goToProject = (dealId) => { setProjectDealId(dealId); setPage('project-detail'); };
+  const goToProjectList = () => { setProjectDealId(null); setPage('projects'); };
 
   return (
     <div className="app">
       <nav className="sidebar">
         <div className="logo">25期受託開発案件分析</div>
+
+        {/* テーマ切替 */}
+        <div className="theme-switcher">
+          {THEMES.map(t => (
+            <button
+              key={t.id}
+              className={`theme-card${theme === t.id ? ' active' : ''}`}
+              onClick={() => setTheme(t.id)}
+              title={t.label}
+            >
+              <div className="theme-card-preview">
+                <div className="theme-card-sidebar" style={{ background: t.swatch[0] }} />
+                <div className="theme-card-body" style={{ background: t.swatch[1] }}>
+                  <div className="theme-card-bar" style={{ background: t.swatch[2], opacity: 0.9 }} />
+                  <div className="theme-card-bar short" style={{ background: t.swatch[2], opacity: 0.5 }} />
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
         <button className={page === 'dashboard' ? 'active' : ''} onClick={() => setPage('dashboard')}>Dashboard</button>
         <button className={['customers', 'customer-detail'].includes(page) ? 'active' : ''} onClick={goToCustomerList}>顧客管理</button>
         <button className={page === 'deals' ? 'active' : ''} onClick={() => setPage('deals')}>案件管理</button>

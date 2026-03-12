@@ -74,10 +74,10 @@ export default function SalesTable() {
   };
 
   // スタイル定数
-  const border = '1px solid #1e2a45';
+  const border = '1px solid var(--border)';
   const th = (extra={}) => ({
-    padding: '5px 8px', border, background: '#0d1120',
-    color: '#8a9bc0', fontSize: '11px', textAlign: 'center',
+    padding: '5px 8px', border, background: 'var(--bg-panel)',
+    color: 'var(--text-mid)', fontSize: '11px', textAlign: 'center',
     whiteSpace: 'nowrap', ...extra,
   });
   const td = (extra={}) => ({
@@ -89,11 +89,11 @@ export default function SalesTable() {
     textAlign: 'center', fontWeight: 700, fontSize: '13px',
     background: bg, color, width: '24px', padding: '8px 4px',
   });
-  const nameTd = (bg) => ({ ...td(), textAlign: 'left', background: bg, color: '#c9d1e8' });
-  const numTd = (bg, color='#c9d1e8') => ({ ...td(), background: bg, color });
+  const nameTd = (bg) => ({ ...td(), textAlign: 'left', background: bg, color: 'var(--text-body)' });
+  const numTd = (bg, color='var(--text-body)') => ({ ...td(), background: bg, color });
   const subtotalTd = (bg, color='#7ec8e3') => ({ ...td(), background: bg, color, fontWeight: 600 });
   const totalTd = (bg, color) => ({ ...td(), background: bg, color, fontWeight: 700 });
-  const diffTd = (v, bg) => ({ ...td(), background: bg, color: v > 0 ? '#34d399' : v < 0 ? '#ff4d6a' : '#6b7fa3', fontWeight: 700 });
+  const diffTd = (v, bg) => ({ ...td(), background: bg, color: v > 0 ? '#34d399' : v < 0 ? '#ff4d6a' : 'var(--text-muted)', fontWeight: 700 });
 
   const BG_TARGET   = 'rgba(74,158,186,0.06)';
   const BG_ACTUAL   = 'rgba(52,211,153,0.06)';
@@ -116,15 +116,15 @@ export default function SalesTable() {
             onChange={e => setEditVal(e.target.value)}
             onBlur={() => commitEdit(cid, month)}
             onKeyDown={e => e.key === 'Enter' && commitEdit(cid, month)}
-            style={{ width: '100%', padding: '4px 8px', background: 'rgba(0,212,255,0.15)',
-              border: 'none', borderBottom: '2px solid #00d4ff', color: '#00d4ff',
+            style={{ width: '100%', padding: '4px 8px', background: 'var(--accent-bg)',
+              border: 'none', borderBottom: '2px solid var(--accent)', color: 'var(--accent)',
               fontSize: '12px', textAlign: 'right', outline: 'none', boxSizing: 'border-box' }}
           />
         </td>
       );
     }
     return (
-      <td style={{ ...numTd(bg, key in targets ? '#c9d1e8' : '#2a3a58'), cursor: 'pointer' }}
+      <td style={{ ...numTd(bg, key in targets ? 'var(--text-body)' : 'var(--border-mid)'), cursor: 'pointer' }}
         onClick={() => { setEditing(key); setEditVal(val ? String(val) : ''); }}
         title="クリックして編集">
         {key in targets ? yen(val) : '¥0'}
@@ -134,28 +134,28 @@ export default function SalesTable() {
 
   return (
     <div style={{ padding: '24px' }}>
-      <h2 style={{ color: '#e2e8f0', marginBottom: '16px' }}>売上管理表</h2>
+      <h2 style={{ color: 'var(--text-heading)', marginBottom: '16px' }}>売上管理表</h2>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: '12px', background: '#0a0e1a' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: '12px', background: 'var(--bg-inner)' }}>
           <thead>
             {/* ヘッダー行1: 年 */}
             <tr>
-              <th style={th({ background: '#060a14' })} colSpan={2} rowSpan={3}>受託開発</th>
+              <th style={th({ background: 'var(--bg-inner)' })} colSpan={2} rowSpan={3}>受託開発</th>
               <th style={th()} colSpan={4}>2025年</th>
               <th style={th()} colSpan={11}>2026年</th>
             </tr>
             {/* ヘッダー行2: 期 */}
             <tr>
-              <th style={th({ color: '#6b9fd4' })} colSpan={7}>上期</th>
-              <th style={th({ color: '#6b9fd4' })} colSpan={7}>下期</th>
-              <th style={th({ color: '#00d4ff' })} rowSpan={2}>合計</th>
+              <th style={th({ color: 'var(--accent)' })} colSpan={7}>上期</th>
+              <th style={th({ color: 'var(--accent)' })} colSpan={7}>下期</th>
+              <th style={th({ color: 'var(--accent)' })} rowSpan={2}>合計</th>
             </tr>
             {/* ヘッダー行3: 月 */}
             <tr>
               {UPPER.map(m => <th key={m} style={th()}>{m}</th>)}
-              <th style={th({ color: '#00d4ff' })}>小計</th>
+              <th style={th({ color: 'var(--accent)' })}>小計</th>
               {LOWER.map(m => <th key={m} style={th()}>{m}</th>)}
-              <th style={th({ color: '#00d4ff' })}>小計</th>
+              <th style={th({ color: 'var(--accent)' })}>小計</th>
             </tr>
           </thead>
           <tbody>
@@ -249,14 +249,14 @@ export default function SalesTable() {
       </div>
 
       {/* 予算経緯 */}
-      <div style={{ marginTop: '40px', maxWidth: '900px', lineHeight: '1.9', fontSize: '13px', color: '#c9d1e8' }}>
-        <div style={{ fontWeight: 700, fontSize: '14px', color: '#e2e8f0', marginBottom: '12px' }}>【予算経緯】</div>
+      <div style={{ marginTop: '40px', maxWidth: '900px', lineHeight: '1.9', fontSize: '13px', color: 'var(--text-body)' }}>
+        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-heading)', marginBottom: '12px' }}>【予算経緯】</div>
 
         <p style={{ margin: '0 0 4px 0' }}>
           ・2025年7月、予算検討会議にて、25期受託開発予算を8600万円で上申。内訳はマイナビ2800万円、ケイコーポ3000万円、受託2800万円。<br />
           　同会議にて上記予算に210万円を上積みされ、25期受託開発予算8810万円で決定となる。その内開発案件予算は3010万円。
         </p>
-        <p style={{ margin: '0 0 16px 0', color: '#8a9bc0' }}>
+        <p style={{ margin: '0 0 16px 0', color: 'var(--text-mid)' }}>
           ※資料内の来期売上イメージ（根拠なし）の金額がそのまま上積みされる形となってしまった。
         </p>
 
@@ -264,27 +264,27 @@ export default function SalesTable() {
           ・25年8月、営業(Worksチーム)で年間で500万円分のWorks関連開発案件を取る？？という話が舞い込み、開発案件予算の8月に算入される。<br />
           　よって25期売上全体表では8月の開発案件予算が1810万円→2310万円となっている。
         </p>
-        <p style={{ margin: '0 0 16px 0', color: '#8a9bc0' }}>
+        <p style={{ margin: '0 0 16px 0', color: 'var(--text-mid)' }}>
           ※こちらは受託チームとは別目標ということなので、受託開発の年間目標は当初予算8810万円で管理を行う。（上山部長に確認済み）
         </p>
 
         <p style={{ margin: '0 0 4px 0' }}>
           ・全体表では下期開発案件欄の各月に、根拠のない来期売上イメージ金額がそのまま予算として入っている。（予算組み立て時の認識齟齬により）
         </p>
-        <p style={{ margin: '0 0 32px 0', color: '#8a9bc0' }}>
+        <p style={{ margin: '0 0 32px 0', color: 'var(--text-mid)' }}>
           ※受託開発の性質上、基本的には上期（2月）、下期（8月）終了時点の状態を管理することとする。（上山部長に確認済み）
         </p>
 
-        <div style={{ fontWeight: 700, fontSize: '14px', color: '#e2e8f0', marginBottom: '12px' }}>【重要方針】</div>
+        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-heading)', marginBottom: '12px' }}>【重要方針】</div>
 
         <p style={{ margin: '0 0 4px 0', color: '#ff4d6a', fontWeight: 600 }}>
           ・25年11月、上場審査のため上期売上がカギとなる。そのため受託開発案件では上期目標の1200万円必達の上、<br />
           　他事業の売上をカバーするため、500万円ほどのプラスで着地することが最高の結果。
         </p>
-        <p style={{ margin: '0 0 4px 0', color: '#8a9bc0' }}>
+        <p style={{ margin: '0 0 4px 0', color: 'var(--text-mid)' }}>
           ※セルコホーム、岩倉建設の仕掛計上管理が重要なポイントとなる。
         </p>
-        <p style={{ margin: '0', color: '#8a9bc0' }}>
+        <p style={{ margin: '0', color: 'var(--text-mid)' }}>
           →仕掛計上の考え方（監査上の取り決め）について、管理部に要確認！
         </p>
       </div>

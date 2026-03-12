@@ -27,7 +27,8 @@ const MONTH_COLORS = {
   [currentMonth]: '#00d4ff',
 };
 
-const getMonthColor = (monthName) => MONTH_COLORS[monthName] || null;
+const isDarkTheme = () => (document.body.getAttribute('data-theme') || 'dark') === 'dark';
+const getMonthColor = (monthName) => isDarkTheme() ? (MONTH_COLORS[monthName] || null) : null;
 
 // タグ入力コンポーネント（サジェスト付き）
 function TagFilter({ placeholder, tags, onAdd, onRemove, suggestions = [] }) {
@@ -62,15 +63,15 @@ function TagFilter({ placeholder, tags, onAdd, onRemove, suggestions = [] }) {
           onChange={e => { setInput(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), add())}
-          style={{ flex:1, padding:'7px 10px', background:'#0d1120', border:'1px solid #1e2a45', borderRadius:'6px', color:'#c9d1e8', fontSize:'12px', fontFamily:'Inter,sans-serif', minWidth:0 }}
+          style={{ flex:1, padding:'7px 10px', background:'var(--bg-panel)', border:'1px solid var(--border)', borderRadius:'6px', color:'var(--text-body)', fontSize:'12px', fontFamily:'Inter,sans-serif', minWidth:0 }}
         />
-        <button onClick={() => add()} style={{ padding:'7px 10px', background:'#0d1120', border:'1px solid #1e2a45', borderRadius:'6px', color:'#00d4ff', cursor:'pointer', fontSize:'14px', lineHeight:1 }}>＋</button>
+        <button onClick={() => add()} style={{ padding:'7px 10px', background:'var(--bg-panel)', border:'1px solid var(--border)', borderRadius:'6px', color:'var(--accent)', cursor:'pointer', fontSize:'14px', lineHeight:1 }}>＋</button>
       </div>
       {open && filtered.length > 0 && (
-        <div style={{ position:'absolute', top:'36px', left:0, right:'36px', background:'#0d1120', border:'1px solid #1e2a45', borderRadius:'6px', zIndex:100, maxHeight:'180px', overflowY:'auto' }}>
+        <div style={{ position:'absolute', top:'36px', left:0, right:'36px', background:'var(--bg-panel)', border:'1px solid var(--border)', borderRadius:'6px', zIndex:100, maxHeight:'180px', overflowY:'auto' }}>
           {filtered.map(s => (
-            <div key={s} onMouseDown={() => add(s)} style={{ padding:'8px 12px', fontSize:'12px', color:'#c9d1e8', cursor:'pointer', borderBottom:'1px solid #131825' }}
-              onMouseEnter={e => e.target.style.background='rgba(0,212,255,0.08)'}
+            <div key={s} onMouseDown={() => add(s)} style={{ padding:'8px 12px', fontSize:'12px', color:'var(--text-body)', cursor:'pointer', borderBottom:'1px solid var(--border-subtle)' }}
+              onMouseEnter={e => e.target.style.background='var(--accent-bg)'}
               onMouseLeave={e => e.target.style.background='transparent'}
             >
               {s}
@@ -81,7 +82,7 @@ function TagFilter({ placeholder, tags, onAdd, onRemove, suggestions = [] }) {
       {tags.length > 0 && (
         <div style={{ display:'flex', flexWrap:'wrap', gap:'4px' }}>
           {tags.map(t => (
-            <span key={t} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'2px 8px', background:'rgba(0,212,255,0.1)', border:'1px solid rgba(0,212,255,0.2)', borderRadius:'12px', fontSize:'11px', color:'#00d4ff' }}>
+            <span key={t} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'2px 8px', background:'var(--accent-bg)', border:'1px solid var(--accent-border)', borderRadius:'12px', fontSize:'11px', color:'var(--accent)' }}>
               {t}
               <span onClick={() => onRemove(t)} style={{ cursor:'pointer', opacity:0.7, fontSize:'13px', lineHeight:1 }}>×</span>
             </span>
@@ -99,7 +100,7 @@ function SelectFilter({ placeholder, options, tags, onAdd, onRemove }) {
       <select
         value=""
         onChange={e => { if (e.target.value && !tags.includes(e.target.value)) onAdd(e.target.value); }}
-        style={{ padding:'7px 10px', background:'#0d1120', border:'1px solid #1e2a45', borderRadius:'6px', color: tags.length ? '#c9d1e8' : '#3d4f6e', fontSize:'12px', fontFamily:'Inter,sans-serif' }}
+        style={{ padding:'7px 10px', background:'var(--bg-panel)', border:'1px solid var(--border)', borderRadius:'6px', color: tags.length ? 'var(--text-body)' : 'var(--text-faint)', fontSize:'12px', fontFamily:'Inter,sans-serif' }}
       >
         <option value="">{placeholder}</option>
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -109,7 +110,7 @@ function SelectFilter({ placeholder, options, tags, onAdd, onRemove }) {
           {tags.map(t => {
             const label = options.find(([v]) => v === t)?.[1] || t;
             return (
-              <span key={t} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'2px 8px', background:'rgba(0,212,255,0.1)', border:'1px solid rgba(0,212,255,0.2)', borderRadius:'12px', fontSize:'11px', color:'#00d4ff' }}>
+              <span key={t} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'2px 8px', background:'var(--accent-bg)', border:'1px solid var(--accent-border)', borderRadius:'12px', fontSize:'11px', color:'var(--accent)' }}>
                 {label}
                 <span onClick={() => onRemove(t)} style={{ cursor:'pointer', opacity:0.7, fontSize:'13px', lineHeight:1 }}>×</span>
               </span>
@@ -251,7 +252,7 @@ export default function DealList() {
         <SelectFilter placeholder="検収月" options={INSPECTION_OPTIONS.map(o => [o, o])} tags={filters.inspection_date} onAdd={v => addFilter('inspection_date', v)} onRemove={v => removeFilter('inspection_date', v)} />
         <TagFilter placeholder="トピックス" tags={filters.topics} onAdd={v => addFilter('topics', v)} onRemove={v => removeFilter('topics', v)} suggestions={[...new Set(deals.map(d => d.topics).filter(Boolean))]} />
         {Object.values(filters).some(v => v.length > 0) && (
-          <button onClick={clearFilters} style={{ padding:'7px 14px', background:'none', border:'1px solid #2a3a58', borderRadius:'6px', color:'#6b7fa3', cursor:'pointer', fontSize:'12px', fontFamily:'Inter,sans-serif', alignSelf:'flex-start' }}>
+          <button onClick={clearFilters} style={{ padding:'7px 14px', background:'none', border:'1px solid var(--border-mid)', borderRadius:'6px', color:'var(--text-muted)', cursor:'pointer', fontSize:'12px', fontFamily:'Inter,sans-serif', alignSelf:'flex-start' }}>
             クリア
           </button>
         )}
@@ -291,7 +292,7 @@ export default function DealList() {
                     {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </td>
-                <td><textarea value={editForm.topics} onChange={e => setEditForm({...editForm, topics: e.target.value})} rows={2} style={{width:'100%', resize:'vertical', background:'#0d1120', color:'#c9d1e8', border:'1px solid #1e2a45', borderRadius:'4px', padding:'4px 8px', fontFamily:'Inter,sans-serif', fontSize:'13px'}} /></td>
+                <td><textarea value={editForm.topics} onChange={e => setEditForm({...editForm, topics: e.target.value})} rows={2} style={{width:'100%', resize:'vertical', background:'var(--bg-panel)', color:'var(--text-body)', border:'1px solid var(--border)', borderRadius:'4px', padding:'4px 8px', fontFamily:'Inter,sans-serif', fontSize:'13px'}} /></td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditSave(d.id)}>保存</button>
                   <button className="btn-delete" onClick={() => setEditId(null)}>キャンセル</button>
@@ -311,7 +312,7 @@ export default function DealList() {
                   const c = getMonthColor(d.inspection_date);
                   const s = c ? { color: c } : {};
                   return (<>
-                    <td style={{color:'#3d4f6e', fontSize:'16px', cursor:'grab'}}>⠿</td>
+                    <td style={{color:'var(--text-faint)', fontSize:'16px', cursor:'grab'}}>⠿</td>
                     <td style={s}>{d.customer_name}</td>
                     <td style={s}>{d.title}</td>
                     <td>
@@ -334,24 +335,24 @@ export default function DealList() {
               if (isLastOfMonth) {
                 rows.push(
                   <tr key={`subtotal_${d.inspection_date}_${index}`}>
-                    <td colSpan={4} style={{textAlign:'right', color:'#facc15', fontWeight:600, fontSize:'12px', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid #1e2a45'}}>
+                    <td colSpan={4} style={{textAlign:'right', color:'var(--text-muted)', fontWeight:600, fontSize:'12px', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
                       {d.inspection_date} 小計
                     </td>
-                    <td style={{textAlign:'right', fontWeight:700, fontSize:'12px', color:'#facc15', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid #1e2a45'}}>
+                    <td style={{textAlign:'right', fontWeight:700, fontSize:'12px', color:'var(--accent)', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
                       ¥{monthTotal.toLocaleString()}
                     </td>
-                    <td colSpan={3} style={{borderBottom:'1px solid #1e2a45'}}></td>
+                    <td colSpan={3} style={{borderBottom:'1px solid var(--border)'}}></td>
                   </tr>
                 );
               }
               return rows;
             })}
-            {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'#4a5f82'}}>{Object.values(filters).some(f => f.length > 0) ? '検索結果がありません' : '案件データがありません'}</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-faint)'}}>{Object.values(filters).some(f => f.length > 0) ? '検索結果がありません' : '案件データがありません'}</td></tr>}
 
             {filtered.length > 0 && (
               <tr>
-                <td colSpan={4} style={{textAlign:'right', color:'#6b7fa3', fontWeight:600, paddingTop:'16px'}}>合計</td>
-                <td style={{color:'#00d4ff', fontWeight:700, paddingTop:'16px', textAlign:'right'}}>
+                <td colSpan={4} style={{textAlign:'right', color:'var(--text-muted)', fontWeight:600, paddingTop:'16px'}}>合計</td>
+                <td style={{color:'var(--accent)', fontWeight:700, paddingTop:'16px', textAlign:'right'}}>
                   ¥{filtered.reduce((sum, d) => sum + (Number(d.amount) || 0), 0).toLocaleString()}
                 </td>
                 <td colSpan={3}></td>

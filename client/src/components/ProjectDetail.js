@@ -16,18 +16,18 @@ const STATUS_LABELS = {
 
 const inputStyle = {
   padding: '7px 12px',
-  background: '#141929',
-  border: '1px solid #1e2a45',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border)',
   borderRadius: '6px',
   fontSize: '13px',
   fontFamily: "'Inter', sans-serif",
-  color: '#c9d1e8',
+  color: 'var(--text-body)',
   width: '100%',
 };
 
 const labelStyle = {
   fontSize: '12px',
-  color: '#4a5f82',
+  color: 'var(--text-faint)',
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
@@ -46,12 +46,12 @@ function SummaryRow({ label, value, highlight, large }) {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: large ? '10px 0' : '6px 0',
-      borderBottom: '1px solid #131825',
+      borderBottom: '1px solid var(--border-subtle)',
     }}>
-      <span style={{ fontSize: large ? '14px' : '13px', color: highlight ? '#e2e8f5' : '#8a9bc0', fontWeight: large ? 600 : 400 }}>
+      <span style={{ fontSize: large ? '14px' : '13px', color: highlight ? 'var(--text-heading)' : 'var(--text-mid)', fontWeight: large ? 600 : 400 }}>
         {label}
       </span>
-      <span style={{ fontSize: large ? '15px' : '13px', color: highlight || '#a8b6d0', fontWeight: large ? 700 : 500 }}>
+      <span style={{ fontSize: large ? '15px' : '13px', color: highlight || 'var(--text-td)', fontWeight: large ? 700 : 500 }}>
         {value}
       </span>
     </div>
@@ -401,7 +401,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
     } catch (err) { console.error(err); }
   };
 
-  if (!data) return <div style={{ color: '#6b7fa3', padding: '40px' }}>読み込み中...</div>;
+  if (!data) return <div style={{ color: 'var(--text-muted)', padding: '40px' }}>読み込み中...</div>;
 
   const { deal, meta, summary } = data;
   const progressColor = summary.progress > 100 ? '#ff4d6a' : summary.progress > 80 ? '#fbbf24' : '#00d4ff';
@@ -414,7 +414,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
   const currentIdx = projectIds.indexOf(dealId);
   const prevId = currentIdx > 0 ? projectIds[currentIdx - 1] : null;
   const nextId = currentIdx >= 0 && currentIdx < projectIds.length - 1 ? projectIds[currentIdx + 1] : null;
-  const navBtnStyle = (active) => ({ padding: '6px 14px', background: active ? '#1a2540' : '#111827', border: '1px solid #2a3a58', color: active ? '#c9d1e8' : '#3a4a6a', borderRadius: '6px', cursor: active ? 'pointer' : 'default', fontSize: '13px', fontFamily: "'Inter', sans-serif" });
+  const navBtnStyle = (active) => ({ padding: '6px 14px', background: active ? 'var(--bg-input)' : 'var(--bg-inner)', border: '1px solid var(--border-mid)', color: active ? 'var(--text-body)' : 'var(--text-faint)', borderRadius: '6px', cursor: active ? 'pointer' : 'default', fontSize: '13px', fontFamily: "'Inter', sans-serif" });
 
   return (
     <div>
@@ -436,19 +436,19 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           <div>
             <span style={labelStyle}>顧客名</span>
-            <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{deal.customer_name}</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.customer_name}</div>
           </div>
           <div>
             <span style={labelStyle}>ステータス</span>
-            <div><span style={{ fontSize: '13px', color: '#a8b6d0' }}>{STATUS_LABELS[deal.status] || deal.status}</span></div>
+            <div><span style={{ fontSize: '13px', color: 'var(--text-td)' }}>{STATUS_LABELS[deal.status] || deal.status}</span></div>
           </div>
           <div>
             <span style={labelStyle}>受注額</span>
-            <div style={{ fontSize: '16px', color: '#00d4ff', fontWeight: 700 }}>{fmt(deal.amount)}</div>
+            <div style={{ fontSize: '16px', color: 'var(--accent)', fontWeight: 700 }}>{fmt(deal.amount)}</div>
           </div>
           <div>
             <span style={labelStyle}>検収月</span>
-            <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{deal.inspection_date || '-'}</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.inspection_date || '-'}</div>
           </div>
           {infoEditing ? (
             <>
@@ -469,15 +469,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <>
               <div>
                 <span style={labelStyle}>プロジェクトコード</span>
-                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.project_code || '-'}</div>
+                <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{metaForm.project_code || '-'}</div>
               </div>
               <div>
                 <span style={labelStyle}>受注日</span>
-                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.order_date || '-'}</div>
+                <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{metaForm.order_date || '-'}</div>
               </div>
               <div>
                 <span style={labelStyle}>検収完了日</span>
-                <div style={{ fontSize: '14px', color: '#e2e8f5' }}>{metaForm.acceptance_date || '-'}</div>
+                <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{metaForm.acceptance_date || '-'}</div>
               </div>
             </>
           )}
@@ -490,8 +490,11 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         )}
       </div>
 
+      {/* 2. 見積原価 + 3. 実績サマリー 横並び */}
+      <div style={{ display: metaEditing ? 'block' : 'flex', gap: '16px', alignItems: 'flex-start' }}>
+
       {/* 2. 見積原価 */}
-      <div className="card">
+      <div className="card" style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3>見積原価</h3>
           {!metaEditing && (
@@ -531,14 +534,14 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
               <textarea style={{ ...inputStyle, minHeight: '72px', resize: 'vertical' }} value={metaForm.notes} onChange={e => setMetaForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-              <button onClick={() => setMetaEditing(false)} style={{ padding: '8px 18px', background: 'none', border: '1px solid #2a3a58', color: '#6b7fa3', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>取消</button>
-              <button onClick={saveMeta} disabled={metaSaving} style={{ padding: '8px 22px', background: '#00d4ff', color: '#0a0e1a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter', sans-serif", fontWeight: 600, opacity: metaSaving ? 0.6 : 1 }}>
+              <button onClick={() => setMetaEditing(false)} style={{ padding: '8px 18px', background: 'none', border: '1px solid var(--border-mid)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>取消</button>
+              <button onClick={saveMeta} disabled={metaSaving} style={{ padding: '8px 22px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter', sans-serif", fontWeight: 600, opacity: metaSaving ? 0.6 : 1 }}>
                 {metaSaving ? '保存中...' : '保存'}
               </button>
             </div>
           </>
         ) : (
-          <div style={{ background: '#0a0e1a', borderRadius: '8px', padding: '16px' }}>
+          <div style={{ background: 'var(--bg-inner)', borderRadius: '8px', padding: '16px' }}>
             <SummaryRow label="見積工数" value={`${Number(metaForm.estimated_hours || 0).toFixed(1)}h`} />
             <SummaryRow label="見積労務費" value={fmt(metaForm.estimated_labor)} />
             <SummaryRow label="見積外注費" value={fmt(metaForm.estimated_outsourcing)} />
@@ -552,15 +555,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
       </div>
 
       {/* 3. 実績サマリー */}
-      <div className="card">
+      <div className="card" style={{ flex: 1, minWidth: 0 }}>
         <h3 style={{ marginBottom: '16px' }}>実績サマリー</h3>
-        <div style={{ background: '#0a0e1a', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ background: 'var(--bg-inner)', borderRadius: '8px', padding: '16px' }}>
           <SummaryRow label="直接費（労務費）合計" value={fmt(summary.labor_total)} />
           <SummaryRow label="外注費合計" value={fmt(summary.outsourcing_total)} />
           <SummaryRow label="経費合計" value={fmt(summary.expenses_total)} />
           <SummaryRow label="直接費合計" value={fmt(summary.labor_total + summary.outsourcing_total + summary.expenses_total)} />
           <SummaryRow label="間接費" value={fmt(summary.indirect_total)} />
-          <SummaryRow label="実績合計" value={fmt(summary.actual_total)} highlight="#e2e8f5" large />
+          <SummaryRow label="実績合計" value={fmt(summary.actual_total)} highlight="var(--text-heading)" large />
           <SummaryRow
             label="プロジェクト利益（受注額 - 実績合計）"
             value={`${summary.profit >= 0 ? '' : '-'}¥${Math.round(Math.abs(summary.profit)).toLocaleString()}`}
@@ -575,10 +578,12 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           <SummaryRow
             label={`工数進捗率（実績 ${actualHours.toFixed(2)}h / 見積 ${estimatedHours.toFixed(1)}h）`}
             value={estimatedHours > 0 ? `${hoursProgress.toFixed(1)}%` : '-'}
-            highlight={estimatedHours > 0 ? hoursProgressColor : '#6b7fa3'}
+            highlight={estimatedHours > 0 ? hoursProgressColor : 'var(--text-muted)'}
           />
         </div>
       </div>
+
+      </div>{/* end flex wrapper */}
 
       {/* 4. 直接費テーブル */}
       <div className="card">
@@ -597,7 +602,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           </thead>
           <tbody>
             {directCosts.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', color: '#4a5f82', padding: '20px' }}>データがありません</td></tr>
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: '20px' }}>データがありません</td></tr>
             )}
             {directCosts.map(row => (
               <tr key={row.id}>
@@ -607,7 +612,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                     <td><input type="text" value={dcEditing.member} onChange={e => setDcEditing(v => ({ ...v, member: e.target.value }))} /></td>
                     <td><input type="number" step="0.01" value={dcEditing.hours} onChange={e => setDcEditing(v => ({ ...v, hours: e.target.value }))} /></td>
                     <td><input type="number" value={dcEditing.unit_price} onChange={e => setDcEditing(v => ({ ...v, unit_price: e.target.value }))} /></td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5' }}>{fmt(Number(dcEditing.hours || 0) * Number(dcEditing.unit_price || 0))}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)' }}>{fmt(Number(dcEditing.hours || 0) * Number(dcEditing.unit_price || 0))}</td>
                     <td>
                       <button className="btn-edit" onClick={() => updateDc(row.id)}>保存</button>
                       <button className="btn-delete" onClick={() => setDcEditing(null)}>取消</button>
@@ -619,10 +624,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                     <td>{row.member}</td>
                     <td style={{ textAlign: 'right' }}>{Number(row.hours).toFixed(2)}</td>
                     <td style={{ textAlign: 'right' }}>{fmt(row.unit_price)}</td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5', fontWeight: 600 }}>{fmt(row.hours * row.unit_price)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)', fontWeight: 600 }}>{fmt(row.hours * row.unit_price)}</td>
                     <td>
                       <button className="btn-edit" onClick={() => setDcEditing({ id: row.id, month: row.month, member: row.member, hours: row.hours, unit_price: row.unit_price })}>編集</button>
-                      <button className="btn-delete" onClick={() => duplicateDc(row)} style={{ background: 'none', border: '1px solid #2a3a58', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
+                      <button className="btn-delete" onClick={() => duplicateDc(row)} style={{ background: 'none', border: '1px solid var(--border-mid)', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
                       <button className="btn-delete" onClick={() => deleteDc(row.id)}>削除</button>
                     </td>
                   </>
@@ -631,12 +636,12 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             ))}
             {directCosts.length > 0 && (
               <tr>
-                <td colSpan={2} style={{ textAlign: 'right', color: '#4a5f82', fontSize: '12px' }}>合計</td>
-                <td style={{ textAlign: 'right', color: '#6b7fa3', fontWeight: 600 }}>
+                <td colSpan={2} style={{ textAlign: 'right', color: 'var(--text-faint)', fontSize: '12px' }}>合計</td>
+                <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontWeight: 600 }}>
                   {actualHours.toFixed(2)}
                 </td>
                 <td></td>
-                <td style={{ textAlign: 'right', color: '#00d4ff', fontWeight: 700 }}>
+                <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 700 }}>
                   {fmt(directCosts.reduce((s, r) => s + r.hours * r.unit_price, 0))}
                 </td>
                 <td></td>
@@ -648,7 +653,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         {/* 追加フォーム（下部） */}
         <form
           onSubmit={e => { e.preventDefault(); addDc(); }}
-          style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #1e2a45', paddingTop: '16px' }}
+          style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>製造月</label>
@@ -666,15 +671,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <label style={{ ...labelStyle, marginBottom: 0 }}>単価(¥)</label>
             <input type="number" placeholder="0" value={dcForm.unit_price} onChange={e => setDcForm(f => ({ ...f, unit_price: e.target.value }))} style={inputStyle} />
           </div>
-          <button type="submit" style={{ padding: '7px 18px', background: '#00d4ff', color: '#0a0e1a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
+          <button type="submit" style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
         </form>
       </div>
 
       {/* 5. 外注費テーブル */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: ocOpen ? '16px' : 0 }} onClick={() => setOcOpen(v => !v)}>
-          <h3>外注費 {outsourcing.length > 0 && <span style={{ color: '#00d4ff', fontWeight: 400, fontSize: '12px' }}>（{outsourcing.length}件）</span>}</h3>
-          <span style={{ color: '#6b7fa3', fontSize: '18px' }}>{ocOpen ? '▲' : '▼'}</span>
+          <h3>外注費 {outsourcing.length > 0 && <span style={{ color: 'var(--accent)', fontWeight: 400, fontSize: '12px' }}>（{outsourcing.length}件）</span>}</h3>
+          <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>{ocOpen ? '▲' : '▼'}</span>
         </div>
         {ocOpen && <table>
           <thead>
@@ -688,7 +693,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           </thead>
           <tbody>
             {outsourcing.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#4a5f82', padding: '20px' }}>データがありません</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: '20px' }}>データがありません</td></tr>
             )}
             {outsourcing.map(row => (
               <tr key={row.id}>
@@ -708,10 +713,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                     <td>{row.date || '-'}</td>
                     <td>{row.vendor}</td>
                     <td>{row.description}</td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5', fontWeight: 600 }}>{fmt(row.amount)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)', fontWeight: 600 }}>{fmt(row.amount)}</td>
                     <td>
                       <button className="btn-edit" onClick={() => setOcEditing({ id: row.id, date: row.date, vendor: row.vendor, description: row.description, amount: row.amount, notes: row.notes })}>編集</button>
-                      <button className="btn-delete" onClick={() => duplicateOc(row)} style={{ background: 'none', border: '1px solid #2a3a58', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
+                      <button className="btn-delete" onClick={() => duplicateOc(row)} style={{ background: 'none', border: '1px solid var(--border-mid)', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
                       <button className="btn-delete" onClick={() => deleteOc(row.id)}>削除</button>
                     </td>
                   </>
@@ -720,14 +725,14 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             ))}
             {outsourcing.length > 0 && (
               <tr>
-                <td colSpan={3} style={{ textAlign: 'right', color: '#4a5f82', fontSize: '12px' }}>合計</td>
-                <td style={{ textAlign: 'right', color: '#00d4ff', fontWeight: 700 }}>{fmt(outsourcing.reduce((s, r) => s + r.amount, 0))}</td>
+                <td colSpan={3} style={{ textAlign: 'right', color: 'var(--text-faint)', fontSize: '12px' }}>合計</td>
+                <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 700 }}>{fmt(outsourcing.reduce((s, r) => s + r.amount, 0))}</td>
                 <td></td>
               </tr>
             )}
           </tbody>
         </table>}
-        {ocOpen && <form onSubmit={e => { e.preventDefault(); addOc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #1e2a45', paddingTop: '16px' }}>
+        {ocOpen && <form onSubmit={e => { e.preventDefault(); addOc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>発生日</label>
             <input type="date" value={ocForm.date} onChange={e => setOcForm(f => ({ ...f, date: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />
@@ -744,15 +749,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <label style={{ ...labelStyle, marginBottom: 0 }}>金額(¥)</label>
             <input type="number" placeholder="0" value={ocForm.amount} onChange={e => setOcForm(f => ({ ...f, amount: e.target.value }))} style={inputStyle} />
           </div>
-          <button type="submit" style={{ padding: '7px 18px', background: '#00d4ff', color: '#0a0e1a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
+          <button type="submit" style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
         </form>}
       </div>
 
       {/* 6. 経費テーブル */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: exOpen ? '16px' : 0 }} onClick={() => setExOpen(v => !v)}>
-          <h3>経費 {expenses.length > 0 && <span style={{ color: '#00d4ff', fontWeight: 400, fontSize: '12px' }}>（{expenses.length}件）</span>}</h3>
-          <span style={{ color: '#6b7fa3', fontSize: '18px' }}>{exOpen ? '▲' : '▼'}</span>
+          <h3>経費 {expenses.length > 0 && <span style={{ color: 'var(--accent)', fontWeight: 400, fontSize: '12px' }}>（{expenses.length}件）</span>}</h3>
+          <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>{exOpen ? '▲' : '▼'}</span>
         </div>
         {exOpen && <table>
           <thead>
@@ -767,7 +772,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           </thead>
           <tbody>
             {expenses.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', color: '#4a5f82', padding: '20px' }}>データがありません</td></tr>
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: '20px' }}>データがありません</td></tr>
             )}
             {expenses.map(row => (
               <tr key={row.id}>
@@ -789,10 +794,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                     <td>{row.user_name}</td>
                     <td>{row.item}</td>
                     <td>{row.purpose}</td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5', fontWeight: 600 }}>{fmt(row.amount)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)', fontWeight: 600 }}>{fmt(row.amount)}</td>
                     <td>
                       <button className="btn-edit" onClick={() => setExEditing({ id: row.id, date: row.date, user_name: row.user_name, item: row.item, purpose: row.purpose, amount: row.amount })}>編集</button>
-                      <button className="btn-delete" onClick={() => duplicateEx(row)} style={{ background: 'none', border: '1px solid #2a3a58', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
+                      <button className="btn-delete" onClick={() => duplicateEx(row)} style={{ background: 'none', border: '1px solid var(--border-mid)', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
                       <button className="btn-delete" onClick={() => deleteEx(row.id)}>削除</button>
                     </td>
                   </>
@@ -801,14 +806,14 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             ))}
             {expenses.length > 0 && (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'right', color: '#4a5f82', fontSize: '12px' }}>合計</td>
-                <td style={{ textAlign: 'right', color: '#00d4ff', fontWeight: 700 }}>{fmt(expenses.reduce((s, r) => s + r.amount, 0))}</td>
+                <td colSpan={4} style={{ textAlign: 'right', color: 'var(--text-faint)', fontSize: '12px' }}>合計</td>
+                <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 700 }}>{fmt(expenses.reduce((s, r) => s + r.amount, 0))}</td>
                 <td></td>
               </tr>
             )}
           </tbody>
         </table>}
-        {exOpen && <form onSubmit={e => { e.preventDefault(); addEx(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #1e2a45', paddingTop: '16px' }}>
+        {exOpen && <form onSubmit={e => { e.preventDefault(); addEx(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>発生日</label>
             <input type="date" value={exForm.date} onChange={e => setExForm(f => ({ ...f, date: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />
@@ -829,15 +834,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <label style={{ ...labelStyle, marginBottom: 0 }}>金額(¥)</label>
             <input type="number" placeholder="0" value={exForm.amount} onChange={e => setExForm(f => ({ ...f, amount: e.target.value }))} style={inputStyle} />
           </div>
-          <button type="submit" style={{ padding: '7px 18px', background: '#00d4ff', color: '#0a0e1a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
+          <button type="submit" style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
         </form>}
       </div>
 
       {/* 7. 間接費テーブル */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: icOpen ? '16px' : 0 }} onClick={() => setIcOpen(v => !v)}>
-          <h3>間接費 {indirectCosts.length > 0 && <span style={{ color: '#00d4ff', fontWeight: 400, fontSize: '12px' }}>（{indirectCosts.length}件）</span>}</h3>
-          <span style={{ color: '#6b7fa3', fontSize: '18px' }}>{icOpen ? '▲' : '▼'}</span>
+          <h3>間接費 {indirectCosts.length > 0 && <span style={{ color: 'var(--accent)', fontWeight: 400, fontSize: '12px' }}>（{indirectCosts.length}件）</span>}</h3>
+          <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>{icOpen ? '▲' : '▼'}</span>
         </div>
         {icOpen && <table>
           <thead>
@@ -851,7 +856,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
           </thead>
           <tbody>
             {indirectCosts.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#4a5f82', padding: '20px' }}>データがありません</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-faint)', padding: '20px' }}>データがありません</td></tr>
             )}
             {indirectCosts.map(row => (
               <tr key={row.id}>
@@ -859,8 +864,8 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                   <>
                     <td><input type="month" value={icEditing.month} onChange={e => setIcEditing(v => ({ ...v, month: e.target.value }))} /></td>
                     <td><input type="number" value={icEditing.unit_price} onChange={e => setIcEditing(v => ({ ...v, unit_price: e.target.value }))} /></td>
-                    <td style={{ textAlign: 'right', color: '#6b7fa3' }}>{(dcByMonth[icEditing.month] || 0).toFixed(2)}</td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5' }}>{fmt(Number(icEditing.unit_price || 0) * (dcByMonth[icEditing.month] || 0))}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{(dcByMonth[icEditing.month] || 0).toFixed(2)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)' }}>{fmt(Number(icEditing.unit_price || 0) * (dcByMonth[icEditing.month] || 0))}</td>
                     <td>
                       <button className="btn-edit" onClick={() => updateIc(row.id)}>保存</button>
                       <button className="btn-delete" onClick={() => setIcEditing(null)}>取消</button>
@@ -871,10 +876,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
                     <td>{row.month || '-'}</td>
                     <td style={{ textAlign: 'right' }}>{fmt(row.unit_price)}</td>
                     <td style={{ textAlign: 'right' }}>{(dcByMonth[row.month] || 0).toFixed(2)}</td>
-                    <td style={{ textAlign: 'right', color: '#e2e8f5', fontWeight: 600 }}>{fmt(row.unit_price * (dcByMonth[row.month] || 0))}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-heading)', fontWeight: 600 }}>{fmt(row.unit_price * (dcByMonth[row.month] || 0))}</td>
                     <td>
                       <button className="btn-edit" onClick={() => setIcEditing({ id: row.id, month: row.month, unit_price: row.unit_price })}>編集</button>
-                      <button className="btn-delete" onClick={() => duplicateIc(row)} style={{ background: 'none', border: '1px solid #2a3a58', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
+                      <button className="btn-delete" onClick={() => duplicateIc(row)} style={{ background: 'none', border: '1px solid var(--border-mid)', color: '#a78bfa', cursor: 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 500, padding: '4px 10px', borderRadius: '4px', marginRight: '6px' }}>複製</button>
                       <button className="btn-delete" onClick={() => deleteIc(row.id)}>削除</button>
                     </td>
                   </>
@@ -884,11 +889,11 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             {indirectCosts.length > 0 && (
               <tr>
                 <td></td>
-                <td style={{ textAlign: 'right', color: '#6b7fa3', fontSize: '12px' }}>合計</td>
-                <td style={{ textAlign: 'right', color: '#6b7fa3', fontSize: '12px' }}>
+                <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '12px' }}>合計</td>
+                <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '12px' }}>
                   {indirectCosts.reduce((s, r) => s + (dcByMonth[r.month] || 0), 0).toFixed(2)}
                 </td>
-                <td style={{ textAlign: 'right', color: '#00d4ff', fontWeight: 700 }}>
+                <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 700 }}>
                   {fmt(indirectCosts.reduce((s, r) => s + r.unit_price * (dcByMonth[r.month] || 0), 0))}
                 </td>
                 <td></td>
@@ -896,7 +901,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             )}
           </tbody>
         </table>}
-        {icOpen && <form onSubmit={e => { e.preventDefault(); addIc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid #1e2a45', paddingTop: '16px' }}>
+        {icOpen && <form onSubmit={e => { e.preventDefault(); addIc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>該当月</label>
             <input type="month" value={icForm.month} onChange={e => setIcForm(f => ({ ...f, month: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />
@@ -906,11 +911,11 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <input type="number" placeholder="0" value={icForm.unit_price} onChange={e => setIcForm(f => ({ ...f, unit_price: e.target.value }))} style={inputStyle} />
           </div>
           {icForm.month && (
-            <div style={{ fontSize: '12px', color: '#6b7fa3', alignSelf: 'center', paddingTop: '16px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', alignSelf: 'center', paddingTop: '16px' }}>
               該当製造時間：{(dcByMonth[icForm.month] || 0).toFixed(2)}h（直接費から自動取得）
             </div>
           )}
-          <button type="submit" style={{ padding: '7px 18px', background: '#00d4ff', color: '#0a0e1a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
+          <button type="submit" style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
         </form>}
       </div>
     </div>

@@ -11,7 +11,7 @@ const FORECAST_STS = new Set(['forecast','developing']);
 const MONTH_LABEL = m => m.replace('検収', '');
 const PIE_COLORS = ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'];
 
-const tooltipStyle = { background: '#0d1120', border: '1px solid #1e2a45', borderRadius: 6, padding: '10px 16px' };
+const tooltipStyle = { background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, padding: '10px 16px', color: 'var(--text-body)' };
 
 const YojitsuTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
@@ -25,7 +25,7 @@ const YojitsuTooltip = ({ active, payload, label }) => {
   ].filter(i => i.value > 0);
   return (
     <div style={tooltipStyle}>
-      <p style={{ color: '#6b7fa3', fontSize: 12, marginBottom: 6 }}>{label}</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>{label}</p>
       {items.map(i => (
         <p key={i.name} style={{ color: i.color, fontWeight: 700, fontSize: 13 }}>
           {i.name}：¥{Number(i.value).toLocaleString()}
@@ -39,7 +39,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
     <div style={tooltipStyle}>
-      <p style={{ color: '#6b7fa3', fontSize: 12, marginBottom: 6 }}>{label}</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>{label}</p>
       {payload.filter(p => p.value > 0).map(p => (
         <p key={p.name} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
           {p.name}：¥{Number(p.value).toLocaleString()}
@@ -152,15 +152,15 @@ export default function Dashboard() {
       <div className="card">
         <h3 style={{ marginBottom: '20px' }}>月別売上額</h3>
         {monthlyData.length === 0 ? (
-          <p style={{ color: '#4a5f82', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={monthlyData} margin={{ top: 4, right: 16, left: 16, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" />
-              <XAxis dataKey="month" tick={{ fill: '#6b7fa3', fontSize: 12 }} axisLine={{ stroke: '#1e2a45' }} tickLine={false} />
-              <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: '#6b7fa3', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+              <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-              <Legend wrapperStyle={{ color: '#6b7fa3', fontSize: 12, paddingTop: 8 }} />
+              <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: 12, paddingTop: 8 }} />
               <Bar dataKey="実績" stackId="a" fill="#00d4ff" radius={[0, 0, 0, 0]} />
               <Bar dataKey="見込" stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -171,18 +171,18 @@ export default function Dashboard() {
       <div className="card">
         <h3 style={{ marginBottom: '20px' }}>月別 予実比較</h3>
         {yojitsuData.length === 0 ? (
-          <p style={{ color: '#4a5f82', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={yojitsuData} margin={{ top: 4, right: 16, left: 16, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" />
-              <XAxis dataKey="month" tick={{ fill: '#6b7fa3', fontSize: 12 }} axisLine={{ stroke: '#1e2a45' }} tickLine={false} />
-              <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: '#6b7fa3', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+              <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<YojitsuTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
               <Legend content={() => (
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
                   {[{ label: '目標', color: '#3b82f6' }, { label: '実績', color: '#00d4ff' }, { label: '見込', color: '#fb923c' }].map(i => (
-                    <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7fa3' }}>
+                    <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                       <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
                       {i.label}
                     </div>
@@ -202,21 +202,21 @@ export default function Dashboard() {
       <div className="card">
         <h3 style={{ marginBottom: '20px' }}>上期・下期・通期　予実対比</h3>
         {periodData.length === 0 ? (
-          <p style={{ color: '#4a5f82', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
         ) : (
           <>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={periodData} margin={{ top: 16, right: 24, left: 16, bottom: 4 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" />
-                <XAxis dataKey="name" tick={{ fill: '#c9d1e8', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: '#1e2a45' }} tickLine={false} />
-                <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: '#6b7fa3', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--text-body)', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
                       <div style={tooltipStyle}>
-                        <p style={{ color: '#6b7fa3', fontSize: 12, marginBottom: 6 }}>{label}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>{label}</p>
                         {payload.filter(p => p.value > 0).map(p => {
                           const diff = label !== '下期'
                             ? null
@@ -234,7 +234,7 @@ export default function Dashboard() {
                           const diff = actual - d.予算;
                           if (diff === 0) return null;
                           return (
-                            <p style={{ color: diff > 0 ? '#34d399' : '#ff4d6a', fontWeight: 700, fontSize: 12, borderTop: '1px solid #1e2a45', marginTop: 6, paddingTop: 6 }}>
+                            <p style={{ color: diff > 0 ? '#34d399' : '#ff4d6a', fontWeight: 700, fontSize: 12, borderTop: '1px solid var(--border)', marginTop: 6, paddingTop: 6 }}>
                               差異：{diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
                             </p>
                           );
@@ -246,7 +246,7 @@ export default function Dashboard() {
                 <Legend content={() => (
                   <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
                     {[{ label: '予算', color: '#3b82f6' }, { label: '実績', color: '#00d4ff' }, { label: '見込', color: '#fb923c' }].map(i => (
-                      <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7fa3' }}>
+                      <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                         <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
                         {i.label}
                       </div>
@@ -265,25 +265,25 @@ export default function Dashboard() {
                 const diff = actual - d.予算;
                 const rate = d.予算 > 0 ? Math.round(actual / d.予算 * 100) : 0;
                 return (
-                  <div key={d.name} style={{ flex: 1, background: '#0d1120', border: '1px solid #1e2a45', borderRadius: 8, padding: '14px 16px' }}>
-                    <div style={{ color: '#6b7fa3', fontSize: 11, marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em' }}>{d.name}</div>
+                  <div key={d.name} style={{ flex: 1, background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 8, padding: '14px 16px' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em' }}>{d.name}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: '#6b7fa3' }}>予算</span>
+                        <span style={{ color: 'var(--text-muted)' }}>予算</span>
                         <span style={{ color: '#3b82f6', fontWeight: 600 }}>¥{d.予算.toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: '#6b7fa3' }}>実績{d.見込 > 0 ? '＋見込' : ''}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>実績{d.見込 > 0 ? '＋見込' : ''}</span>
                         <span style={{ color: '#00d4ff', fontWeight: 600 }}>¥{actual.toLocaleString()}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid #1e2a45', paddingTop: 4, marginTop: 2 }}>
-                        <span style={{ color: '#6b7fa3' }}>差異</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid var(--border)', paddingTop: 4, marginTop: 2 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>差異</span>
                         <span style={{ color: diff > 0 ? '#34d399' : diff < 0 ? '#ff4d6a' : '#6b7fa3', fontWeight: 700 }}>
                           {diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: '#6b7fa3' }}>達成率</span>
+                        <span style={{ color: 'var(--text-muted)' }}>達成率</span>
                         <span style={{ color: rate >= 100 ? '#34d399' : rate >= 80 ? '#facc15' : '#ff4d6a', fontWeight: 700 }}>{rate}%</span>
                       </div>
                     </div>
@@ -299,15 +299,15 @@ export default function Dashboard() {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '20px' }}>
           <h3>顧客別 取引実績</h3>
           {customerData.length > 0 && (
-            <span style={{ fontSize: 13, color: '#6b7fa3' }}>
-              合計取引額：<span style={{ color: '#00d4ff', fontWeight: 700 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              合計取引額：<span style={{ color: 'var(--accent)', fontWeight: 700 }}>
                 ¥{customerData.reduce((s, d) => s + Number(d.total), 0).toLocaleString()}
               </span>
             </span>
           )}
         </div>
         {customerData.length === 0 ? (
-          <p style={{ color: '#4a5f82', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <ResponsiveContainer width="50%" height={280}>
@@ -315,15 +315,15 @@ export default function Dashboard() {
                 <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={110} innerRadius={50}>
                   {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={v => `¥${Number(v).toLocaleString()}`} contentStyle={tooltipStyle} labelStyle={{ color: '#6b7fa3' }} itemStyle={{ color: '#00d4ff' }} />
+                <Tooltip formatter={v => `¥${Number(v).toLocaleString()}`} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-muted)' }} itemStyle={{ color: '#00d4ff' }} />
               </PieChart>
             </ResponsiveContainer>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: 280, overflowY: 'auto' }}>
               {customerData.map((d, i) => (
                 <div key={d.customer} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: 12 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length], flexShrink: 0 }} />
-                  <span style={{ color: '#a8b6d0', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.customer}</span>
-                  <span style={{ color: '#e2e8f0', fontWeight: 600, whiteSpace: 'nowrap' }}>¥{Number(d.total).toLocaleString()}</span>
+                  <span style={{ color: 'var(--text-td)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.customer}</span>
+                  <span style={{ color: 'var(--text-heading)', fontWeight: 600, whiteSpace: 'nowrap' }}>¥{Number(d.total).toLocaleString()}</span>
                 </div>
               ))}
             </div>
