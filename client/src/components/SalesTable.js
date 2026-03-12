@@ -41,18 +41,18 @@ function getTableColors() {
   }
   if (theme === 'earth') {
     return {
-      targetSection: '#4a3010',
-      targetSub:     '#7b5e2a',
-      targetTotal:   '#7b5e2a',
-      actualSection: '#2d5016',
-      actualSub:     '#4a7a28',
-      actualTotal:   '#4a7a28',
-      forecastSection: '#6b3010',
-      forecastSub:   '#9b4f1e',
-      forecastTotal: '#9b4f1e',
-      diffLabel:     '#7a5210',
-      diffGain:      '#4a7a28',
-      diffLoss:      '#922b21',
+      targetSection: '#2a5a8a',
+      targetSub:     '#3a7aaa',
+      targetTotal:   '#3a7aaa',
+      actualSection: '#1e6b2a',
+      actualSub:     '#2e8a38',
+      actualTotal:   '#2e8a38',
+      forecastSection: '#a03800',
+      forecastSub:   '#c44e10',
+      forecastTotal: '#c44e10',
+      diffLabel:     '#9a7200',
+      diffGain:      '#2e8a38',
+      diffLoss:      '#b03020',
     };
   }
   // dark (default)

@@ -155,12 +155,12 @@ body[data-theme="earth"] {
   --focus-shadow: rgba(181,101,29,0.07);
   --btn-back-hover-border: rgba(181,101,29,0.3);
   --btn-back-hover-bg:     rgba(181,101,29,0.05);
-  --chart-actual:   #966432;
-  --chart-forecast: #c87941;
-  --chart-target:   #7b6c4e;
-  --chart-gain:     #7daa6e;
-  --chart-loss:     #922b21;
-  --chart-warn:     #c87941;
+  --chart-actual:   #a06820;
+  --chart-forecast: #c45510;
+  --chart-target:   #4a7a96;
+  --chart-gain:     #3a8040;
+  --chart-loss:     #b03020;
+  --chart-warn:     #b89010;
 }
 
 /* ============================================================
@@ -200,19 +200,20 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(
 
 /* テーマ切替 */
 .theme-switcher {
-  padding: 0 24px 20px;
+  padding: 0 16px 20px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
 }
 
 .theme-card {
+  flex: 1;
   display: flex;
-  flex-shrink: 0;
+  justify-content: center;
   background: none;
   border: 1px solid transparent;
   border-radius: 5px;
-  padding: 2px;
+  padding: 3px;
   cursor: pointer;
   transition: all 0.18s;
   opacity: 0.5;
@@ -227,8 +228,8 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(
 }
 
 .theme-card-preview {
-  width: 30px;
-  height: 20px;
+  width: 100%;
+  height: 22px;
   border-radius: 3px;
   overflow: hidden;
   display: flex;

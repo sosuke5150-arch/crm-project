@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { exportPPT } from './utils/exportPPT';
 import Dashboard from './components/Dashboard';
 import CustomerList from './components/CustomerList';
 import CustomerDetail from './components/CustomerDetail';
@@ -21,6 +22,13 @@ function App() {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [projectDealId, setProjectDealId] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark');
+  const [generatingPPT, setGeneratingPPT] = useState(false);
+
+  const handleExportPPT = async () => {
+    setGeneratingPPT(true);
+    try { await exportPPT(); } catch(e) { console.error(e); alert('PPT生成に失敗しました'); }
+    finally { setGeneratingPPT(false); }
+  };
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
@@ -64,6 +72,28 @@ function App() {
         <button className={page === 'upper-half-sales' ? 'active' : ''} onClick={() => setPage('upper-half-sales')}>上期売上一覧</button>
         <button className={page === 'lower-half-sales' ? 'active' : ''} onClick={() => setPage('lower-half-sales')}>下期売上一覧</button>
         <button className={['projects', 'project-detail'].includes(page) ? 'active' : ''} onClick={goToProjectList}>プロジェクト管理</button>
+
+        <div style={{ marginTop: 'auto', padding: '16px 16px 8px' }}>
+          <button
+            onClick={handleExportPPT}
+            disabled={generatingPPT}
+            style={{
+              width: '100%', padding: '10px 0',
+              background: generatingPPT ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              borderRadius: '7px',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '13px', fontWeight: 600, fontFamily: 'Inter,sans-serif',
+              cursor: generatingPPT ? 'default' : 'pointer',
+              transition: 'all 0.15s',
+              opacity: generatingPPT ? 0.6 : 1,
+            }}
+            onMouseEnter={e => { if (!generatingPPT) e.currentTarget.style.background = 'rgba(255,255,255,0.18)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = generatingPPT ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)'; }}
+          >
+            {generatingPPT ? '生成中...' : '📊 会議資料生成'}
+          </button>
+        </div>
       </nav>
       <main className="content">
         {page === 'dashboard' && <Dashboard />}

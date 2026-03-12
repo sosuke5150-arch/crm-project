@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import { exportMonthlyReport } from '../utils/exportMonthlyReport';
 
 const API = 'http://localhost:3001';
 
 const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
-const STATUS_COLORS = { proposing: '#f9a8d4', planned: '#f9a8d4', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
+function getStatusColors() {
+  const theme = document.body.dataset.theme || 'dark';
+  if (theme === 'excel' || theme === 'earth') {
+    return { proposing: '#9e2060', planned: '#9e2060', developing: '#8a6000', shikakake: '#8a6000', forecast: '#c00000' };
+  }
+  return { proposing: '#f9a8d4', planned: '#f9a8d4', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
+}
 
 const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
 
@@ -123,6 +130,7 @@ function SelectFilter({ placeholder, options, tags, onAdd, onRemove }) {
 }
 
 export default function DealList() {
+  const STATUS_COLORS = getStatusColors();
   const [deals, setDeals] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -132,6 +140,9 @@ export default function DealList() {
   const addFilter = (key, val) => setFilters(f => ({ ...f, [key]: [...f[key], val] }));
   const removeFilter = (key, val) => setFilters(f => ({ ...f, [key]: f[key].filter(v => v !== val) }));
   const clearFilters = () => setFilters({ customer: [], title: [], status: [], inspection_date: [], topics: [] });
+  const [targets, setTargets] = useState({});
+  const [exportMonth, setExportMonth] = useState('');
+  const [exporting, setExporting] = useState(false);
   const dragIndex = useRef(null);
   const currentMonthRef = useRef(null);
 
@@ -140,6 +151,11 @@ export default function DealList() {
       setDeals(data);
     });
     fetch(`${API}/customers`).then(r => r.json()).then(setCustomers);
+    fetch(`${API}/targets`).then(r => r.json()).then(rows => {
+      const map = {};
+      rows.forEach(r => { map[`${r.customer_id}_${r.month}`] = r.amount; });
+      setTargets(map);
+    });
   };
 
   useEffect(() => { load(); }, []);
@@ -244,7 +260,30 @@ export default function DealList() {
 
   return (
     <div>
-      <h2>案件管理　売上一覧</h2>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px', flexWrap:'wrap', gap:'8px' }}>
+        <h2 style={{ margin:0 }}>案件管理　売上一覧</h2>
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <select
+            value={exportMonth}
+            onChange={e => setExportMonth(e.target.value)}
+            style={{ padding:'6px 10px', background:'var(--bg-panel)', border:'1px solid var(--border)', borderRadius:'6px', color: exportMonth ? 'var(--text-body)' : 'var(--text-faint)', fontSize:'12px', fontFamily:'Inter,sans-serif' }}
+          >
+            <option value="">帳票月を選択...</option>
+            {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <button
+            disabled={!exportMonth || exporting}
+            onClick={async () => {
+              setExporting(true);
+              try { await exportMonthlyReport(deals, targets, exportMonth); }
+              finally { setExporting(false); }
+            }}
+            style={{ padding:'6px 14px', background: exportMonth ? 'var(--accent)' : 'var(--bg-panel)', border:'1px solid var(--accent-border)', borderRadius:'6px', color: exportMonth ? '#fff' : 'var(--text-faint)', fontSize:'12px', fontFamily:'Inter,sans-serif', cursor: exportMonth ? 'pointer' : 'default', fontWeight:600, whiteSpace:'nowrap', opacity: exporting ? 0.6 : 1 }}
+          >
+            {exporting ? '出力中...' : 'Excel出力'}
+          </button>
+        </div>
+      </div>
       <div style={{ display:'flex', gap:'10px', marginBottom:'16px', flexWrap:'wrap', alignItems:'flex-start' }}>
         <TagFilter placeholder="顧客" tags={filters.customer} onAdd={v => addFilter('customer', v)} onRemove={v => removeFilter('customer', v)} suggestions={[...new Set(deals.map(d => d.customer_name).filter(Boolean))]} />
         <TagFilter placeholder="案件名" tags={filters.title} onAdd={v => addFilter('title', v)} onRemove={v => removeFilter('title', v)} suggestions={[...new Set(deals.map(d => d.title).filter(Boolean))]} />
