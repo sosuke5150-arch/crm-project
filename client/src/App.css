@@ -421,8 +421,13 @@ td select option { background: var(--bg-input); color: var(--text-body); }
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
-  opacity: 0.2;
-  filter: invert(1);
+  opacity: 0.4;
+}
+body[data-theme="excel"] input[type=number]::-webkit-inner-spin-button,
+body[data-theme="excel"] input[type=number]::-webkit-outer-spin-button,
+body[data-theme="earth"] input[type=number]::-webkit-inner-spin-button,
+body[data-theme="earth"] input[type=number]::-webkit-outer-spin-button {
+  opacity: 0.5;
 }
 
 .btn-edit {

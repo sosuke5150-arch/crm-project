@@ -14,6 +14,24 @@ const STATUS_LABELS = {
   open: 'オープン',
 };
 
+function isLightTheme() {
+  return ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
+}
+
+const STATUS_COLORS_DARK = {
+  proposing: '#fbbf24', planned: '#fbbf24', won: '#34d399',
+  developing: '#00d4ff', shikakake: '#a78bfa', monthly: '#34d399',
+  done: '#4a5f82', forecast: '#fb923c',
+};
+const STATUS_COLORS_LIGHT = {
+  proposing: '#b45309', planned: '#b45309', won: '#16803a',
+  developing: '#1d6395', shikakake: '#7e22ce', monthly: '#16803a',
+  done: '#4b5563', forecast: '#c2410c',
+};
+function getStatusColors() {
+  return isLightTheme() ? STATUS_COLORS_LIGHT : STATUS_COLORS_DARK;
+}
+
 const STATUS_COLORS = {
   proposing: '#fbbf24',
   planned: '#fbbf24',
@@ -79,8 +97,10 @@ export default function ProjectList({ onSelect }) {
             {projects.map(p => {
               const progress = p.progress || 0;
               const profit = p.profit || 0;
-              const profitColor = profit >= 0 ? '#34d399' : '#ff4d6a';
-              const progressColor = progress > 100 ? '#ff4d6a' : progress > 80 ? '#fbbf24' : '#00d4ff';
+              const light = isLightTheme();
+              const SC = getStatusColors();
+              const profitColor = profit >= 0 ? (light ? '#16803a' : '#34d399') : (light ? '#dc2626' : '#ff4d6a');
+              const progressColor = progress > 100 ? (light ? '#dc2626' : '#ff4d6a') : progress > 80 ? (light ? '#b45309' : '#fbbf24') : (light ? '#1d6395' : '#00d4ff');
 
               return (
                 <tr
@@ -99,9 +119,9 @@ export default function ProjectList({ onSelect }) {
                     <span
                       className="status-badge"
                       style={{
-                        background: `${STATUS_COLORS[p.status] || '#6b7fa3'}1a`,
-                        color: STATUS_COLORS[p.status] || '#6b7fa3',
-                        border: `1px solid ${STATUS_COLORS[p.status] || '#6b7fa3'}33`,
+                        background: `${SC[p.status] || '#6b7fa3'}1a`,
+                        color: SC[p.status] || '#6b7fa3',
+                        border: `1px solid ${SC[p.status] || '#6b7fa3'}33`,
                       }}
                     >
                       {STATUS_LABELS[p.status] || p.status}

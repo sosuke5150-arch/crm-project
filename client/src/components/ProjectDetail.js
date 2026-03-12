@@ -404,12 +404,13 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
   if (!data) return <div style={{ color: 'var(--text-muted)', padding: '40px' }}>読み込み中...</div>;
 
   const { deal, meta, summary } = data;
-  const progressColor = summary.progress > 100 ? '#ff4d6a' : summary.progress > 80 ? '#fbbf24' : '#00d4ff';
-  const profitColor = summary.profit >= 0 ? '#34d399' : '#ff4d6a';
+  const light = ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
+  const progressColor = summary.progress > 100 ? (light ? '#dc2626' : '#ff4d6a') : summary.progress > 80 ? (light ? '#b45309' : '#fbbf24') : (light ? '#1d6395' : '#00d4ff');
+  const profitColor = summary.profit >= 0 ? (light ? '#16803a' : '#34d399') : (light ? '#dc2626' : '#ff4d6a');
   const actualHours = directCosts.reduce((s, r) => s + (Number(r.hours) || 0), 0);
   const estimatedHours = Number(metaForm.estimated_hours) || 0;
   const hoursProgress = estimatedHours > 0 ? (actualHours / estimatedHours * 100) : 0;
-  const hoursProgressColor = hoursProgress > 100 ? '#ff4d6a' : hoursProgress > 80 ? '#fbbf24' : '#00d4ff';
+  const hoursProgressColor = hoursProgress > 100 ? (light ? '#dc2626' : '#ff4d6a') : hoursProgress > 80 ? (light ? '#b45309' : '#fbbf24') : (light ? '#1d6395' : '#00d4ff');
 
   const currentIdx = projectIds.indexOf(dealId);
   const prevId = currentIdx > 0 ? projectIds[currentIdx - 1] : null;
@@ -548,7 +549,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <SummaryRow label="見積経費" value={fmt(metaForm.estimated_expenses)} />
             <SummaryRow label="見積直接費合計" value={fmt(estDirectCost)} />
             <SummaryRow label="見積製造間接費" value={fmt(metaForm.estimated_indirect)} />
-            <SummaryRow label="見積総原価" value={fmt(estTotal)} highlight="#00d4ff" large />
+            <SummaryRow label="見積総原価" value={fmt(estTotal)} highlight={light ? '#1d6395' : '#00d4ff'} large />
             {metaForm.notes && <SummaryRow label="メモ" value={metaForm.notes} />}
           </div>
         )}
@@ -653,7 +654,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         {/* 追加フォーム（下部） */}
         <form
           onSubmit={e => { e.preventDefault(); addDc(); }}
-          style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}
+          style={{ marginTop: '16px', display: 'flex', columnGap: '14px', rowGap: '12px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>製造月</label>
@@ -663,13 +664,15 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             <label style={{ ...labelStyle, marginBottom: 0 }}>担当者</label>
             <input type="text" placeholder="担当者名" value={dcForm.member} onChange={e => setDcForm(f => ({ ...f, member: e.target.value }))} style={inputStyle} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100px' }}>
-            <label style={{ ...labelStyle, marginBottom: 0 }}>工数(h)</label>
-            <input type="number" placeholder="0" step="0.01" value={dcForm.hours} onChange={e => setDcForm(f => ({ ...f, hours: e.target.value }))} style={inputStyle} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '120px' }}>
-            <label style={{ ...labelStyle, marginBottom: 0 }}>単価(¥)</label>
-            <input type="number" placeholder="0" value={dcForm.unit_price} onChange={e => setDcForm(f => ({ ...f, unit_price: e.target.value }))} style={inputStyle} />
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-end', flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>工数(h)</label>
+              <input type="number" placeholder="0" step="0.01" value={dcForm.hours} onChange={e => setDcForm(f => ({ ...f, hours: e.target.value }))} style={{ ...inputStyle, width: '110px' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>単価(¥)</label>
+              <input type="number" placeholder="0" value={dcForm.unit_price} onChange={e => setDcForm(f => ({ ...f, unit_price: e.target.value }))} style={{ ...inputStyle, width: '130px' }} />
+            </div>
           </div>
           <button type="submit" style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>追加</button>
         </form>
@@ -732,7 +735,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             )}
           </tbody>
         </table>}
-        {ocOpen && <form onSubmit={e => { e.preventDefault(); addOc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+        {ocOpen && <form onSubmit={e => { e.preventDefault(); addOc(); }} style={{ marginTop: '16px', display: 'flex', columnGap: '14px', rowGap: '12px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>発生日</label>
             <input type="date" value={ocForm.date} onChange={e => setOcForm(f => ({ ...f, date: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />
@@ -813,7 +816,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             )}
           </tbody>
         </table>}
-        {exOpen && <form onSubmit={e => { e.preventDefault(); addEx(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+        {exOpen && <form onSubmit={e => { e.preventDefault(); addEx(); }} style={{ marginTop: '16px', display: 'flex', columnGap: '14px', rowGap: '12px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>発生日</label>
             <input type="date" value={exForm.date} onChange={e => setExForm(f => ({ ...f, date: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />
@@ -901,7 +904,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
             )}
           </tbody>
         </table>}
-        {icOpen && <form onSubmit={e => { e.preventDefault(); addIc(); }} style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+        {icOpen && <form onSubmit={e => { e.preventDefault(); addIc(); }} style={{ marginTop: '16px', display: 'flex', columnGap: '14px', rowGap: '12px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>該当月</label>
             <input type="month" value={icForm.month} onChange={e => setIcForm(f => ({ ...f, month: e.target.value }))} style={{ ...inputStyle, width: 'auto' }} />

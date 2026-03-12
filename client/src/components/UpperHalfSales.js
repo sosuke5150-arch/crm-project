@@ -47,6 +47,7 @@ export default function UpperHalfSales() {
     .reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
 
   const diff = totalSales - totalBudget;
+  const light = ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
 
   const border = '1px solid var(--border)';
   const thStyle = (extra = {}) => ({
@@ -95,12 +96,12 @@ export default function UpperHalfSales() {
                   </td>
                   <td style={{ padding: '7px 12px', border, textAlign: 'center' }}>
                     {isShikakake && (
-                      <span style={{ color: '#fb923c', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: light ? '#c2410c' : '#fb923c', fontSize: '11px', whiteSpace: 'nowrap' }}>
                         仕掛かり計上
                       </span>
                     )}
                     {isNew && (
-                      <span style={{ color: '#34d399', fontSize: '11px', fontWeight: 700 }}>
+                      <span style={{ color: light ? '#16803a' : '#34d399', fontSize: '11px', fontWeight: 700 }}>
                         NEW
                       </span>
                     )}
@@ -135,8 +136,8 @@ export default function UpperHalfSales() {
               <td style={{
                 ...footerCell(),
                 textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums',
-                background: diff > 0 ? 'rgba(250,204,21,0.12)' : diff < 0 ? 'rgba(255,77,106,0.12)' : 'var(--bg-panel)',
-                color: diff > 0 ? '#facc15' : diff < 0 ? '#ff4d6a' : 'var(--text-muted)',
+                background: diff > 0 ? (light ? 'rgba(22,128,58,0.1)' : 'rgba(250,204,21,0.12)') : diff < 0 ? 'rgba(255,77,106,0.12)' : 'var(--bg-panel)',
+                color: diff > 0 ? (light ? '#16803a' : '#facc15') : diff < 0 ? (light ? '#dc2626' : '#ff4d6a') : 'var(--text-muted)',
               }}>
                 {commas(diff)}
               </td>
