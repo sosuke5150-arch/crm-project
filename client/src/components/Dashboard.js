@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, ReferenceLine, LabelList } from 'recharts';
 
 const API = 'http://localhost:3001';
 
 const MONTH_ORDER = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
+const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
+const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
+const ACTUAL_STS = new Set(['won','done','monthly','shikakake']);
+const FORECAST_STS = new Set(['forecast','developing']);
 const MONTH_LABEL = m => m.replace('検収', '');
 const PIE_COLORS = ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'];
 
@@ -50,6 +54,7 @@ export default function Dashboard() {
   const [monthlyData, setMonthlyData] = useState([]);
   const [yojitsuData, setYojitsuData] = useState([]);
   const [customerData, setCustomerData] = useState([]);
+  const [periodData, setPeriodData] = useState([]);
 
   useEffect(() => {
     fetch(`${API}/summary`).then(r => r.json()).then(setSummary).catch(() => {});
@@ -65,6 +70,32 @@ export default function Dashboard() {
     }).catch(() => {});
 
     fetch(`${API}/summary/by-customer`).then(r => r.json()).then(setCustomerData).catch(() => {});
+
+    // 上期・下期・通期 予実対比
+    Promise.all([
+      fetch(`${API}/deals`).then(r => r.json()),
+      fetch(`${API}/targets`).then(r => r.json()),
+    ]).then(([deals, targetRows]) => {
+      const inMonth = (dateStr, months) => months.some(m => (dateStr || '').includes(m));
+      const sumDeals = (sts, months) => deals
+        .filter(d => sts.has(d.status) && inMonth(d.inspection_date, months))
+        .reduce((s, d) => s + (Number(d.amount) || 0), 0);
+      const sumTargets = (months) => targetRows
+        .filter(r => months.includes(r.month))
+        .reduce((s, r) => s + (Number(r.amount) || 0), 0);
+
+      const uBudget = sumTargets(UPPER_MONTHS);
+      const uActual = sumDeals(ACTUAL_STS, UPPER_MONTHS);
+      const lBudget = sumTargets(LOWER_MONTHS);
+      const lActual = sumDeals(ACTUAL_STS, LOWER_MONTHS);
+      const lForecast = sumDeals(FORECAST_STS, LOWER_MONTHS);
+
+      setPeriodData([
+        { name: '上期', 予算: uBudget, 実績: uActual, 見込: 0 },
+        { name: '下期', 予算: lBudget, 実績: lActual, 見込: lForecast },
+        { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: lForecast },
+      ]);
+    }).catch(() => {});
 
     fetch(`${API}/summary/yojitsu`).then(r => r.json()).then(({ actuals, forecasts, targets }) => {
       const data = MONTH_ORDER.map(m => {
@@ -165,6 +196,102 @@ export default function Dashboard() {
               <Bar dataKey="bar3" name="見込" fill="#fb923c" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '20px' }}>上期・下期・通期　予実対比</h3>
+        {periodData.length === 0 ? (
+          <p style={{ color: '#4a5f82', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={periodData} margin={{ top: 16, right: 24, left: 16, bottom: 4 }} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" />
+                <XAxis dataKey="name" tick={{ fill: '#c9d1e8', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: '#1e2a45' }} tickLine={false} />
+                <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: '#6b7fa3', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div style={tooltipStyle}>
+                        <p style={{ color: '#6b7fa3', fontSize: 12, marginBottom: 6 }}>{label}</p>
+                        {payload.filter(p => p.value > 0).map(p => {
+                          const diff = label !== '下期'
+                            ? null
+                            : p.name === '実績' ? null : null;
+                          return (
+                            <p key={p.name} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
+                              {p.name}：¥{Number(p.value).toLocaleString()}
+                            </p>
+                          );
+                        })}
+                        {(() => {
+                          const d = payload[0]?.payload;
+                          if (!d) return null;
+                          const actual = d.実績 + d.見込;
+                          const diff = actual - d.予算;
+                          if (diff === 0) return null;
+                          return (
+                            <p style={{ color: diff > 0 ? '#34d399' : '#ff4d6a', fontWeight: 700, fontSize: 12, borderTop: '1px solid #1e2a45', marginTop: 6, paddingTop: 6 }}>
+                              差異：{diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend content={() => (
+                  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
+                    {[{ label: '予算', color: '#3b82f6' }, { label: '実績', color: '#00d4ff' }, { label: '見込', color: '#fb923c' }].map(i => (
+                      <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7fa3' }}>
+                        <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
+                        {i.label}
+                      </div>
+                    ))}
+                  </div>
+                )} />
+                <Bar dataKey="予算" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="実績" fill="#00d4ff" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="見込" fill="#fb923c" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            {/* 数値サマリー */}
+            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              {periodData.map(d => {
+                const actual = d.実績 + d.見込;
+                const diff = actual - d.予算;
+                const rate = d.予算 > 0 ? Math.round(actual / d.予算 * 100) : 0;
+                return (
+                  <div key={d.name} style={{ flex: 1, background: '#0d1120', border: '1px solid #1e2a45', borderRadius: 8, padding: '14px 16px' }}>
+                    <div style={{ color: '#6b7fa3', fontSize: 11, marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em' }}>{d.name}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: '#6b7fa3' }}>予算</span>
+                        <span style={{ color: '#3b82f6', fontWeight: 600 }}>¥{d.予算.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: '#6b7fa3' }}>実績{d.見込 > 0 ? '＋見込' : ''}</span>
+                        <span style={{ color: '#00d4ff', fontWeight: 600 }}>¥{actual.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid #1e2a45', paddingTop: 4, marginTop: 2 }}>
+                        <span style={{ color: '#6b7fa3' }}>差異</span>
+                        <span style={{ color: diff > 0 ? '#34d399' : diff < 0 ? '#ff4d6a' : '#6b7fa3', fontWeight: 700 }}>
+                          {diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: '#6b7fa3' }}>達成率</span>
+                        <span style={{ color: rate >= 100 ? '#34d399' : rate >= 80 ? '#facc15' : '#ff4d6a', fontWeight: 700 }}>{rate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
