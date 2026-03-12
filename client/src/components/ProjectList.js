@@ -92,7 +92,7 @@ export default function ProjectList({ onSelect }) {
                     <span className="link">{p.title}</span>
                   </td>
                   <td>{p.customer_name}</td>
-                  <td style={{ textAlign: 'right', color: '#e2e8f5', fontWeight: 600 }}>
+                  <td style={{ textAlign: 'right', color: 'var(--text-heading)', fontWeight: 600 }}>
                     {fmt(p.amount)}
                   </td>
                   <td>

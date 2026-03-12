@@ -49,6 +49,12 @@
   --focus-shadow: rgba(0,212,255,0.07);
   --btn-back-hover-border: rgba(0,212,255,0.27);
   --btn-back-hover-bg:     rgba(0,212,255,0.05);
+  --chart-actual:   #00d4ff;
+  --chart-forecast: #fb923c;
+  --chart-target:   #3b82f6;
+  --chart-gain:     #34d399;
+  --chart-loss:     #ff4d6a;
+  --chart-warn:     #facc15;
 }
 
 /* エクセル（ライト） */
@@ -96,6 +102,12 @@ body[data-theme="excel"] {
   --focus-shadow: rgba(46,117,182,0.07);
   --btn-back-hover-border: rgba(46,117,182,0.3);
   --btn-back-hover-bg:     rgba(46,117,182,0.04);
+  --chart-actual:   #2e75b6;
+  --chart-forecast: #ed7d31;
+  --chart-target:   #9dc3e6;
+  --chart-gain:     #70ad47;
+  --chart-loss:     #c0392b;
+  --chart-warn:     #ffc000;
 }
 
 /* アースカラー */
@@ -143,6 +155,12 @@ body[data-theme="earth"] {
   --focus-shadow: rgba(181,101,29,0.07);
   --btn-back-hover-border: rgba(181,101,29,0.3);
   --btn-back-hover-bg:     rgba(181,101,29,0.05);
+  --chart-actual:   #966432;
+  --chart-forecast: #c87941;
+  --chart-target:   #7b6c4e;
+  --chart-gain:     #7daa6e;
+  --chart-loss:     #922b21;
+  --chart-warn:     #c87941;
 }
 
 /* ============================================================

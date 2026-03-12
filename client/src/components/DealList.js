@@ -335,10 +335,10 @@ export default function DealList() {
               if (isLastOfMonth) {
                 rows.push(
                   <tr key={`subtotal_${d.inspection_date}_${index}`}>
-                    <td colSpan={4} style={{textAlign:'right', color:'var(--text-muted)', fontWeight:600, fontSize:'12px', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
+                    <td colSpan={4} style={{textAlign:'right', color:'var(--text-body)', fontWeight:600, fontSize:'13px', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
                       {d.inspection_date} 小計
                     </td>
-                    <td style={{textAlign:'right', fontWeight:700, fontSize:'12px', color:'var(--accent)', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
+                    <td style={{textAlign:'right', fontWeight:700, fontSize:'13px', color:'var(--accent)', paddingTop:'6px', paddingBottom:'6px', borderBottom:'1px solid var(--border)'}}>
                       ¥{monthTotal.toLocaleString()}
                     </td>
                     <td colSpan={3} style={{borderBottom:'1px solid var(--border)'}}></td>
@@ -351,7 +351,7 @@ export default function DealList() {
 
             {filtered.length > 0 && (
               <tr>
-                <td colSpan={4} style={{textAlign:'right', color:'var(--text-muted)', fontWeight:600, paddingTop:'16px'}}>合計</td>
+                <td colSpan={4} style={{textAlign:'right', color:'var(--text-body)', fontWeight:600, paddingTop:'16px'}}>合計</td>
                 <td style={{color:'var(--accent)', fontWeight:700, paddingTop:'16px', textAlign:'right'}}>
                   ¥{filtered.reduce((sum, d) => sum + (Number(d.amount) || 0), 0).toLocaleString()}
                 </td>

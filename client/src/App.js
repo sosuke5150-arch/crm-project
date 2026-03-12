@@ -43,7 +43,7 @@ function App() {
             <button
               key={t.id}
               className={`theme-card${theme === t.id ? ' active' : ''}`}
-              onClick={() => setTheme(t.id)}
+              onClick={() => { document.body.setAttribute('data-theme', t.id); setTheme(t.id); }}
               title={t.label}
             >
               <div className="theme-card-preview">

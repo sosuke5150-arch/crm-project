@@ -9,19 +9,37 @@ const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
 const ACTUAL_STS = new Set(['won','done','monthly','shikakake']);
 const FORECAST_STS = new Set(['forecast','developing']);
 const MONTH_LABEL = m => m.replace('検収', '');
-const PIE_COLORS = ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'];
+
+const PIE_COLORS_MAP = {
+  dark:  ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
+  excel: ['#4472c4','#ed7d31','#a9d18e','#ffc000','#e15f5f','#70ad47','#5b9bd5','#c55a11','#7030a0','#2e75b6','#843c0c','#bf9000'],
+  earth: ['#b5651d','#e9a84c','#7daa6e','#c87941','#922b21','#8b6914','#d4956a','#5c8a58','#a04000','#6b8e4e','#cd853f','#556b2f'],
+};
+
+function getChartColors() {
+  const s = getComputedStyle(document.body);
+  const g = v => s.getPropertyValue(v).trim();
+  return {
+    actual:   g('--chart-actual')   || '#00d4ff',
+    forecast: g('--chart-forecast') || '#fb923c',
+    target:   g('--chart-target')   || '#3b82f6',
+    gain:     g('--chart-gain')     || '#34d399',
+    loss:     g('--chart-loss')     || '#ff4d6a',
+    warn:     g('--chart-warn')     || '#facc15',
+  };
+}
 
 const tooltipStyle = { background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, padding: '10px 16px', color: 'var(--text-body)' };
 
-const YojitsuTooltip = ({ active, payload, label }) => {
+const YojitsuTooltip = ({ active, payload, label, colors }) => {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload;
   const actual = d._hasActual ? d.bar2 : 0;
   const forecast = d._hasActual ? d.bar3 : d.bar2;
   const items = [
-    { name: '目標', value: d.目標, color: '#3b82f6' },
-    { name: '実績', value: actual, color: '#00d4ff' },
-    { name: '見込', value: forecast, color: '#fb923c' },
+    { name: '目標', value: d.目標, color: colors.target },
+    { name: '実績', value: actual, color: colors.actual },
+    { name: '見込', value: forecast, color: colors.forecast },
   ].filter(i => i.value > 0);
   return (
     <div style={tooltipStyle}>
@@ -55,6 +73,15 @@ export default function Dashboard() {
   const [yojitsuData, setYojitsuData] = useState([]);
   const [customerData, setCustomerData] = useState([]);
   const [periodData, setPeriodData] = useState([]);
+
+  const theme = document.body.dataset.theme || 'dark';
+  const colors = getChartColors();
+  const PIE_COLORS = PIE_COLORS_MAP[theme] || PIE_COLORS_MAP.dark;
+  const isLight = theme === 'excel' || theme === 'earth';
+  const cursorFill = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
+  const headingStyle = isLight
+    ? { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--accent)' }
+    : { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00d4ff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
 
   useEffect(() => {
     fetch(`${API}/summary`).then(r => r.json()).then(setSummary).catch(() => {});
@@ -117,7 +144,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00d4ff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>DASHBOARD</h2>
+      <h2 style={headingStyle}>DASHBOARD</h2>
       <div className="stats">
         <div className="stat">
           <div className="stat-label">案件数</div>
@@ -159,10 +186,10 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
               <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: cursorFill }} />
               <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: 12, paddingTop: 8 }} />
-              <Bar dataKey="実績" stackId="a" fill="#00d4ff" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="見込" stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="実績" stackId="a" fill={colors.actual} radius={[0, 0, 0, 0]} />
+              <Bar dataKey="見込" stackId="a" fill={colors.forecast} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -178,10 +205,10 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
               <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<YojitsuTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+              <Tooltip content={<YojitsuTooltip colors={colors} />} cursor={{ fill: cursorFill }} />
               <Legend content={() => (
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
-                  {[{ label: '目標', color: '#3b82f6' }, { label: '実績', color: '#00d4ff' }, { label: '見込', color: '#fb923c' }].map(i => (
+                  {[{ label: '目標', color: colors.target }, { label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }].map(i => (
                     <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                       <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
                       {i.label}
@@ -189,11 +216,11 @@ export default function Dashboard() {
                   ))}
                 </div>
               )} />
-              <Bar dataKey="目標" name="目標" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="目標" name="目標" fill={colors.target} radius={[4, 4, 0, 0]} />
               <Bar dataKey="bar2" name="実績" radius={[4, 4, 0, 0]}>
-                {yojitsuData.map((d, i) => <Cell key={i} fill={d._hasActual ? '#00d4ff' : '#fb923c'} />)}
+                {yojitsuData.map((d, i) => <Cell key={i} fill={d._hasActual ? colors.actual : colors.forecast} />)}
               </Bar>
-              <Bar dataKey="bar3" name="見込" fill="#fb923c" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="bar3" name="見込" fill={colors.forecast} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -211,22 +238,17 @@ export default function Dashboard() {
                 <XAxis dataKey="name" tick={{ fill: 'var(--text-body)', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
                 <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  cursor={{ fill: cursorFill }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
                       <div style={tooltipStyle}>
                         <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>{label}</p>
-                        {payload.filter(p => p.value > 0).map(p => {
-                          const diff = label !== '下期'
-                            ? null
-                            : p.name === '実績' ? null : null;
-                          return (
-                            <p key={p.name} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
-                              {p.name}：¥{Number(p.value).toLocaleString()}
-                            </p>
-                          );
-                        })}
+                        {payload.filter(p => p.value > 0).map(p => (
+                          <p key={p.name} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
+                            {p.name}：¥{Number(p.value).toLocaleString()}
+                          </p>
+                        ))}
                         {(() => {
                           const d = payload[0]?.payload;
                           if (!d) return null;
@@ -234,7 +256,7 @@ export default function Dashboard() {
                           const diff = actual - d.予算;
                           if (diff === 0) return null;
                           return (
-                            <p style={{ color: diff > 0 ? '#34d399' : '#ff4d6a', fontWeight: 700, fontSize: 12, borderTop: '1px solid var(--border)', marginTop: 6, paddingTop: 6 }}>
+                            <p style={{ color: diff > 0 ? colors.gain : colors.loss, fontWeight: 700, fontSize: 12, borderTop: '1px solid var(--border)', marginTop: 6, paddingTop: 6 }}>
                               差異：{diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
                             </p>
                           );
@@ -245,7 +267,7 @@ export default function Dashboard() {
                 />
                 <Legend content={() => (
                   <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
-                    {[{ label: '予算', color: '#3b82f6' }, { label: '実績', color: '#00d4ff' }, { label: '見込', color: '#fb923c' }].map(i => (
+                    {[{ label: '予算', color: colors.target }, { label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }].map(i => (
                       <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                         <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
                         {i.label}
@@ -253,9 +275,9 @@ export default function Dashboard() {
                     ))}
                   </div>
                 )} />
-                <Bar dataKey="予算" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="実績" fill="#00d4ff" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="見込" fill="#fb923c" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="予算" fill={colors.target} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="実績" fill={colors.actual} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="見込" fill={colors.forecast} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             {/* 数値サマリー */}
@@ -270,21 +292,21 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                         <span style={{ color: 'var(--text-muted)' }}>予算</span>
-                        <span style={{ color: '#3b82f6', fontWeight: 600 }}>¥{d.予算.toLocaleString()}</span>
+                        <span style={{ color: colors.target, fontWeight: 600 }}>¥{d.予算.toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                         <span style={{ color: 'var(--text-muted)' }}>実績{d.見込 > 0 ? '＋見込' : ''}</span>
-                        <span style={{ color: '#00d4ff', fontWeight: 600 }}>¥{actual.toLocaleString()}</span>
+                        <span style={{ color: colors.actual, fontWeight: 600 }}>¥{actual.toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid var(--border)', paddingTop: 4, marginTop: 2 }}>
                         <span style={{ color: 'var(--text-muted)' }}>差異</span>
-                        <span style={{ color: diff > 0 ? '#34d399' : diff < 0 ? '#ff4d6a' : '#6b7fa3', fontWeight: 700 }}>
+                        <span style={{ color: diff > 0 ? colors.gain : diff < 0 ? colors.loss : 'var(--text-muted)', fontWeight: 700 }}>
                           {diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                         <span style={{ color: 'var(--text-muted)' }}>達成率</span>
-                        <span style={{ color: rate >= 100 ? '#34d399' : rate >= 80 ? '#facc15' : '#ff4d6a', fontWeight: 700 }}>{rate}%</span>
+                        <span style={{ color: rate >= 100 ? colors.gain : rate >= 80 ? colors.warn : colors.loss, fontWeight: 700 }}>{rate}%</span>
                       </div>
                     </div>
                   </div>
@@ -315,7 +337,7 @@ export default function Dashboard() {
                 <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={110} innerRadius={50}>
                   {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={v => `¥${Number(v).toLocaleString()}`} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-muted)' }} itemStyle={{ color: '#00d4ff' }} />
+                <Tooltip formatter={v => `¥${Number(v).toLocaleString()}`} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-muted)' }} itemStyle={{ color: colors.actual }} />
               </PieChart>
             </ResponsiveContainer>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: 280, overflowY: 'auto' }}>

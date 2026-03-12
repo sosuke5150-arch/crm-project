@@ -21,11 +21,64 @@ const toMonth = s => s?.replace('検収','') || null;
 const yen = v => `¥${(Number(v)||0).toLocaleString()}`;
 const s = arr => arr.reduce((a,b) => a + (Number(b)||0), 0);
 
+function getTableColors() {
+  const theme = document.body.dataset.theme || 'dark';
+  if (theme === 'excel') {
+    return {
+      targetSection: '#1f4e79',
+      targetSub:     '#2e75b6',
+      targetTotal:   '#2e75b6',
+      actualSection: '#375623',
+      actualSub:     '#538135',
+      actualTotal:   '#538135',
+      forecastSection: '#843c00',
+      forecastSub:   '#c55a11',
+      forecastTotal: '#c55a11',
+      diffLabel:     '#7f6000',
+      diffGain:      '#375623',
+      diffLoss:      '#c00000',
+    };
+  }
+  if (theme === 'earth') {
+    return {
+      targetSection: '#4a3010',
+      targetSub:     '#7b5e2a',
+      targetTotal:   '#7b5e2a',
+      actualSection: '#2d5016',
+      actualSub:     '#4a7a28',
+      actualTotal:   '#4a7a28',
+      forecastSection: '#6b3010',
+      forecastSub:   '#9b4f1e',
+      forecastTotal: '#9b4f1e',
+      diffLabel:     '#7a5210',
+      diffGain:      '#4a7a28',
+      diffLoss:      '#922b21',
+    };
+  }
+  // dark (default)
+  return {
+    targetSection: '#4a9eba',
+    targetSub:     '#7ec8e3',
+    targetTotal:   '#7ec8e3',
+    actualSection: '#34d399',
+    actualSub:     '#34d399',
+    actualTotal:   '#34d399',
+    forecastSection: '#fb923c',
+    forecastSub:   '#fb923c',
+    forecastTotal: '#fb923c',
+    diffLabel:     '#facc15',
+    diffGain:      '#34d399',
+    diffLoss:      '#ff4d6a',
+  };
+}
+
 export default function SalesTable() {
   const [deals, setDeals] = useState([]);
   const [targets, setTargets] = useState({});
   const [editing, setEditing] = useState(null);
   const [editVal, setEditVal] = useState('');
+
+  const C = getTableColors();
 
   useEffect(() => {
     fetch(`${API}/deals`).then(r => r.json()).then(setDeals);
@@ -91,9 +144,9 @@ export default function SalesTable() {
   });
   const nameTd = (bg) => ({ ...td(), textAlign: 'left', background: bg, color: 'var(--text-body)' });
   const numTd = (bg, color='var(--text-body)') => ({ ...td(), background: bg, color });
-  const subtotalTd = (bg, color='#7ec8e3') => ({ ...td(), background: bg, color, fontWeight: 600 });
+  const subtotalTd = (bg, color) => ({ ...td(), background: bg, color, fontWeight: 600 });
   const totalTd = (bg, color) => ({ ...td(), background: bg, color, fontWeight: 700 });
-  const diffTd = (v, bg) => ({ ...td(), background: bg, color: v > 0 ? '#34d399' : v < 0 ? '#ff4d6a' : 'var(--text-muted)', fontWeight: 700 });
+  const diffTd = (v, bg) => ({ ...td(), background: bg, color: v > 0 ? C.diffGain : v < 0 ? C.diffLoss : 'var(--text-muted)', fontWeight: 700 });
 
   const BG_TARGET   = 'rgba(74,158,186,0.06)';
   const BG_ACTUAL   = 'rgba(52,211,153,0.06)';
@@ -162,50 +215,50 @@ export default function SalesTable() {
             {/* ===== 目標 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`t_${row.id}`}>
-                {i === 0 && <td style={sectionTd('rgba(74,158,186,0.12)', '#4a9eba')} rowSpan={ROWS.length + 1}>目　標</td>}
+                {i === 0 && <td style={sectionTd('rgba(74,158,186,0.12)', C.targetSection)} rowSpan={ROWS.length + 1}>目　標</td>}
                 <td style={nameTd(BG_TOTAL_T)}>{row.name}</td>
                 {UPPER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TOTAL_T} />)}
-                <td style={subtotalTd(BG_TOTAL_T)}>{yen(sumRow(getTarget, row.id, UPPER))}</td>
+                <td style={subtotalTd(BG_TOTAL_T, C.targetSub)}>{yen(sumRow(getTarget, row.id, UPPER))}</td>
                 {LOWER.map(m => <EditCell key={m} cid={row.id} month={m} bg={BG_TOTAL_T} />)}
-                <td style={subtotalTd(BG_TOTAL_T)}>{yen(sumRow(getTarget, row.id, LOWER))}</td>
-                <td style={totalTd(BG_TOTAL_T, '#7ec8e3')}>{yen(sumRow(getTarget, row.id, ALL_MONTHS))}</td>
+                <td style={subtotalTd(BG_TOTAL_T, C.targetSub)}>{yen(sumRow(getTarget, row.id, LOWER))}</td>
+                <td style={totalTd(BG_TOTAL_T, C.targetTotal)}>{yen(sumRow(getTarget, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}
             {/* 目標合計 */}
             <tr>
-              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_T, color: '#4a9eba', fontWeight: 700 }}>合計</td>
-              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_T, '#7ec8e3')}>{yen(sumCol(getTarget, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_T)}>{yen(sumAll(getTarget, UPPER))}</td>
-              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_T, '#7ec8e3')}>{yen(sumCol(getTarget, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_T)}>{yen(sumAll(getTarget, LOWER))}</td>
-              <td style={totalTd(BG_TOTAL_T, '#7ec8e3')}>{yen(sumAll(getTarget, ALL_MONTHS))}</td>
+              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_T, color: C.targetSection, fontWeight: 700 }}>合計</td>
+              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_T, C.targetSub)}>{yen(sumCol(getTarget, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_T, C.targetSub)}>{yen(sumAll(getTarget, UPPER))}</td>
+              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_T, C.targetSub)}>{yen(sumCol(getTarget, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_T, C.targetSub)}>{yen(sumAll(getTarget, LOWER))}</td>
+              <td style={totalTd(BG_TOTAL_T, C.targetTotal)}>{yen(sumAll(getTarget, ALL_MONTHS))}</td>
             </tr>
 
             {/* ===== 実績 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`a_${row.id}`}>
-                {i === 0 && <td style={sectionTd('rgba(52,211,153,0.12)', '#34d399')} rowSpan={ROWS.length + 1}>実　績</td>}
+                {i === 0 && <td style={sectionTd('rgba(52,211,153,0.12)', C.actualSection)} rowSpan={ROWS.length + 1}>実　績</td>}
                 <td style={nameTd(BG_TOTAL_A)}>{row.name}</td>
                 {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_A)}>{yen(getActual(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_TOTAL_A)}>{yen(sumRow(getActual, row.id, UPPER))}</td>
+                <td style={subtotalTd(BG_TOTAL_A, C.actualSub)}>{yen(sumRow(getActual, row.id, UPPER))}</td>
                 {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_A)}>{yen(getActual(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_TOTAL_A)}>{yen(sumRow(getActual, row.id, LOWER))}</td>
-                <td style={totalTd(BG_TOTAL_A, '#34d399')}>{yen(sumRow(getActual, row.id, ALL_MONTHS))}</td>
+                <td style={subtotalTd(BG_TOTAL_A, C.actualSub)}>{yen(sumRow(getActual, row.id, LOWER))}</td>
+                <td style={totalTd(BG_TOTAL_A, C.actualTotal)}>{yen(sumRow(getActual, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}
             {/* 実績合計 */}
             <tr>
-              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_A, color: '#34d399', fontWeight: 700 }}>合計</td>
-              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_A, '#34d399')}>{yen(sumCol(getActual, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_A, '#34d399')}>{yen(sumAll(getActual, UPPER))}</td>
-              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_A, '#34d399')}>{yen(sumCol(getActual, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_A, '#34d399')}>{yen(sumAll(getActual, LOWER))}</td>
-              <td style={totalTd(BG_TOTAL_A, '#34d399')}>{yen(sumAll(getActual, ALL_MONTHS))}</td>
+              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_A, color: C.actualSection, fontWeight: 700 }}>合計</td>
+              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_A, C.actualSub)}>{yen(sumCol(getActual, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_A, C.actualSub)}>{yen(sumAll(getActual, UPPER))}</td>
+              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_A, C.actualSub)}>{yen(sumCol(getActual, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_A, C.actualSub)}>{yen(sumAll(getActual, LOWER))}</td>
+              <td style={totalTd(BG_TOTAL_A, C.actualTotal)}>{yen(sumAll(getActual, ALL_MONTHS))}</td>
             </tr>
 
             {/* ===== 実績差異 ===== */}
             <tr>
-              <td colSpan={2} style={{ ...td(), textAlign: 'center', background: BG_DIFF, color: '#facc15', fontWeight: 700 }}>実績差異</td>
+              <td colSpan={2} style={{ ...td(), textAlign: 'center', background: BG_DIFF, color: C.diffLabel, fontWeight: 700 }}>実績差異</td>
               {UPPER.map(m => { const v = sumCol(getActual,m)-sumCol(getTarget,m); return <td key={m} style={diffTd(v,BG_DIFF)}>{yen(v)}</td>; })}
               {(()=>{ const v=sumAll(getActual,UPPER)-sumAll(getTarget,UPPER); return <td style={{ ...diffTd(v,BG_DIFF), fontWeight:700 }}>{yen(v)}</td>; })()}
               {LOWER.map(m => { const v = sumCol(getActual,m)-sumCol(getTarget,m); return <td key={m} style={diffTd(v,BG_DIFF)}>{yen(v)}</td>; })}
@@ -216,28 +269,28 @@ export default function SalesTable() {
             {/* ===== 見込 ===== */}
             {ROWS.map((row, i) => (
               <tr key={`f_${row.id}`}>
-                {i === 0 && <td style={sectionTd('rgba(251,146,60,0.12)', '#fb923c')} rowSpan={ROWS.length + 1}>見　込</td>}
+                {i === 0 && <td style={sectionTd('rgba(251,146,60,0.12)', C.forecastSection)} rowSpan={ROWS.length + 1}>見　込</td>}
                 <td style={nameTd(BG_TOTAL_F)}>{row.name}</td>
                 {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_F)}>{yen(getForecast(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_TOTAL_F)}>{yen(sumRow(getForecast, row.id, UPPER))}</td>
+                <td style={subtotalTd(BG_TOTAL_F, C.forecastSub)}>{yen(sumRow(getForecast, row.id, UPPER))}</td>
                 {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_F)}>{yen(getForecast(row.id, m))}</td>)}
-                <td style={subtotalTd(BG_TOTAL_F)}>{yen(sumRow(getForecast, row.id, LOWER))}</td>
-                <td style={totalTd(BG_TOTAL_F, '#fb923c')}>{yen(sumRow(getForecast, row.id, ALL_MONTHS))}</td>
+                <td style={subtotalTd(BG_TOTAL_F, C.forecastSub)}>{yen(sumRow(getForecast, row.id, LOWER))}</td>
+                <td style={totalTd(BG_TOTAL_F, C.forecastTotal)}>{yen(sumRow(getForecast, row.id, ALL_MONTHS))}</td>
               </tr>
             ))}
             {/* 見込合計 */}
             <tr>
-              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_F, color: '#fb923c', fontWeight: 700 }}>合計</td>
-              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_F, '#fb923c')}>{yen(sumCol(getForecast, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_F, '#fb923c')}>{yen(sumAll(getForecast, UPPER))}</td>
-              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_F, '#fb923c')}>{yen(sumCol(getForecast, m))}</td>)}
-              <td style={subtotalTd(BG_SUB_F, '#fb923c')}>{yen(sumAll(getForecast, LOWER))}</td>
-              <td style={totalTd(BG_TOTAL_F, '#fb923c')}>{yen(sumAll(getForecast, ALL_MONTHS))}</td>
+              <td style={{ ...td(), textAlign: 'left', background: BG_TOTAL_F, color: C.forecastSection, fontWeight: 700 }}>合計</td>
+              {UPPER.map(m => <td key={m} style={numTd(BG_TOTAL_F, C.forecastSub)}>{yen(sumCol(getForecast, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_F, C.forecastSub)}>{yen(sumAll(getForecast, UPPER))}</td>
+              {LOWER.map(m => <td key={m} style={numTd(BG_TOTAL_F, C.forecastSub)}>{yen(sumCol(getForecast, m))}</td>)}
+              <td style={subtotalTd(BG_SUB_F, C.forecastSub)}>{yen(sumAll(getForecast, LOWER))}</td>
+              <td style={totalTd(BG_TOTAL_F, C.forecastTotal)}>{yen(sumAll(getForecast, ALL_MONTHS))}</td>
             </tr>
 
             {/* ===== 実績＋見込差異 ===== */}
             <tr>
-              <td colSpan={2} style={{ ...td(), textAlign: 'center', background: BG_DIFF, color: '#facc15', fontWeight: 700 }}>実績＋見込差異</td>
+              <td colSpan={2} style={{ ...td(), textAlign: 'center', background: BG_DIFF, color: C.diffLabel, fontWeight: 700 }}>実績＋見込差異</td>
               {UPPER.map(m => { const v = sumCol(getActual,m)+sumCol(getForecast,m)-sumCol(getTarget,m); return <td key={m} style={diffTd(v,BG_DIFF)}>{yen(v)}</td>; })}
               {(()=>{ const v=sumAll(getActual,UPPER)+sumAll(getForecast,UPPER)-sumAll(getTarget,UPPER); return <td style={{ ...diffTd(v,BG_DIFF), fontWeight:700 }}>{yen(v)}</td>; })()}
               {LOWER.map(m => { const v = sumCol(getActual,m)+sumCol(getForecast,m)-sumCol(getTarget,m); return <td key={m} style={diffTd(v,BG_DIFF)}>{yen(v)}</td>; })}
