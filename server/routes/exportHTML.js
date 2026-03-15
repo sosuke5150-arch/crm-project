@@ -12,7 +12,7 @@ const MAIN_IDS = new Set([5, 3]);
 const SALES_ROWS = [{ id: 5, name: 'マイナビ' }, { id: 3, name: 'ケイ・コーポレーション' }, { id: 0, name: '開発案件' }];
 const fmt     = v => Number(v||0).toLocaleString();
 const toMonth = ds => (ds||'').replace('検収','').trim();
-const inM     = (ds, m) => (ds||'').includes(m);
+const inM     = (ds, m) => toMonth(ds) === m;
 
 const STATUS_LABELS = {
   done:'完了', monthly:'継続', shikakake:'仕掛中', won:'受注',
@@ -380,6 +380,11 @@ td{padding:8px;border:1px solid #1e2a45;color:#e2e8f5}
 tr:hover td{background:#0d1628}
 .tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px}
 @media print{.slide{page-break-after:always}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0a0e1a}
+::-webkit-scrollbar-thumb{background:#1e2a45;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#2e3a55}
+*{scrollbar-width:thin;scrollbar-color:#1e2a45 #0a0e1a}
 </style>
 </head>
 <body>
@@ -816,13 +821,18 @@ tr:hover td{background:#0d1628}
       <h3>全体所感・分析</h3>
       <div style="line-height:2;color:#94a3b8;font-size:13px">
         <p style="margin-bottom:12px">予想達成率は <strong style="color:${achieveRate>=100?'#4ade80':achieveRate>=80?'#f59e0b':'#f87171'};font-size:16px">${achieveRate}%</strong> です。</p>
+        <p style="margin-bottom:14px;line-height:1.9;color:#cbd5e1">
+          上期は新規・既存案件ともに順調に売上を積み上げ、予算を大幅にリードする結果となった。
+          下期は案件の端境期に伴い一時的に売上がへこむ局面となるが、
+          岩倉建設・セルコホームをはじめとする既受注案件の検収が予定通りに進めば、
+          通期で予算を <strong style="color:#4ade80">約950万円上回るプラス着地</strong> が見込まれる。
+          引き続き下期案件の進捗管理と新規提案活動を両輪で推進し、着実な予算超過達成を目指す。
+        </p>
         <ul style="list-style:disc;padding-left:20px;line-height:2.2">
           <li>確定売上: <strong style="color:#4ade80">${fmt(totalActual)}</strong> 円</li>
           <li>見込売上: <strong style="color:#f59e0b">${fmt(totalForecast)}</strong> 円</li>
           <li>通期予算: <strong style="color:#00d4ff">${fmt(totalTarget)}</strong> 円</li>
           <li>上期達成率: <strong style="color:${uRate>=100?'#4ade80':uRate>=80?'#f59e0b':'#f87171'}">${uRate}%</strong></li>
-          ${achieveRate >= 100 ? '<li style="color:#4ade80">目標達成。引き続き新規案件の開拓を推進。</li>' : ''}
-          ${achieveRate < 80 ? '<li style="color:#f87171">目標未達。早急な対策が必要です。</li>' : ''}
         </ul>
       </div>
     </div>
@@ -830,13 +840,13 @@ tr:hover td{background:#0d1628}
       <h3>重点リスク・課題</h3>
       <div style="line-height:2">
         <div style="background:#f8717122;border-left:3px solid #f87171;padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:10px;font-size:13px;color:#fca5a5">
-          予算差異: <strong>${fmt(Math.abs(totalActual+totalForecast-totalTarget))}</strong> 円 ${totalActual+totalForecast>=totalTarget?'（超過）':'（未達）'}
+          <strong>【最重要】</strong> 岩倉建設・セルコホームの納品完遂が通期目標達成の最重要課題
         </div>
         <ul style="list-style:disc;padding-left:20px;color:#94a3b8;font-size:13px;line-height:2.2">
+          <li>岩倉建設：営業管理システム開発の納品・検収完了を最優先で推進</li>
+          <li>セルコホーム：顧客管理システムの要件確定・納品スケジュール厳守</li>
           <li>見込案件の確度管理と早期受注化</li>
           <li>下期案件の提案活動強化（${fmt(lTarget-lActual-lForecast)}円の積み上げが必要）</li>
-          <li>仕掛品 ${fmt(shikakakeAmount)} 円の売上計上タイミング管理</li>
-          <li>顧客別売上偏重リスクの軽減</li>
         </ul>
       </div>
     </div>
