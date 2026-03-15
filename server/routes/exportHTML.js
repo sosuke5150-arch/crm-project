@@ -654,7 +654,7 @@ tr:hover td{background:#0d1628}
       <div class="kpi-value" style="color:#f59e0b">${fmt(totalActual+totalForecast)}</div>
       <div class="kpi-sub">
         <span style="background:${(totalActual+totalForecast-totalTarget)>=0?'#16a34a33':'#dc262633'};color:${(totalActual+totalForecast-totalTarget)>=0?'#4ade80':'#f87171'};border-radius:4px;padding:2px 6px;font-size:11px">
-          ${(totalActual+totalForecast-totalTarget)>=0?'▲':'▼'} ${fmt(Math.abs(totalActual+totalForecast-totalTarget))}
+          ${(totalActual+totalForecast-totalTarget)>=0?'+':'▲'} ${fmt(Math.abs(totalActual+totalForecast-totalTarget))}
         </span>
       </div>
     </div>
