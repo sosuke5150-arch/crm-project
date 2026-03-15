@@ -86,59 +86,59 @@ export default function Dashboard() {
   useEffect(() => {
     fetch(`${API}/summary`).then(r => r.json()).then(setSummary).catch(() => {});
 
-    fetch(`${API}/summary/by-month`).then(r => r.json()).then(rows => {
-      const sorted = MONTH_ORDER
-        .map(m => {
-          const r = rows.find(r => r.month === m);
-          return { month: MONTH_LABEL(m), 実績: r?.actual || 0, 見込: r?.forecast || 0 };
-        })
-        .filter(d => d.実績 > 0 || d.見込 > 0);
-      setMonthlyData(sorted);
-    }).catch(() => {});
-
     fetch(`${API}/summary/by-customer`).then(r => r.json()).then(setCustomerData).catch(() => {});
 
-    // 上期・下期・通期 予実対比
+    // deals + targets から月次データ・予実・期間対比をすべて計算
     Promise.all([
       fetch(`${API}/deals`).then(r => r.json()),
       fetch(`${API}/targets`).then(r => r.json()),
     ]).then(([deals, targetRows]) => {
-      const inMonth = (dateStr, months) => months.some(m => (dateStr || '').includes(m));
-      const sumDeals = (sts, months) => deals
-        .filter(d => sts.has(d.status) && inMonth(d.inspection_date, months))
-        .reduce((s, d) => s + (Number(d.amount) || 0), 0);
-      const sumTargets = (months) => targetRows
-        .filter(r => months.includes(r.month))
-        .reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      const toM = ds => (ds || '').replace('検収', '').trim();
+      const MONTH_LABELS = ['9月','10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月'];
 
-      const uBudget = sumTargets(UPPER_MONTHS);
-      const uActual = sumDeals(ACTUAL_STS, UPPER_MONTHS);
-      const lBudget = sumTargets(LOWER_MONTHS);
-      const lActual = sumDeals(ACTUAL_STS, LOWER_MONTHS);
-      const lForecast = sumDeals(FORECAST_STS, LOWER_MONTHS);
+      // 月別実績・見込を hash map で集計（substring バグなし）
+      const actMap = {}, foreMap = {};
+      deals.forEach(d => {
+        const m = toM(d.inspection_date);
+        if (!m) return;
+        if (ACTUAL_STS.has(d.status))   actMap[m]  = (actMap[m]  || 0) + (Number(d.amount) || 0);
+        if (FORECAST_STS.has(d.status)) foreMap[m] = (foreMap[m] || 0) + (Number(d.amount) || 0);
+      });
+
+      // 月別売上額チャート
+      const sorted = MONTH_LABELS
+        .map(m => ({ month: m, 実績: actMap[m] || 0, 見込: foreMap[m] || 0 }))
+        .filter(d => d.実績 > 0 || d.見込 > 0);
+      setMonthlyData(sorted);
+
+      // 月別予実比較チャート
+      const tgtMap = {};
+      targetRows.forEach(r => { tgtMap[r.month] = (tgtMap[r.month] || 0) + (Number(r.amount) || 0); });
+      const yojitsu = MONTH_LABELS.map(m => {
+        const actual   = actMap[m]  || 0;
+        const forecast = foreMap[m] || 0;
+        const target   = tgtMap[m]  || 0;
+        return { month: m, 目標: target, bar2: actual > 0 ? actual : forecast, bar3: actual > 0 ? forecast : 0, _hasActual: actual > 0 };
+      }).filter(d => d.bar2 > 0 || d.目標 > 0);
+      setYojitsuData(yojitsu);
+
+      // 上期・下期・通期 予実対比
+      const inPeriod = (ds, months) => months.includes(toM(ds));
+      const sumAct  = months => deals.filter(d => ACTUAL_STS.has(d.status)   && inPeriod(d.inspection_date, months)).reduce((s,d) => s+(Number(d.amount)||0), 0);
+      const sumFore = months => deals.filter(d => FORECAST_STS.has(d.status) && inPeriod(d.inspection_date, months)).reduce((s,d) => s+(Number(d.amount)||0), 0);
+      const sumTgt  = months => targetRows.filter(r => months.includes(r.month)).reduce((s,r) => s+(Number(r.amount)||0), 0);
+
+      const uBudget = sumTgt(UPPER_MONTHS);
+      const uActual = sumAct(UPPER_MONTHS);
+      const lBudget = sumTgt(LOWER_MONTHS);
+      const lActual = sumAct(LOWER_MONTHS);
+      const lForecast = sumFore(LOWER_MONTHS);
 
       setPeriodData([
         { name: '上期', 予算: uBudget, 実績: uActual, 見込: 0 },
         { name: '下期', 予算: lBudget, 実績: lActual, 見込: lForecast },
         { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: lForecast },
       ]);
-    }).catch(() => {});
-
-    fetch(`${API}/summary/yojitsu`).then(r => r.json()).then(({ actuals, forecasts, targets }) => {
-      const data = MONTH_ORDER.map(m => {
-        const label = MONTH_LABEL(m);
-        const actual = actuals.find(r => r.month === m)?.total || 0;
-        const forecast = (forecasts || []).find(r => r.month === m)?.total || 0;
-        const target = targets.find(r => r.month === label)?.total || 0;
-        return {
-          month: label,
-          目標: target,
-          bar2: actual > 0 ? actual : forecast,
-          bar3: actual > 0 ? forecast : 0,
-          _hasActual: actual > 0,
-        };
-      }).filter(d => d.bar2 > 0 || d.目標 > 0);
-      setYojitsuData(data);
     }).catch(() => {});
   }, []);
 
