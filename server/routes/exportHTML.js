@@ -790,6 +790,51 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 </div>
 
+<!-- Page 7b: Budget Background & Policy -->
+<div class="slide">
+  <div style="margin-bottom:24px">
+    <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">BUDGET NOTES</div>
+    <h2 style="font-size:26px;margin-top:4px">予算経緯・重要方針</h2>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:20px;flex:1">
+
+    <!-- 予算経緯 -->
+    <div class="panel">
+      <div style="font-size:14px;font-weight:700;color:${C.textHeading};margin-bottom:14px;border-bottom:1px solid ${C.border};padding-bottom:8px">【予算経緯】</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.8;color:${C.textBody}">
+        <div>
+          <p>・2025年7月、予算検討会議にて、25期受託開発予算を8600万円で上申。内訳はマイナビ2800万円、ケイコーポ3000万円、受託2800万円。</p>
+          <p style="padding-left:1em">同会議にて上記予算に210万円を上積みされ、25期受託開発予算8810万円で決定となる。その内開発案件予算は3010万円。</p>
+          <p style="color:${C.colorLoss};font-size:12px">※資料内の来期売上イメージ（根拠なし）の金額がそのまま上積みされる形となってしまった。</p>
+        </div>
+        <div>
+          <p>・25年8月、営業(Worksチーム)で年間で500万円分のWorks関連開発案件を取る？？という話が舞い込み、開発案件予算の8月に算入される。</p>
+          <p style="padding-left:1em">よって25期売上全体表では8月の開発案件予算が1810万円→2310万円となっている。</p>
+          <p style="color:${C.textMuted};font-size:12px">※こちらは受託チームとは別目標ということなので、受託開発の年間目標は当初予算8810万円で管理を行う。（上山部長に確認済み）</p>
+        </div>
+        <div>
+          <p>・全体表では下期開発案件欄の各月に、根拠のない来期売上イメージ金額がそのまま予算として入っている。（予算組み立て時の認識齟齬により）</p>
+          <p style="color:${C.textMuted};font-size:12px">※受託開発の性質上、基本的には上期（2月）、下期（8月）終了時点の状態を管理することとする。（上山部長に確認済み）</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 重要方針 -->
+    <div class="panel">
+      <div style="font-size:14px;font-weight:700;color:${C.textHeading};margin-bottom:14px;border-bottom:1px solid ${C.border};padding-bottom:8px">【重要方針】</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.8;color:${C.textBody}">
+        <div>
+          <p style="color:${C.colorLoss};font-weight:600">・25年11月、上場審査のため上期売上がカギとなる。そのため受託開発案件では上期目標の1200万円上達の上、</p>
+          <p style="color:${C.colorLoss};font-weight:600;padding-left:1em">他事業の売上をカバーするため、500万円ほどのプラスで着地することが最高の結果。</p>
+          <p style="color:${C.textMuted};font-size:12px">※セルコホーム、岩倉建設の仕掛計上管理が重要なポイントとなる。</p>
+          <p style="color:${C.accent};font-size:12px;margin-top:4px">→仕掛計上の考え方（監査上の取り決め）について、管理部に要確認！</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Page 8: Upper Half Sales -->
 <div class="slide">
   <div style="margin-bottom:20px">

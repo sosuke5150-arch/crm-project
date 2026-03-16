@@ -28,11 +28,11 @@ router.get('/:id', (req, res) => {
 
 // 更新
 router.patch('/:id', (req, res) => {
-  const { company, phone, postal_code, prefecture, address, building, url } = req.body;
+  const { company, phone, postal_code, prefecture, address, building, url, sasuke_id } = req.body;
   if (!company) return res.status(400).json({ error: '会社名は必須です' });
   db.prepare(
-    'UPDATE customers SET name=?, company=?, phone=?, postal_code=?, prefecture=?, address=?, building=?, url=? WHERE id=?'
-  ).run(company, company, phone || null, postal_code || null, prefecture || null, address || null, building || null, url || null, req.params.id);
+    'UPDATE customers SET name=?, company=?, phone=?, postal_code=?, prefecture=?, address=?, building=?, url=?, sasuke_id=? WHERE id=?'
+  ).run(company, company, phone || null, postal_code || null, prefecture || null, address || null, building || null, url || null, sasuke_id || null, req.params.id);
   const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
   res.json(customer);
 });

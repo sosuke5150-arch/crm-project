@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const API = 'http://localhost:3001';
 
-const emptyForm = { company: '', phone: '', postal_code: '', prefecture: '', address: '', building: '', url: '' };
+const emptyForm = { company: '', phone: '', postal_code: '', prefecture: '', address: '', building: '', url: '', sasuke_id: '' };
 
 export default function CustomerList({ onSelect }) {
   const [customers, setCustomers] = useState([]);
@@ -42,6 +42,7 @@ export default function CustomerList({ onSelect }) {
       address: c.address || '',
       building: c.building || '',
       url: c.url || '',
+      sasuke_id: c.sasuke_id || '',
     });
   };
 
@@ -79,7 +80,7 @@ export default function CustomerList({ onSelect }) {
       <div className="card">
         <table>
           <thead>
-            <tr><th></th><th>会社名</th><th>郵便番号</th><th>都道府県</th><th>住所</th><th>建物名</th><th>URL</th><th></th></tr>
+            <tr><th></th><th>会社名</th><th>郵便番号</th><th>都道府県</th><th>住所</th><th>建物名</th><th>URL</th><th>サスケ顧客番号</th><th></th></tr>
           </thead>
           <tbody>
             {customers.map((c, index) => editId === c.id ? (
@@ -91,6 +92,7 @@ export default function CustomerList({ onSelect }) {
                 <td><input value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} /></td>
                 <td><input value={editForm.building} onChange={e => setEditForm({...editForm, building: e.target.value})} /></td>
                 <td><input value={editForm.url} onChange={e => setEditForm({...editForm, url: e.target.value})} /></td>
+                <td><input value={editForm.sasuke_id} onChange={e => setEditForm({...editForm, sasuke_id: e.target.value})} /></td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditSave(c.id)}>保存</button>
                   <button className="btn-delete" onClick={() => setEditId(null)}>キャンセル</button>
@@ -112,13 +114,14 @@ export default function CustomerList({ onSelect }) {
                 <td>{c.address || '-'}</td>
                 <td>{c.building || '-'}</td>
                 <td>{c.url ? <a href={c.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{c.url}</a> : '-'}</td>
+                <td>{c.sasuke_id || '-'}</td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditStart(c)}>修正</button>
                   <button className="btn-delete" onClick={() => handleDelete(c.id)}>削除</button>
                 </td>
               </tr>
             ))}
-            {customers.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'#4a5f82'}}>顧客データがありません</td></tr>}
+            {customers.length === 0 && <tr><td colSpan={9} style={{textAlign:'center',color:'#4a5f82'}}>顧客データがありません</td></tr>}
           </tbody>
         </table>
         <form onSubmit={handleSubmit} style={{marginTop:'16px', marginBottom:0}}>

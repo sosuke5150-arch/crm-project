@@ -53,6 +53,7 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
       building: customer.building || '',
       url: customer.url || '',
       phone: customer.phone || '',
+      sasuke_id: customer.sasuke_id || '',
     });
     setEditingCustomer(true);
   };
@@ -120,6 +121,7 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
                 <tr><th>住所</th><td><input value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} style={{ width: '100%' }} /></td></tr>
                 <tr><th>建物名</th><td><input value={customerForm.building} onChange={e => setCustomerForm({...customerForm, building: e.target.value})} style={{ width: '100%' }} /></td></tr>
                 <tr><th>URL</th><td><input value={customerForm.url} onChange={e => setCustomerForm({...customerForm, url: e.target.value})} style={{ width: '100%' }} /></td></tr>
+                <tr><th>サスケ顧客番号</th><td><input value={customerForm.sasuke_id} onChange={e => setCustomerForm({...customerForm, sasuke_id: e.target.value})} style={{ width: '100%' }} /></td></tr>
               </tbody>
             </table>
             <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
@@ -136,6 +138,7 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
               <tr><th>住所</th><td>{customer.address || '-'}</td></tr>
               <tr><th>建物名</th><td>{customer.building || '-'}</td></tr>
               <tr><th>URL</th><td>{customer.url ? <a href={customer.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{customer.url}</a> : '-'}</td></tr>
+              <tr><th>サスケ顧客番号</th><td>{customer.sasuke_id || '-'}</td></tr>
             </tbody>
           </table>
         )}
