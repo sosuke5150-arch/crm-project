@@ -1,7 +1,8 @@
 const API = 'http://localhost:3001';
 
 export async function exportPPT() {
-  const res = await fetch(`${API}/export-html`);
+  const theme = document.body.dataset.theme || 'dark';
+  const res = await fetch(`${API}/export-html?theme=${theme}`);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'サーバーエラー' }));
     throw new Error(err.error || 'HTML生成に失敗しました');
