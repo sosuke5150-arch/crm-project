@@ -39,6 +39,7 @@ function getThemeColors(theme) {
       colorGain:    '#16a34a',
       colorLoss:    '#dc2626',
       colorWarn:    '#b45309',
+      policyColor:  '#c55a11',
       gradFrom:     '#2e75b6',
       gradTo:       '#7e3af2',
       chartGrid:    '#e2e8f0',
@@ -76,6 +77,7 @@ function getThemeColors(theme) {
       colorGain:    '#3a8040',
       colorLoss:    '#b03020',
       colorWarn:    '#b89010',
+      policyColor:  '#b89010',
       gradFrom:     '#b5651d',
       gradTo:       '#966432',
       chartGrid:    '#d8ccb8',
@@ -113,6 +115,7 @@ function getThemeColors(theme) {
     colorGain:    '#4ade80',
     colorLoss:    '#f87171',
     colorWarn:    '#facc15',
+    policyColor:  '#facc15',
     gradFrom:     '#00d4ff',
     gradTo:       '#a78bfa',
     chartGrid:    '#131825',
@@ -153,6 +156,93 @@ router.get('/', (req, res) => {
     const targetRows = db.prepare('SELECT * FROM targets').all();
     const targetsMap = {};
     targetRows.forEach(r => { targetsMap[`${r.customer_id}_${r.month}`] = r.amount; });
+
+    let budgetText = '';
+    let policyText = '';
+    try {
+      const kvRows = db.prepare('SELECT * FROM notes_kv').all();
+      const kv = {};
+      kvRows.forEach(r => { kv[r.key] = r.content; });
+      budgetText = kv['budget'] || '';
+      policyText = kv['policy'] || '';
+    } catch (e) {}
+
+    // CommonSheet データ
+    let cs = { title: '25期3月全体会議（2月報告）', author: '', gaiyou: '', kadai: '', taisaku: '', jiyo_yosoku: '', table_data: '{}' };
+    try {
+      const csRows = db.prepare('SELECT * FROM common_sheet').all();
+      csRows.forEach(r => { cs[r.key] = r.value; });
+    } catch (e) {}
+    let csTable = {};
+    try { csTable = JSON.parse(cs.table_data); } catch (e) {}
+
+    const csParseNum = v => { const n = Number(String(v || '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+    const csFmtNum  = v => (v === '' || v == null) ? '—' : csParseNum(v).toLocaleString();
+    const csFmtPct  = (num, den) => (!den || !num) ? '—' : (csParseNum(num) / csParseNum(den) * 100).toFixed(2) + '%';
+    const csFmtDiff = (a, b) => (a === '' || b === '') ? '—' : (csParseNum(a) - csParseNum(b)).toLocaleString();
+    const csEsc     = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
+    const csSections = [
+      { id: 'tsuki', section: '2026年2月単月',       label25: '第25期2月度',     label24: '第24期2月度'     },
+      { id: 'q2',    section: '25 第二四半期',        label25: '第25期第2四半期', label24: '第24期第2四半期' },
+      { id: 'cum',   section: '期初〜当月までの累積', label25: '第25期 累積',     label24: '第24期 累積'     },
+      { id: 'full',  section: '通期',                label25: '第25期 通期',     label24: '第24期 通期'     },
+    ];
+    const csCalcColor = theme === 'dark' ? '#60b8e8' : theme === 'earth' ? '#8b5a1a' : '#1a5fa8';
+    const csNegColor  = theme === 'dark' ? '#ff6060' : '#c00000';
+    const csBgHeader  = theme === 'dark' ? '#1a2f58' : theme === 'earth' ? '#6b3e1e' : '#2f5496';
+    const csBgSection = theme === 'dark' ? '#1a2d4a' : theme === 'earth' ? '#e8d8c0' : '#d9e2f3';
+    const csBgRow25   = theme === 'dark' ? '#0d1628' : theme === 'earth' ? '#faf6ef' : '#ffffff';
+    const csBgRow24   = theme === 'dark' ? '#0a1020' : theme === 'earth' ? '#f0e8d8' : '#f2f2f2';
+    const csBorder    = theme === 'dark' ? '1px solid #2a3a58' : theme === 'earth' ? '1px solid #b08050' : '1px solid #999';
+    const csText      = theme === 'dark' ? '#c9d1e8' : theme === 'earth' ? '#3a2410' : '#1a1a1a';
+
+    const csCalcTd = (val, bg) => {
+      const isNeg = String(val).startsWith('-') && val !== '—';
+      const color = isNeg ? csNegColor : csCalcColor;
+      return `<td style="border:${csBorder};padding:5px 6px;background:${bg};font-size:12px;text-align:right;color:${color};font-weight:700">${val}</td>`;
+    };
+    const csNumTd = (val, bg) =>
+      `<td style="border:${csBorder};padding:5px 6px;background:${bg};font-size:12px;text-align:right;color:${csText};font-weight:700">${csFmtNum(val)}</td>`;
+    const csLabelTd = (val, bg, bold = false) =>
+      `<td style="border:${csBorder};padding:5px 8px;background:${bg};font-size:12px;color:${csText};font-weight:${bold ? 700 : 'normal'};white-space:nowrap">${val}</td>`;
+
+    const csTableRows = csSections.map(({ id, section, label25, label24 }) => {
+      const d = csTable[id] || { b25: '', a25: '', f25: '', b24: '', a24: '' };
+      const sectionRow = `<tr><td colspan="9" style="border:${csBorder};padding:4px 8px;background:${csBgSection};font-weight:700;font-size:12px;color:${csText}">${section}</td></tr>`;
+      const row25 = `<tr>
+        ${csLabelTd(label25, csBgRow25, true)}
+        ${csNumTd(d.b25, csBgRow25)}
+        ${csCalcTd(csFmtPct(d.b25, d.b24), csBgRow25)}
+        ${csNumTd(d.a25, csBgRow25)}
+        ${csCalcTd(csFmtPct(d.a25, d.a24), csBgRow25)}
+        ${csCalcTd(csFmtDiff(d.a25, d.b25), csBgRow25)}
+        ${csCalcTd(csFmtPct(d.a25, d.b25), csBgRow25)}
+        ${csNumTd(d.f25, csBgRow25)}
+        ${csCalcTd(csFmtPct(d.f25, d.b25), csBgRow25)}
+      </tr>`;
+      const row24 = `<tr>
+        ${csLabelTd(label24, csBgRow24)}
+        ${csNumTd(d.b24, csBgRow24)}
+        ${csCalcTd('—', csBgRow24)}
+        ${csNumTd(d.a24, csBgRow24)}
+        ${csCalcTd('—', csBgRow24)}
+        ${csCalcTd(csFmtDiff(d.a24, d.b24), csBgRow24)}
+        ${csCalcTd(csFmtPct(d.a24, d.b24), csBgRow24)}
+        ${csCalcTd('—', csBgRow24)}
+        ${csCalcTd('—', csBgRow24)}
+      </tr>`;
+      return sectionRow + row25 + row24;
+    }).join('');
+
+    const csThTd = t => `<th style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:12px;text-align:center;white-space:nowrap">${t}</th>`;
+    const csTextRow = (label, text) => `
+      <tr>
+        <td style="border:${csBorder};padding:8px 12px;width:70px;background:${csBgSection};vertical-align:top;font-weight:700;text-align:center;white-space:nowrap;color:${csText}">${label}</td>
+        <td style="border:${csBorder};padding:10px 12px;font-size:13px;line-height:1.7;color:${csText}">${csEsc(text)}</td>
+      </tr>`;
+    const escapeHtml = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
     const getTarget = (cid, m) => targetsMap[`${cid}_${m}`] || 0;
 
     // ---- Computed totals ----
@@ -537,6 +627,40 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 </div>
 
+<!-- Page 1b: Common Sheet -->
+<div class="slide" style="overflow:auto">
+  <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end">
+    <h2 style="font-size:20px;margin:0;color:${C.textHeading}">${csEsc(cs.title)}</h2>
+    <span style="font-size:12px;color:${C.textMuted}">${csEsc(cs.author)}</span>
+  </div>
+  <table style="border-collapse:collapse;font-size:11px;width:100%;margin-bottom:16px">
+    <thead>
+      <tr>
+        <th rowspan="2" style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:11px;text-align:center;white-space:nowrap;width:130px">【マイナビ＋ケイコーポ＋開発案件】</th>
+        <th colspan="2" style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:11px;text-align:center">予算</th>
+        <th colspan="2" style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:11px;text-align:center">実績</th>
+        <th colspan="2" style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:11px;text-align:center">実績差異</th>
+        <th colspan="2" style="border:${csBorder};padding:5px 6px;background:${csBgHeader};color:#fff;font-size:11px;text-align:center">着地予測</th>
+      </tr>
+      <tr>
+        ${csThTd('金額（千円）')}${csThTd('昨対')}
+        ${csThTd('金額（千円）')}${csThTd('昨対')}
+        ${csThTd('金額（千円）')}${csThTd('対予算進捗率')}
+        ${csThTd('金額（千円）')}${csThTd('対予算進捗率')}
+      </tr>
+    </thead>
+    <tbody>${csTableRows}</tbody>
+  </table>
+  <table style="border-collapse:collapse;width:100%;font-size:12px">
+    <tbody>
+      ${csTextRow('概況', cs.gaiyou)}
+      ${csTextRow('課題', cs.kadai)}
+      ${csTextRow('対策', cs.taisaku)}
+      ${csTextRow('次月予測', cs.jiyo_yosoku)}
+    </tbody>
+  </table>
+</div>
+
 <!-- Page 2: KPI Dashboard (Dashboard style) -->
 <div class="slide">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
@@ -801,35 +925,13 @@ tr:hover td{background:${C.bgPanel}}
     <!-- 予算経緯 -->
     <div class="panel">
       <div style="font-size:14px;font-weight:700;color:${C.textHeading};margin-bottom:14px;border-bottom:1px solid ${C.border};padding-bottom:8px">【予算経緯】</div>
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.8;color:${C.textBody}">
-        <div>
-          <p>・2025年7月、予算検討会議にて、25期受託開発予算を8600万円で上申。内訳はマイナビ2800万円、ケイコーポ3000万円、受託2800万円。</p>
-          <p style="padding-left:1em">同会議にて上記予算に210万円を上積みされ、25期受託開発予算8810万円で決定となる。その内開発案件予算は3010万円。</p>
-          <p style="color:${C.colorLoss};font-size:12px">※資料内の来期売上イメージ（根拠なし）の金額がそのまま上積みされる形となってしまった。</p>
-        </div>
-        <div>
-          <p>・25年8月、営業(Worksチーム)で年間で500万円分のWorks関連開発案件を取る？？という話が舞い込み、開発案件予算の8月に算入される。</p>
-          <p style="padding-left:1em">よって25期売上全体表では8月の開発案件予算が1810万円→2310万円となっている。</p>
-          <p style="color:${C.textMuted};font-size:12px">※こちらは受託チームとは別目標ということなので、受託開発の年間目標は当初予算8810万円で管理を行う。（上山部長に確認済み）</p>
-        </div>
-        <div>
-          <p>・全体表では下期開発案件欄の各月に、根拠のない来期売上イメージ金額がそのまま予算として入っている。（予算組み立て時の認識齟齬により）</p>
-          <p style="color:${C.textMuted};font-size:12px">※受託開発の性質上、基本的には上期（2月）、下期（8月）終了時点の状態を管理することとする。（上山部長に確認済み）</p>
-        </div>
-      </div>
+      <div style="font-size:13px;line-height:1.9;color:${C.textBody};white-space:pre-wrap">${escapeHtml(budgetText)}</div>
     </div>
 
     <!-- 重要方針 -->
     <div class="panel">
       <div style="font-size:14px;font-weight:700;color:${C.textHeading};margin-bottom:14px;border-bottom:1px solid ${C.border};padding-bottom:8px">【重要方針】</div>
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.8;color:${C.textBody}">
-        <div>
-          <p style="color:${C.colorLoss};font-weight:600">・25年11月、上場審査のため上期売上がカギとなる。そのため受託開発案件では上期目標の1200万円上達の上、</p>
-          <p style="color:${C.colorLoss};font-weight:600;padding-left:1em">他事業の売上をカバーするため、500万円ほどのプラスで着地することが最高の結果。</p>
-          <p style="color:${C.textMuted};font-size:12px">※セルコホーム、岩倉建設の仕掛計上管理が重要なポイントとなる。</p>
-          <p style="color:${C.accent};font-size:12px;margin-top:4px">→仕掛計上の考え方（監査上の取り決め）について、管理部に要確認！</p>
-        </div>
-      </div>
+      <div style="font-size:13px;line-height:1.9;color:${C.policyColor};white-space:pre-wrap">${escapeHtml(policyText)}</div>
     </div>
 
   </div>

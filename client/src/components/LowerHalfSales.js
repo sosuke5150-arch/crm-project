@@ -6,12 +6,10 @@ const LOWER_MONTHS = ['3月', '4月', '5月', '6月', '7月', '8月'];
 const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
 const FORECAST_STATUSES = new Set(['forecast', 'developing']);
 
-const monthOrder = (dateStr) => {
-  if (!dateStr) return 99;
-  for (let i = 0; i < LOWER_MONTHS.length; i++) {
-    if (dateStr.includes(LOWER_MONTHS[i])) return i;
-  }
-  return 99;
+const toM = ds => (ds || '').replace('検収', '').trim();
+const monthOrder = dateStr => {
+  const i = LOWER_MONTHS.indexOf(toM(dateStr));
+  return i === -1 ? 99 : i;
 };
 
 const commas = v => (Number(v) || 0).toLocaleString();
@@ -33,7 +31,7 @@ export default function LowerHalfSales() {
     .filter(d => {
       if (!ACTUAL_STATUSES.has(d.status) && !FORECAST_STATUSES.has(d.status)) return false;
       if (!d.inspection_date) return false;
-      return LOWER_MONTHS.some(m => d.inspection_date.includes(m));
+      return LOWER_MONTHS.includes(toM(d.inspection_date));
     })
     .sort((a, b) => {
       const mo = monthOrder(a.inspection_date) - monthOrder(b.inspection_date);

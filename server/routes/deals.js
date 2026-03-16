@@ -52,6 +52,20 @@ router.patch('/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// 複製（複製元の直下に挿入）
+router.post('/duplicate/:id', (req, res) => {
+  const original = db.prepare('SELECT * FROM deals WHERE id = ?').get(req.params.id);
+  if (!original) return res.status(404).json({ error: '案件が見つかりません' });
+  // 複製元より後ろのsort_orderを1つずらす
+  db.prepare('UPDATE deals SET sort_order = sort_order + 1 WHERE sort_order > ?').run(original.sort_order);
+  // 複製元の直後に挿入
+  const result = db.prepare(
+    'INSERT INTO deals (customer_id, title, amount, status, inspection_date, topics, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(original.customer_id, original.title, original.amount, original.status, original.inspection_date, original.topics, original.sort_order + 1);
+  const deal = db.prepare('SELECT * FROM deals WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json(deal);
+});
+
 // 並び順更新
 router.post('/reorder', (req, res) => {
   const { ids } = req.body;

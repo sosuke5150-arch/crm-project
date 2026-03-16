@@ -9,6 +9,7 @@ import UpperHalfSales from './components/UpperHalfSales';
 import LowerHalfSales from './components/LowerHalfSales';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
+import CommonSheet from './components/CommonSheet';
 import './App.css';
 
 const THEMES = [
@@ -72,6 +73,7 @@ function App() {
         <button className={page === 'upper-half-sales' ? 'active' : ''} onClick={() => setPage('upper-half-sales')}>上期売上一覧</button>
         <button className={page === 'lower-half-sales' ? 'active' : ''} onClick={() => setPage('lower-half-sales')}>下期売上一覧</button>
         <button className={['projects', 'project-detail'].includes(page) ? 'active' : ''} onClick={goToProjectList}>プロジェクト管理</button>
+        <button className={page === 'common-sheet' ? 'active' : ''} onClick={() => setPage('common-sheet')}>共通シート</button>
 
         <div style={{ marginTop: 'auto', padding: '16px 16px 8px' }}>
           <button
@@ -105,6 +107,7 @@ function App() {
         {page === 'lower-half-sales' && <LowerHalfSales />}
         {page === 'projects' && <ProjectList onSelect={goToProject} />}
         {page === 'project-detail' && <ProjectDetail dealId={projectDealId} onBack={goToProjectList} onNavigate={goToProject} />}
+        {page === 'common-sheet' && <CommonSheet />}
       </main>
     </div>
   );

@@ -128,16 +128,17 @@ export default function Dashboard() {
       const sumFore = months => deals.filter(d => FORECAST_STS.has(d.status) && inPeriod(d.inspection_date, months)).reduce((s,d) => s+(Number(d.amount)||0), 0);
       const sumTgt  = months => targetRows.filter(r => months.includes(r.month)).reduce((s,r) => s+(Number(r.amount)||0), 0);
 
-      const uBudget = sumTgt(UPPER_MONTHS);
-      const uActual = sumAct(UPPER_MONTHS);
-      const lBudget = sumTgt(LOWER_MONTHS);
-      const lActual = sumAct(LOWER_MONTHS);
+      const uBudget   = sumTgt(UPPER_MONTHS);
+      const uActual   = sumAct(UPPER_MONTHS);
+      const uForecast = sumFore(UPPER_MONTHS);
+      const lBudget   = sumTgt(LOWER_MONTHS);
+      const lActual   = sumAct(LOWER_MONTHS);
       const lForecast = sumFore(LOWER_MONTHS);
 
       setPeriodData([
-        { name: '上期', 予算: uBudget, 実績: uActual, 見込: 0 },
+        { name: '上期', 予算: uBudget, 実績: uActual, 見込: uForecast },
         { name: '下期', 予算: lBudget, 実績: lActual, 見込: lForecast },
-        { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: lForecast },
+        { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: uForecast + lForecast },
       ]);
     }).catch(() => {});
   }, []);

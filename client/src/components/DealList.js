@@ -193,18 +193,7 @@ export default function DealList() {
   };
 
   const handleDuplicate = async (d) => {
-    await fetch(`${API}/deals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_id: d.customer_id,
-        title: d.title,
-        status: d.status,
-        amount: d.amount,
-        inspection_date: d.inspection_date,
-        topics: d.topics,
-      }),
-    });
+    await fetch(`${API}/deals/duplicate/${d.id}`, { method: 'POST' });
     load();
   };
 

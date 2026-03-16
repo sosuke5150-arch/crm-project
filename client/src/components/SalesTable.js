@@ -37,6 +37,7 @@ function getTableColors() {
       diffLabel:     '#7f6000',
       diffGain:      '#375623',
       diffLoss:      '#c00000',
+      policyColor:   '#c55a11',
     };
   }
   if (theme === 'earth') {
@@ -53,6 +54,7 @@ function getTableColors() {
       diffLabel:     '#9a7200',
       diffGain:      '#2e8a38',
       diffLoss:      '#b03020',
+      policyColor:   '#b89010',
     };
   }
   // dark (default)
@@ -69,6 +71,7 @@ function getTableColors() {
     diffLabel:     '#facc15',
     diffGain:      '#34d399',
     diffLoss:      '#ff4d6a',
+    policyColor:   '#facc15',
   };
 }
 
@@ -77,11 +80,15 @@ export default function SalesTable() {
   const [targets, setTargets] = useState({});
   const [editing, setEditing] = useState(null);
   const [editVal, setEditVal] = useState('');
+  const [notes, setNotes] = useState({ budget: '', policy: '' });
+  const [editingSection, setEditingSection] = useState(null);
+  const [noteEditText, setNoteEditText] = useState('');
 
   const C = getTableColors();
 
   useEffect(() => {
     fetch(`${API}/deals`).then(r => r.json()).then(setDeals);
+    fetch(`${API}/notes`).then(r => r.json()).then(setNotes);
     fetch(`${API}/targets`).then(r => r.json()).then(rows => {
       const map = {};
       rows.forEach(r => { map[`${r.customer_id}_${r.month}`] = r.amount; });
@@ -113,6 +120,57 @@ export default function SalesTable() {
   const sumRow = (fn, cid, months) => months.reduce((t, m) => t + fn(cid, m), 0);
   const sumCol = (fn, m) => ROWS.reduce((t, r) => t + fn(r.id, m), 0);
   const sumAll = (fn, months) => months.reduce((t, m) => t + sumCol(fn, m), 0);
+
+  const loadNotes = () => fetch(`${API}/notes`).then(r => r.json()).then(setNotes);
+
+  const handleNoteEdit = (section) => {
+    setEditingSection(section);
+    setNoteEditText(notes[section] || '');
+  };
+
+  const handleNoteSave = async (section) => {
+    await fetch(`${API}/notes/${section}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: noteEditText }),
+    });
+    setEditingSection(null);
+    loadNotes();
+  };
+
+  const handleNoteDelete = async (section) => {
+    if (!window.confirm('削除しますか？')) return;
+    await fetch(`${API}/notes/${section}`, { method: 'DELETE' });
+    loadNotes();
+  };
+
+  const renderNoteSection = (title, key) => (
+    <div style={{ marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-heading)' }}>【{title}】</div>
+        {editingSection !== key && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn-edit" onClick={() => handleNoteEdit(key)} style={{ padding: '3px 10px', fontSize: '12px' }}>編集</button>
+            <button className="btn-delete" onClick={() => handleNoteDelete(key)} style={{ padding: '3px 10px', fontSize: '12px' }}>削除</button>
+          </div>
+        )}
+      </div>
+      {editingSection === key ? (
+        <div>
+          <textarea value={noteEditText} onChange={e => setNoteEditText(e.target.value)}
+            style={{ width: '100%', minHeight: '160px', padding: '12px', background: 'var(--bg-panel)', color: 'var(--text-body)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit', lineHeight: '1.8' }} />
+          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+            <button className="btn-edit" onClick={() => handleNoteSave(key)}>保存</button>
+            <button className="btn-delete" onClick={() => setEditingSection(null)}>キャンセル</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ color: key === 'policy' ? C.policyColor : 'var(--text-body)', fontSize: '13px', lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>
+          {notes[key] || <span style={{ color: 'var(--text-muted)' }}>（内容なし）</span>}
+        </div>
+      )}
+    </div>
+  );
 
   const commitEdit = (cid, month) => {
     const amount = Number(String(editVal).replace(/,/g,'')) || 0;
@@ -301,45 +359,10 @@ export default function SalesTable() {
         </table>
       </div>
 
-      {/* 予算経緯 */}
-      <div style={{ marginTop: '40px', maxWidth: '900px', lineHeight: '1.9', fontSize: '13px', color: 'var(--text-body)' }}>
-        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-heading)', marginBottom: '12px' }}>【予算経緯】</div>
-
-        <p style={{ margin: '0 0 4px 0' }}>
-          ・2025年7月、予算検討会議にて、25期受託開発予算を8600万円で上申。内訳はマイナビ2800万円、ケイコーポ3000万円、受託2800万円。<br />
-          　同会議にて上記予算に210万円を上積みされ、25期受託開発予算8810万円で決定となる。その内開発案件予算は3010万円。
-        </p>
-        <p style={{ margin: '0 0 16px 0', color: 'var(--text-mid)' }}>
-          ※資料内の来期売上イメージ（根拠なし）の金額がそのまま上積みされる形となってしまった。
-        </p>
-
-        <p style={{ margin: '0 0 4px 0' }}>
-          ・25年8月、営業(Worksチーム)で年間で500万円分のWorks関連開発案件を取る？？という話が舞い込み、開発案件予算の8月に算入される。<br />
-          　よって25期売上全体表では8月の開発案件予算が1810万円→2310万円となっている。
-        </p>
-        <p style={{ margin: '0 0 16px 0', color: 'var(--text-mid)' }}>
-          ※こちらは受託チームとは別目標ということなので、受託開発の年間目標は当初予算8810万円で管理を行う。（上山部長に確認済み）
-        </p>
-
-        <p style={{ margin: '0 0 4px 0' }}>
-          ・全体表では下期開発案件欄の各月に、根拠のない来期売上イメージ金額がそのまま予算として入っている。（予算組み立て時の認識齟齬により）
-        </p>
-        <p style={{ margin: '0 0 32px 0', color: 'var(--text-mid)' }}>
-          ※受託開発の性質上、基本的には上期（2月）、下期（8月）終了時点の状態を管理することとする。（上山部長に確認済み）
-        </p>
-
-        <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-heading)', marginBottom: '12px' }}>【重要方針】</div>
-
-        <p style={{ margin: '0 0 4px 0', color: '#ff4d6a', fontWeight: 600 }}>
-          ・25年11月、上場審査のため上期売上がカギとなる。そのため受託開発案件では上期目標の1200万円必達の上、<br />
-          　他事業の売上をカバーするため、500万円ほどのプラスで着地することが最高の結果。
-        </p>
-        <p style={{ margin: '0 0 4px 0', color: 'var(--text-mid)' }}>
-          ※セルコホーム、岩倉建設の仕掛計上管理が重要なポイントとなる。
-        </p>
-        <p style={{ margin: '0', color: 'var(--text-mid)' }}>
-          →仕掛計上の考え方（監査上の取り決め）について、管理部に要確認！
-        </p>
+      {/* 予算経緯・重要方針 */}
+      <div style={{ marginTop: '40px', maxWidth: '900px' }}>
+        {renderNoteSection('予算経緯', 'budget')}
+        {renderNoteSection('重要方針', 'policy')}
       </div>
     </div>
   );
