@@ -496,12 +496,14 @@ th{background:${C.bgTh};color:${C.textMid};font-size:12px;padding:8px;border:1px
 td{padding:8px;border:1px solid ${C.border};color:${C.textHeading}}
 tr:hover td{background:${C.bgPanel}}
 .tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px}
-@media print{.slide{page-break-after:always}}
+@media print{.slide{page-break-after:always}.print-btn{display:none}@page{margin:8mm;size:A4 landscape}}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:${C.scrollbarTrack}}
 ::-webkit-scrollbar-thumb{background:${C.scrollbarThumb};border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:${C.scrollbarThumb}}
 *{scrollbar-width:thin;scrollbar-color:${C.scrollbarThumb} ${C.scrollbarTrack}}
+.print-btn{position:fixed;bottom:24px;right:24px;z-index:9999;background:${C.accent};color:${C.bgMain};border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);letter-spacing:0.05em}
+.print-btn:hover{opacity:0.85;transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -1173,6 +1175,7 @@ tr:hover td{background:${C.bgPanel}}
   }
 })();
 <\/script>
+<button class="print-btn" onclick="window.print()">PDF出力</button>
 </body>
 </html>`;
 
