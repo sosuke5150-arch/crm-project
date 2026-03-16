@@ -57,17 +57,17 @@ const fmtPct   = (num, den) => (!den || !num) ? '—' : (parseNum(num) / parseNu
 const fmtDiff  = (a, b) => (a === '' || b === '') ? '—' : (parseNum(a) - parseNum(b)).toLocaleString();
 
 const SECTIONS = [
-  { id: 'tsuki', section: '2026年2月単月',       label25: '第25期2月度',     label24: '第24期2月度'     },
-  { id: 'q2',    section: '25 第二四半期',        label25: '第25期第2四半期', label24: '第24期第2四半期' },
+  { id: 'tsuki', section: '2026年3月単月',       label25: '第25期3月度',     label24: '第24期3月度'     },
+  { id: 'q2',    section: '第25期 第3四半期',    label25: '第25期 第3四半期', label24: '第24期 第3四半期' },
   { id: 'cum',   section: '期初〜当月までの累積', label25: '第25期 累積',     label24: '第24期 累積'     },
   { id: 'full',  section: '通期',                label25: '第25期 通期',     label24: '第24期 通期'     },
 ];
 
 const DEFAULT_TABLE = {
-  tsuki: { b25: '14700', a25: '19668', f25: '',      b24: '7960',  a24: '8070'  },
-  q2:    { b25: '27492', a25: '36527', f25: '36527', b24: '20272', a24: '13272' },
-  cum:   { b25: '42472', a25: '54772', f25: '',      b24: '35772', a24: '41926' },
-  full:  { b25: '93772', a25: '54772', f25: '95826', b24: '79632', a24: '41926' },
+  tsuki: { b25: '6700',  a25: '4930',  f25: '',      b24: '5460',  a24: '5480'  },
+  q2:    { b25: '21600', a25: '4930',  f25: '36527', b24: '18520', a24: '5480'  },
+  cum:   { b25: '49171', a25: '55001', f25: '',      b24: '41232', a24: '47406' },
+  full:  { b25: '93772', a25: '55001', f25: '95826', b24: '79632', a24: '47406' },
 };
 
 export default function CommonSheet() {
