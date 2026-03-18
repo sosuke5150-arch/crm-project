@@ -80,6 +80,58 @@ export default function CommonSheet() {
   const [jiyoYosoku,  setJiyoYosoku]  = useState('');
   const saveTimer = useRef(null);
 
+  // 画像読み取り
+  const [imgAnalyzing, setImgAnalyzing] = useState(false);
+  const [imgPreview,   setImgPreview]   = useState(null);
+  const [imgResult,    setImgResult]    = useState(null);
+  const [imgError,     setImgError]     = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleImageSelect = async (file) => {
+    if (!file) return;
+    setImgPreview(URL.createObjectURL(file));
+    setImgResult(null);
+    setImgError(null);
+    setImgAnalyzing(true);
+
+    const form = new FormData();
+    form.append('image', file);
+    try {
+      const res = await fetch(`${API}/common-sheet/analyze-image`, { method: 'POST', body: form });
+      const json = await res.json();
+      if (json.success) {
+        setImgResult(json.data);
+      } else {
+        setImgError(json.error || '解析に失敗しました');
+      }
+    } catch (e) {
+      setImgError('サーバーに接続できませんでした');
+    } finally {
+      setImgAnalyzing(false);
+    }
+  };
+
+  const applyImageResult = () => {
+    if (!imgResult) return;
+    const d = imgResult;
+    if (d.title)        { setTitle(d.title);             save({ title: d.title }); }
+    if (d.author)       { setAuthor(d.author);            save({ author: d.author }); }
+    if (d.gaiyou)       { setGaiyou(d.gaiyou);            save({ gaiyou: d.gaiyou }); }
+    if (d.kadai)        { setKadai(d.kadai);              save({ kadai: d.kadai }); }
+    if (d.taisaku)      { setTaisaku(d.taisaku);          save({ taisaku: d.taisaku }); }
+    if (d.jiyo_yosoku)  { setJiyoYosoku(d.jiyo_yosoku);  save({ jiyo_yosoku: d.jiyo_yosoku }); }
+    if (d.table_data) {
+      const merged = { ...DEFAULT_TABLE };
+      ['tsuki','q2','cum','full'].forEach(k => {
+        if (d.table_data[k]) merged[k] = { ...DEFAULT_TABLE[k], ...d.table_data[k] };
+      });
+      setTableData(merged);
+      save({ table_data: JSON.stringify(merged) });
+    }
+    setImgPreview(null);
+    setImgResult(null);
+  };
+
   // 初期ロード
   useEffect(() => {
     fetch(`${API}/common-sheet`).then(r => r.json()).then(d => {
@@ -151,6 +203,58 @@ export default function CommonSheet() {
 
   return (
     <div style={{ padding: '24px', fontFamily: "'メイリオ','Meiryo','Hiragino Kaku Gothic Pro',sans-serif", color: S.text }}>
+
+      {/* 画像取り込みボタン */}
+      <div style={{ marginBottom: '16px' }}>
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+          onChange={e => handleImageSelect(e.target.files[0])} />
+        <button
+          onClick={() => { setImgPreview(null); setImgResult(null); setImgError(null); fileInputRef.current.click(); }}
+          style={{ padding: '7px 16px', background: '#1a4a7a', color: '#7dd3fc', border: '1px solid #2a5a9a',
+            borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+          📷 画像から読み取り
+        </button>
+      </div>
+
+      {/* 画像解析パネル */}
+      {(imgPreview || imgAnalyzing || imgError) && (
+        <div style={{ marginBottom: '20px', border: S.border, borderRadius: '8px', padding: '16px',
+          background: S.bgTextArea, display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {imgPreview && (
+            <img src={imgPreview} alt="取り込み画像"
+              style={{ maxWidth: '260px', maxHeight: '200px', objectFit: 'contain', border: S.border, borderRadius: '4px' }} />
+          )}
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            {imgAnalyzing && (
+              <div style={{ color: S.calcColor, fontWeight: 600 }}>⏳ 画像を解析中...</div>
+            )}
+            {imgError && (
+              <div style={{ color: S.negColor, fontWeight: 600 }}>⚠️ {imgError}</div>
+            )}
+            {imgResult && !imgAnalyzing && (
+              <>
+                <div style={{ color: '#4ade80', fontWeight: 700, marginBottom: '10px' }}>✅ 解析完了</div>
+                {imgResult.title        && <div style={{ fontSize: '12px', color: S.textSub, marginBottom: '4px' }}>タイトル: <span style={{ color: S.text }}>{imgResult.title}</span></div>}
+                {imgResult.author       && <div style={{ fontSize: '12px', color: S.textSub, marginBottom: '4px' }}>著者: <span style={{ color: S.text }}>{imgResult.author}</span></div>}
+                {imgResult.gaiyou       && <div style={{ fontSize: '12px', color: S.textSub, marginBottom: '4px' }}>概況: <span style={{ color: S.text }}>{imgResult.gaiyou.slice(0, 60)}…</span></div>}
+                {imgResult.table_data   && <div style={{ fontSize: '12px', color: S.textSub, marginBottom: '4px' }}>数値テーブル: <span style={{ color: S.text }}>抽出済み</span></div>}
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                  <button onClick={applyImageResult}
+                    style={{ padding: '6px 18px', background: '#1a5a2a', color: '#4ade80', border: '1px solid #2a7a3a',
+                      borderRadius: '5px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+                    適用する
+                  </button>
+                  <button onClick={() => { setImgPreview(null); setImgResult(null); setImgError(null); }}
+                    style={{ padding: '6px 14px', background: 'transparent', color: S.textSub, border: S.border,
+                      borderRadius: '5px', cursor: 'pointer', fontSize: '13px' }}>
+                    閉じる
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* タイトル */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>

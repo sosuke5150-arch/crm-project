@@ -1,6 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const multer = require('multer');
+const Anthropic = require('@anthropic-ai/sdk');
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// 画像解析エンドポイント
+router.post('/analyze-image', upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: '画像が指定されていません' });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ success: false, error: 'ANTHROPIC_API_KEY が設定されていません' });
+
+  try {
+    const client = new Anthropic({ apiKey });
+    const base64 = req.file.buffer.toString('base64');
+    const mediaType = req.file.mimetype;
+
+    const response = await client.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: `この画像は営業月次報告書です。以下のフィールドをすべて抽出し、JSONのみを返してください（説明文は不要）。
+
+{
+  "title": "資料タイトル・会議名",
+  "author": "著者・報告者名",
+  "gaiyou": "概況のテキスト全文",
+  "kadai": "課題のテキスト全文",
+  "taisaku": "対策のテキスト全文",
+  "jiyo_yosoku": "次月予測のテキスト全文",
+  "table_data": {
+    "tsuki": { "b25": "単月今期予算(千円)", "a25": "単月今期実績(千円)", "f25": "単月着地予測(千円)", "b24": "単月前期予算(千円)", "a24": "単月前期実績(千円)" },
+    "q2":    { "b25": "四半期今期予算",    "a25": "四半期今期実績",    "f25": "四半期着地予測",    "b24": "四半期前期予算",    "a24": "四半期前期実績"    },
+    "cum":   { "b25": "累積今期予算",      "a25": "累積今期実績",      "f25": "累積着地予測",      "b24": "累積前期予算",      "a24": "累積前期実績"      },
+    "full":  { "b25": "通期今期予算",      "a25": "通期今期実績",      "f25": "通期着地予測",      "b24": "通期前期予算",      "a24": "通期前期実績"      }
+  }
+}
+
+数値はカンマなしの整数文字列（千円単位）。該当データが画像にない場合はnullを返してください。` }
+        ],
+      }],
+    });
+
+    const text = response.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.json({ success: false, error: 'データを抽出できませんでした' });
+
+    res.json({ success: true, data: JSON.parse(match[0]) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 db.exec(`CREATE TABLE IF NOT EXISTS common_sheet (
   key TEXT PRIMARY KEY,
