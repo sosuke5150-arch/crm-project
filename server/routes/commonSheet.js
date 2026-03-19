@@ -2,56 +2,166 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const multer = require('multer');
-const Anthropic = require('@anthropic-ai/sdk');
+const sharp = require('sharp');
+const { execFile } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 const upload = multer({ storage: multer.memoryStorage() });
+const PS_SCRIPT = path.join(__dirname, '..', 'ocr.ps1');
 
-// 画像解析エンドポイント
-router.post('/analyze-image', upload.single('image'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, error: '画像が指定されていません' });
+// Windows OCR（Windows.Media.Ocr）でテキスト抽出
+async function windowsOcr(imageBuffer) {
+  // Windows OCR は高解像度ほど精度が上がる。最低3000px幅になるよう拡大
+  const meta = await sharp(imageBuffer).metadata();
+  const targetWidth = Math.max(meta.width * 3, 3000);
+  const pngBuffer = await sharp(imageBuffer)
+    .resize(Math.round(targetWidth), null, { fit: 'inside', withoutEnlargement: false })
+    .sharpen({ sigma: 1.0, m1: 1.5, m2: 2.0 })
+    .png()
+    .toBuffer();
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ success: false, error: 'ANTHROPIC_API_KEY が設定されていません' });
+  const tmpFile = path.join(os.tmpdir(), `crm_ocr_${Date.now()}.png`);
+  fs.writeFileSync(tmpFile, pngBuffer);
 
   try {
-    const client = new Anthropic({ apiKey });
-    const base64 = req.file.buffer.toString('base64');
-    const mediaType = req.file.mimetype;
-
-    const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          { type: 'text', text: `この画像は営業月次報告書です。以下のフィールドをすべて抽出し、JSONのみを返してください（説明文は不要）。
-
-{
-  "title": "資料タイトル・会議名",
-  "author": "著者・報告者名",
-  "gaiyou": "概況のテキスト全文",
-  "kadai": "課題のテキスト全文",
-  "taisaku": "対策のテキスト全文",
-  "jiyo_yosoku": "次月予測のテキスト全文",
-  "table_data": {
-    "tsuki": { "b25": "単月今期予算(千円)", "a25": "単月今期実績(千円)", "f25": "単月着地予測(千円)", "b24": "単月前期予算(千円)", "a24": "単月前期実績(千円)" },
-    "q2":    { "b25": "四半期今期予算",    "a25": "四半期今期実績",    "f25": "四半期着地予測",    "b24": "四半期前期予算",    "a24": "四半期前期実績"    },
-    "cum":   { "b25": "累積今期予算",      "a25": "累積今期実績",      "f25": "累積着地予測",      "b24": "累積前期予算",      "a24": "累積前期実績"      },
-    "full":  { "b25": "通期今期予算",      "a25": "通期今期実績",      "f25": "通期着地予測",      "b24": "通期前期予算",      "a24": "通期前期実績"      }
+    return await new Promise((resolve, reject) => {
+      execFile(
+        'powershell',
+        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS_SCRIPT, tmpFile],
+        { timeout: 30000, encoding: 'buffer' },
+        (err, stdout, stderr) => {
+          if (err) reject(new Error(stderr.toString('utf8') || err.message));
+          else resolve(stdout.toString('utf8').trim());
+        }
+      );
+    });
+  } finally {
+    try { fs.unlinkSync(tmpFile); } catch (_) {}
   }
 }
 
-数値はカンマなしの整数文字列（千円単位）。該当データが画像にない場合はnullを返してください。` }
-        ],
-      }],
+// ===== OCRテキストのローカルパーサー（API不要）=====
+function parseOcrLocal(text) {
+  const result = {
+    gaiyou: null, kadai: null, taisaku: null, jiyo_yosoku: null,
+    tableData: {
+      tsuki: { b25: '', a25: '', f25: '', b24: '', a24: '' },
+      q2:    { b25: '', a25: '', f25: '', b24: '', a24: '' },
+      cum:   { b25: '', a25: '', f25: '', b24: '', a24: '' },
+      full:  { b25: '', a25: '', f25: '', b24: '', a24: '' },
+    },
+  };
+
+  // --- テキストセクション抽出 ---
+  // OCRでは「概況」「課題」「対策」「次月予測」が見出しとして登場する
+  const textDefs = [
+    { key: 'gaiyou',      words: ['概況'] },
+    { key: 'kadai',       words: ['課題'] },
+    { key: 'taisaku',     words: ['対策'] },
+    { key: 'jiyo_yosoku', words: ['次月予測', '次月見通し'] },
+  ];
+
+  const positions = [];
+  textDefs.forEach(({ key, words }) => {
+    words.forEach(word => {
+      const idx = text.indexOf(word);
+      if (idx !== -1) positions.push({ key, idx, len: word.length });
     });
+  });
+  positions.sort((a, b) => a.idx - b.idx);
 
-    const text = response.content[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return res.json({ success: false, error: 'データを抽出できませんでした' });
+  const seenKeys = new Set();
+  positions.forEach(({ key, idx, len }, i) => {
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    const endIdx = i + 1 < positions.length ? positions[i + 1].idx : text.length;
+    const content = text.slice(idx + len, endIdx).replace(/^[\s:：\n\r]+/, '').trim();
+    if (content) result[key] = content;
+  });
 
-    res.json({ success: true, data: JSON.parse(match[0]) });
+  // --- テーブル数値抽出 ---
+  // 数値正規化: "93 772" → "93772", "4：930" → "4930"
+  function normLine(line) {
+    let s = line;
+    s = s.replace(/(\d)\s+(\d)/g, '$1$2');
+    s = s.replace(/(\d)\s+(\d)/g, '$1$2'); // 2回適用（3グループ対応）
+    s = s.replace(/[,，]/g, '');
+    return s;
+  }
+
+  // 行から金額候補を抽出（4〜7桁の整数、年号2020-2100を除外）
+  function extractAmounts(line) {
+    const normalized = normLine(line);
+    const matches = normalized.match(/\d+/g) || [];
+    return matches.filter(m => {
+      if (m.length < 4 || m.length > 7) return false;
+      const n = parseInt(m);
+      if (n >= 2000 && n <= 2100) return false; // 年号除外
+      return n >= 1000;
+    });
+  }
+
+  const lines = text.split(/\r?\n/).map(l => l.trim());
+
+  // セクション境界を検出（最初に見つかった行を使用）
+  const sectionDefs = [
+    { id: 'tsuki', re: /単月/ },
+    { id: 'q2',    re: /四半期|四半/ },
+    { id: 'cum',   re: /累積|累計/ },
+    { id: 'full',  re: /通期/ },
+  ];
+
+  const sectionBoundaries = [];
+  lines.forEach((line, i) => {
+    sectionDefs.forEach(({ id, re }) => {
+      if (re.test(line) && !sectionBoundaries.find(s => s.id === id)) {
+        sectionBoundaries.push({ id, start: i });
+      }
+    });
+  });
+  sectionBoundaries.sort((a, b) => a.start - b.start);
+
+  sectionBoundaries.forEach(({ id, start }, idx) => {
+    const end = idx + 1 < sectionBoundaries.length ? sectionBoundaries[idx + 1].start : lines.length;
+    const secLines = lines.slice(start, end);
+
+    // 25期行と24期行を探す
+    const lines25 = secLines.filter(l => /25/.test(l) && !/24/.test(l));
+    const lines24 = secLines.filter(l => /24/.test(l));
+
+    let amounts25 = lines25.flatMap(l => extractAmounts(l));
+    let amounts24 = lines24.flatMap(l => extractAmounts(l));
+
+    // 行内に数値がない場合 → 数値が別行に出力されている可能性
+    // セクション内の全数値を収集して、前半=25期、後半=24期と推定
+    if (amounts25.length === 0 && amounts24.length === 0) {
+      const allAmounts = secLines.flatMap(l => extractAmounts(l));
+      const half = Math.ceil(allAmounts.length / 2);
+      amounts25 = allAmounts.slice(0, half);
+      amounts24 = allAmounts.slice(half);
+    }
+
+    // 列の割り当て: b25, a25, f25（着地予測、あれば3番目）
+    if (amounts25[0]) result.tableData[id].b25 = amounts25[0];
+    if (amounts25[1]) result.tableData[id].a25 = amounts25[1];
+    if (amounts25[2]) result.tableData[id].f25 = amounts25[2];
+    if (amounts24[0]) result.tableData[id].b24 = amounts24[0];
+    if (amounts24[1]) result.tableData[id].a24 = amounts24[1];
+  });
+
+  return result;
+}
+
+// 画像解析エンドポイント（Windows OCR + ローカルパーサー）
+router.post('/analyze-image', upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: '画像が指定されていません' });
+
+  try {
+    const ocrText = await windowsOcr(req.file.buffer);
+    const parsed = parseOcrLocal(ocrText);
+    res.json({ success: true, text: ocrText, parsed });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
