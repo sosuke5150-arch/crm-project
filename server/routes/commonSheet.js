@@ -9,13 +9,14 @@ const os = require('os');
 const path = require('path');
 
 const upload = multer({ storage: multer.memoryStorage() });
-const PS_SCRIPT = path.join(__dirname, '..', 'ocr.ps1');
+const PY_SCRIPT = path.join(__dirname, '..', 'ocr_easy.py');
+const PYTHON_BIN = process.env.PYTHON_PATH || 'python';
 
-// Windows OCR（Windows.Media.Ocr）でテキスト抽出
-async function windowsOcr(imageBuffer) {
-  // Windows OCR は高解像度ほど精度が上がる。最低3000px幅になるよう拡大
+// EasyOCR（Python）でテキスト抽出
+async function easyOcr(imageBuffer) {
+  // 高解像度ほど精度が上がる。最低3000px幅になるよう拡大
   const meta = await sharp(imageBuffer).metadata();
-  const targetWidth = Math.max(meta.width * 3, 3000);
+  const targetWidth = Math.max(meta.width * 2, 2000);
   const pngBuffer = await sharp(imageBuffer)
     .resize(Math.round(targetWidth), null, { fit: 'inside', withoutEnlargement: false })
     .sharpen({ sigma: 1.0, m1: 1.5, m2: 2.0 })
@@ -28,12 +29,13 @@ async function windowsOcr(imageBuffer) {
   try {
     return await new Promise((resolve, reject) => {
       execFile(
-        'powershell',
-        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS_SCRIPT, tmpFile],
-        { timeout: 30000, encoding: 'buffer' },
+        PYTHON_BIN,
+        [PY_SCRIPT, tmpFile],
+        { timeout: 120000, encoding: 'buffer', env: { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' } },
         (err, stdout, stderr) => {
-          if (err) reject(new Error(stderr.toString('utf8') || err.message));
-          else resolve(stdout.toString('utf8').trim());
+          const out = stdout.toString('utf8').trim();
+          if (err && !out) reject(new Error(stderr.toString('utf8').trim() || err.message));
+          else resolve(out);
         }
       );
     });
@@ -45,6 +47,7 @@ async function windowsOcr(imageBuffer) {
 // ===== OCRテキストのローカルパーサー（API不要）=====
 function parseOcrLocal(text) {
   const result = {
+    title: null, author: null,
     gaiyou: null, kadai: null, taisaku: null, jiyo_yosoku: null,
     tableData: {
       tsuki: { b25: '', a25: '', f25: '', b24: '', a24: '' },
@@ -366,6 +369,15 @@ function parseOcrLocal(text) {
     }
   }
 
+  // --- タイトル・著者抽出（linesが宣言された後で実行）---
+  const cleanLines = lines.map(l => l.replace(/\s+/g, ''));
+  // タイトル: "25期4月全体会議（3月報告）" のようなパターン
+  const titleLine = lines.find((l, i) => i < 15 && /\d+期.*会議/.test(cleanLines[i]));
+  if (titleLine) result.title = titleLine.trim();
+  // 著者: コロン（：）を含む行
+  const authorLine = lines.find((l, i) => i < 20 && /[：:]/.test(cleanLines[i]) && cleanLines[i].length > 5 && !/会議|報告/.test(cleanLines[i]));
+  if (authorLine) result.author = authorLine.trim();
+
   return result;
 }
 
@@ -374,7 +386,7 @@ router.post('/analyze-image', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: '画像が指定されていません' });
 
   try {
-    const ocrText = await windowsOcr(req.file.buffer);
+    const ocrText = await easyOcr(req.file.buffer);
     const parsed = parseOcrLocal(ocrText);
     const fs2 = require('fs');
     fs2.writeFileSync('C:/Users/ikuta/test/crm-project/server/ocr_debug.log',

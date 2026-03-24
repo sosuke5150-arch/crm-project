@@ -102,6 +102,12 @@ export default function CommonSheet() {
   const [taisaku,     setTaisaku]     = useState('');
   const [jiyoYosoku,  setJiyoYosoku]  = useState('');
   const saveTimer = useRef(null);
+  const titleRef  = useRef(null);
+  const authorRef = useRef(null);
+
+  // contentEditable はReactが直接DOM更新しないためrefで同期
+  useEffect(() => { if (titleRef.current && titleRef.current.textContent !== title) titleRef.current.textContent = title; }, [title]);
+  useEffect(() => { if (authorRef.current && authorRef.current.textContent !== author) authorRef.current.textContent = author; }, [author]);
 
   // 画像読み取り
   const [imgAnalyzing,  setImgAnalyzing]  = useState(false);
@@ -130,6 +136,8 @@ export default function CommonSheet() {
 
   const applyParsed = (parsed) => {
     const fullPatch = {};
+    if (parsed.title)       { setTitle(parsed.title);             fullPatch.title = parsed.title; }
+    if (parsed.author)      { setAuthor(parsed.author);           fullPatch.author = parsed.author; }
     if (parsed.gaiyou)      { setGaiyou(parsed.gaiyou);           fullPatch.gaiyou = parsed.gaiyou; }
     if (parsed.kadai)       { setKadai(parsed.kadai);             fullPatch.kadai = parsed.kadai; }
     if (parsed.taisaku)     { setTaisaku(parsed.taisaku);         fullPatch.taisaku = parsed.taisaku; }
@@ -332,13 +340,12 @@ export default function CommonSheet() {
 
       {/* タイトル */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
-        <h2 contentEditable suppressContentEditableWarning
+        <h2 ref={titleRef} contentEditable suppressContentEditableWarning
           onBlur={e => { setTitle(e.currentTarget.textContent); save({ title: e.currentTarget.textContent }); }}
-          style={{ margin: 0, fontSize: '18px', fontWeight: 700, outline: 'none', color: S.text }}
-          suppressContentEditableWarning>
+          style={{ margin: 0, fontSize: '18px', fontWeight: 700, outline: 'none', color: S.text }}>
           {title}
         </h2>
-        <div contentEditable suppressContentEditableWarning
+        <div ref={authorRef} contentEditable suppressContentEditableWarning
           onBlur={e => { setAuthor(e.currentTarget.textContent); save({ author: e.currentTarget.textContent }); }}
           style={{ fontSize: '12px', color: S.textSub, outline: 'none' }}>
           {author}
