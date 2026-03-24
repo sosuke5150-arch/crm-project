@@ -70,6 +70,29 @@ const DEFAULT_TABLE = {
   full:  { b25: '93772', a25: '55001', f25: '95826', b24: '79632', a24: '47406' },
 };
 
+function NumCell({ value, onChange, bg }) {
+  const S = getSheetColors();
+  return (
+    <td style={{ border: S.border, padding: 0, background: bg, fontSize: '12px', color: S.text, textAlign: 'right', fontWeight: 700 }}>
+      <input type="text" value={fmtNum(value)} onChange={e => onChange(e.target.value.replace(/,/g, ''))}
+        onFocus={e => { e.target.style.outline = `1px solid ${S.calcColor}`; e.target.select(); }}
+        onBlur={e => { e.target.style.outline = 'none'; }}
+        style={{ width: '100%', padding: '5px 6px', border: 'none', outline: 'none', background: 'transparent',
+          fontSize: '12px', textAlign: 'right', fontWeight: 700, color: S.text, boxSizing: 'border-box', fontFamily: 'inherit' }} />
+    </td>
+  );
+}
+
+function CalcCell({ value, bg }) {
+  const S = getSheetColors();
+  const isNeg = typeof value === 'string' && value.startsWith('-');
+  return (
+    <td style={{ border: S.border, padding: '5px 6px', background: bg, fontSize: '12px', color: isNeg ? S.negColor : S.calcColor, textAlign: 'right', fontWeight: 700 }}>
+      {value}
+    </td>
+  );
+}
+
 export default function CommonSheet() {
   const [tableData,   setTableData]   = useState(DEFAULT_TABLE);
   const [title,       setTitle]       = useState('25期3月全体会議（2月報告）');
@@ -208,25 +231,6 @@ export default function CommonSheet() {
   const td = (bg, extra = {}) => ({
     border: S.border, padding: '5px 6px', background: bg, fontSize: '12px', color: S.text, ...extra,
   });
-
-  const NumCell = ({ value, onChange, bg }) => (
-    <td style={td(bg, { textAlign: 'right', fontWeight: 700, padding: 0 })}>
-      <input type="text" value={fmtNum(value)} onChange={e => onChange(e.target.value.replace(/,/g, ''))}
-        onFocus={e => { e.target.style.outline = `1px solid ${S.calcColor}`; e.target.select(); }}
-        onBlur={e => { e.target.style.outline = 'none'; }}
-        style={{ width: '100%', padding: '5px 6px', border: 'none', outline: 'none', background: 'transparent',
-          fontSize: '12px', textAlign: 'right', fontWeight: 700, color: S.text, boxSizing: 'border-box', fontFamily: 'inherit' }} />
-    </td>
-  );
-
-  const CalcCell = ({ value, bg }) => {
-    const isNeg = typeof value === 'string' && value.startsWith('-');
-    return (
-      <td style={td(bg, { textAlign: 'right', color: isNeg ? S.negColor : S.calcColor, fontWeight: 700 })}>
-        {value}
-      </td>
-    );
-  };
 
   const SectionRow = ({ label }) => (
     <tr>

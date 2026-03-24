@@ -47,7 +47,7 @@ function getThemeColors(theme) {
       chartLegend:  '#374151',
       chartActual:  '#2e75b6',
       chartForecast:'#ed7d31',
-      chartTarget:  '#9dc3e6',
+      chartTarget:  '#a5a5a5',
       pieColors:    ['#2e75b6','#7e3af2','#70ad47','#ed7d31','#c0392b','#4caf50','#2dd4bf','#fb923c','#a78bfa','#00b4d8','#ffc000','#e91e63'],
       statusColors: { done:'#16a34a', monthly:'#2e75b6', shikakake:'#d97706', won:'#2e75b6', developing:'#1d4ed8', forecast:'#d97706', proposing:'#7e22ce', planned:'#6b7280', open:'#6b7280' },
       scrollbarTrack: '#e8ecf0',
@@ -1222,7 +1222,7 @@ tr:hover td{background:${C.bgPanel}}
       data: {
         labels: yLabels,
         datasets: [
-          { label: '目標', data: yTarget, backgroundColor: '${C.colorTarget}', borderRadius: 2 },
+          { label: '目標', data: yTarget, backgroundColor: '${C.chartTarget}', borderRadius: 2 },
           { label: '実績', data: yBar2,   backgroundColor: yBar2Colors, borderRadius: 2 },
           { label: '見込', data: yBar3,   backgroundColor: '${C.chartForecast}', borderRadius: 2 }
         ]
@@ -1249,7 +1249,7 @@ tr:hover td{background:${C.bgPanel}}
       data: {
         labels: DATA.periodData.map(function(p) { return p.name; }),
         datasets: [
-          { label: '予算', data: DATA.periodData.map(function(p) { return p.budget; }),           backgroundColor: '${C.colorTarget}', borderRadius: 4 },
+          { label: '予算', data: DATA.periodData.map(function(p) { return p.budget; }),           backgroundColor: '${C.chartTarget}', borderRadius: 4 },
           { label: '実績', data: DATA.periodData.map(function(p) { return p.actual; }),           backgroundColor: '${C.chartActual}', borderRadius: 4 },
           { label: '見込', data: DATA.periodData.map(function(p) { return p.forecast; }),         backgroundColor: '${C.chartForecast}', borderRadius: 4 }
         ]
