@@ -338,6 +338,9 @@ export default function CommonSheet() {
         </div>
       )}
 
+      {/* 共通シートラベル */}
+      <div style={{ fontSize: '12px', color: S.textSub, marginBottom: '4px' }}>共通シート</div>
+
       {/* タイトル */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
         <h2 ref={titleRef} contentEditable suppressContentEditableWarning

@@ -629,6 +629,7 @@ tr:hover td{background:${C.bgPanel}}
 
 <!-- Page 1b: Common Sheet -->
 <div class="slide" style="overflow:auto">
+  <div style="font-size:12px;color:${C.textMuted};margin-bottom:4px">共通シート</div>
   <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end">
     <h2 style="font-size:20px;margin:0;color:${C.textHeading}">${csEsc(cs.title)}</h2>
     <span style="font-size:12px;color:${C.textMuted}">${csEsc(cs.author)}</span>
@@ -659,112 +660,6 @@ tr:hover td{background:${C.bgPanel}}
       ${csTextRow('次月予測', cs.jiyo_yosoku)}
     </tbody>
   </table>
-</div>
-
-<!-- Page 2: KPI Dashboard (Dashboard style) -->
-<div class="slide">
-  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
-
-  <!-- 統計カード上段: 案件数/完了数/見込数/提案中 -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
-    ${[
-      {label:'案件数',  value:totalCount,    color:C.accent},
-      {label:'完了数',  value:doneCount,     color:C.accent},
-      {label:'見込数',  value:forecastCount, color:C.accent},
-      {label:'提案中',  value:proposingCount,color:C.accent},
-    ].map(s => `<div class="panel" style="padding:14px 16px">
-      <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
-      <div style="font-size:28px;font-weight:700;color:${s.color}">${s.value}</div>
-    </div>`).join('')}
-  </div>
-
-  <!-- 統計カード下段: 売上目標/確定売上額/着地予想額 -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-    ${[
-      {label:'通期売上目標',   value:fmt(totalTarget),              color:C.accent},
-      {label:'確定売上',       value:fmt(totalActual),              color:C.colorActual},
-      {label:'着地予想額（円）', value:fmt(totalActual+totalForecast),color:C.colorForecast},
-    ].map(s => `<div class="panel" style="padding:14px 16px">
-      <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
-      <div style="font-size:24px;font-weight:700;color:${s.color}">${s.value}</div>
-    </div>`).join('')}
-  </div>
-
-  <!-- 月別売上額 -->
-  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
-    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別売上額</h3>
-    <canvas id="monthlyStackedBar" height="80"></canvas>
-  </div>
-
-  <!-- 月別 予実比較 -->
-  <div class="panel" style="padding:16px 20px">
-    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別 予実比較</h3>
-    <canvas id="yojitsuBar" height="80"></canvas>
-  </div>
-</div>
-
-<!-- Page 3: Period Comparison + Customer -->
-<div class="slide">
-  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
-
-  <!-- 上期・下期・通期 予実対比 -->
-  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
-    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">上期・下期・通期　予実対比</h3>
-    <canvas id="periodBar" height="90"></canvas>
-  </div>
-
-  <!-- 上期/下期/通期 サマリーカード -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-    ${periodData.map(p => {
-      const actual = p.actual + p.forecast;
-      const diff   = actual - p.budget;
-      const rate   = p.budget > 0 ? Math.round(actual/p.budget*100) : 0;
-      const dColor = diff > 0 ? C.colorGain : diff < 0 ? C.colorLoss : C.textMuted;
-      const rColor = rate >= 100 ? C.colorGain : rate >= 80 ? C.colorWarn : C.colorLoss;
-      return `<div class="panel" style="padding:14px 16px;font-size:12px">
-        <div style="font-weight:700;font-size:13px;color:${C.textMuted};margin-bottom:10px">${p.name}</div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="color:${C.textMuted}">予算</span>
-          <span style="color:${C.colorTarget};font-weight:600">¥${fmt(p.budget)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="color:${C.textMuted}">実績${p.forecast>0?'＋見込':''}</span>
-          <span style="color:${C.accent};font-weight:600">¥${fmt(actual)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;border-top:1px solid ${C.border};padding-top:4px;margin-top:2px">
-          <span style="color:${C.textMuted}">差異</span>
-          <span style="color:${dColor};font-weight:700">${diff>0?'+':''}¥${fmt(diff)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between">
-          <span style="color:${C.textMuted}">達成率</span>
-          <span style="color:${rColor};font-weight:700">${rate}%</span>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>
-
-  <!-- 顧客別 取引実績 -->
-  <div class="panel" style="padding:16px 20px">
-    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:600;color:${C.textHeading}">顧客別 取引実績</h3>
-      <span style="font-size:12px;color:${C.textMuted}">合計取引額：<span style="color:${C.accent};font-weight:700">¥${fmt(allCustomers.reduce((s,c)=>s+c.total,0))}</span></span>
-    </div>
-    <div style="display:flex;gap:24px;align-items:center">
-      <div style="flex-shrink:0">
-        <canvas id="custDonut" width="200" height="200"></canvas>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
-        ${allCustomers.map((c,i) => {
-          const col = C.pieColors[i % C.pieColors.length];
-          return `<div style="display:flex;align-items:center;gap:8px;font-size:12px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
-            <span style="color:${C.textBody};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</span>
-            <span style="color:${C.textHeading};font-weight:600;white-space:nowrap">¥${fmt(c.total)}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Page 5: Previous Month Sales -->
@@ -934,6 +829,112 @@ tr:hover td{background:${C.bgPanel}}
       <div style="font-size:13px;line-height:1.9;color:${C.policyColor};white-space:pre-wrap">${escapeHtml(policyText)}</div>
     </div>
 
+  </div>
+</div>
+
+<!-- Page 2: KPI Dashboard (Dashboard style) -->
+<div class="slide">
+  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
+
+  <!-- 統計カード上段: 案件数/完了数/見込数/提案中 -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+    ${[
+      {label:'案件数',  value:totalCount,    color:C.accent},
+      {label:'完了数',  value:doneCount,     color:C.accent},
+      {label:'見込数',  value:forecastCount, color:C.accent},
+      {label:'提案中',  value:proposingCount,color:C.accent},
+    ].map(s => `<div class="panel" style="padding:14px 16px">
+      <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
+      <div style="font-size:28px;font-weight:700;color:${s.color}">${s.value}</div>
+    </div>`).join('')}
+  </div>
+
+  <!-- 統計カード下段: 売上目標/確定売上額/着地予想額 -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+    ${[
+      {label:'通期売上目標',   value:fmt(totalTarget),              color:C.accent},
+      {label:'確定売上',       value:fmt(totalActual),              color:C.colorActual},
+      {label:'着地予想額（円）', value:fmt(totalActual+totalForecast),color:C.colorForecast},
+    ].map(s => `<div class="panel" style="padding:14px 16px">
+      <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
+      <div style="font-size:24px;font-weight:700;color:${s.color}">${s.value}</div>
+    </div>`).join('')}
+  </div>
+
+  <!-- 月別売上額 -->
+  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
+    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別売上額</h3>
+    <canvas id="monthlyStackedBar" height="80"></canvas>
+  </div>
+
+  <!-- 月別 予実比較 -->
+  <div class="panel" style="padding:16px 20px">
+    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別 予実比較</h3>
+    <canvas id="yojitsuBar" height="80"></canvas>
+  </div>
+</div>
+
+<!-- Page 3: Period Comparison + Customer -->
+<div class="slide">
+  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
+
+  <!-- 上期・下期・通期 予実対比 -->
+  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
+    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">上期・下期・通期　予実対比</h3>
+    <canvas id="periodBar" height="90"></canvas>
+  </div>
+
+  <!-- 上期/下期/通期 サマリーカード -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+    ${periodData.map(p => {
+      const actual = p.actual + p.forecast;
+      const diff   = actual - p.budget;
+      const rate   = p.budget > 0 ? Math.round(actual/p.budget*100) : 0;
+      const dColor = diff > 0 ? C.colorGain : diff < 0 ? C.colorLoss : C.textMuted;
+      const rColor = rate >= 100 ? C.colorGain : rate >= 80 ? C.colorWarn : C.colorLoss;
+      return `<div class="panel" style="padding:14px 16px;font-size:12px">
+        <div style="font-weight:700;font-size:13px;color:${C.textMuted};margin-bottom:10px">${p.name}</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:${C.textMuted}">予算</span>
+          <span style="color:${C.colorTarget};font-weight:600">¥${fmt(p.budget)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:${C.textMuted}">実績${p.forecast>0?'＋見込':''}</span>
+          <span style="color:${C.accent};font-weight:600">¥${fmt(actual)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;border-top:1px solid ${C.border};padding-top:4px;margin-top:2px">
+          <span style="color:${C.textMuted}">差異</span>
+          <span style="color:${dColor};font-weight:700">${diff>0?'+':''}¥${fmt(diff)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:${C.textMuted}">達成率</span>
+          <span style="color:${rColor};font-weight:700">${rate}%</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- 顧客別 取引実績 -->
+  <div class="panel" style="padding:16px 20px">
+    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:600;color:${C.textHeading}">顧客別 取引実績</h3>
+      <span style="font-size:12px;color:${C.textMuted}">合計取引額：<span style="color:${C.accent};font-weight:700">¥${fmt(allCustomers.reduce((s,c)=>s+c.total,0))}</span></span>
+    </div>
+    <div style="display:flex;gap:24px;align-items:center">
+      <div style="flex-shrink:0">
+        <canvas id="custDonut" width="200" height="200"></canvas>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
+        ${allCustomers.map((c,i) => {
+          const col = C.pieColors[i % C.pieColors.length];
+          return `<div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
+            <span style="color:${C.textBody};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</span>
+            <span style="color:${C.textHeading};font-weight:600;white-space:nowrap">¥${fmt(c.total)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
   </div>
 </div>
 
