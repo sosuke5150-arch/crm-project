@@ -10,6 +10,7 @@ import LowerHalfSales from './components/LowerHalfSales';
 import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import CommonSheet from './components/CommonSheet';
+import OutsourcingManagement from './components/OutsourcingManagement';
 import './App.css';
 
 const THEMES = [
@@ -74,6 +75,7 @@ function App() {
         <button className={page === 'lower-half-sales' ? 'active' : ''} onClick={() => setPage('lower-half-sales')}>下期売上一覧</button>
         <button className={['projects', 'project-detail'].includes(page) ? 'active' : ''} onClick={goToProjectList}>プロジェクト管理</button>
         <button className={page === 'common-sheet' ? 'active' : ''} onClick={() => setPage('common-sheet')}>共通シート</button>
+        <button className={page === 'outsourcing' ? 'active' : ''} onClick={() => setPage('outsourcing')}>外注管理</button>
 
         <div style={{ marginTop: 'auto', padding: '16px 16px 8px' }}>
           <button
@@ -108,6 +110,7 @@ function App() {
         {page === 'projects' && <ProjectList onSelect={goToProject} />}
         {page === 'project-detail' && <ProjectDetail dealId={projectDealId} onBack={goToProjectList} onNavigate={goToProject} />}
         {page === 'common-sheet' && <CommonSheet />}
+        {page === 'outsourcing' && <OutsourcingManagement />}
       </main>
     </div>
   );

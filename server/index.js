@@ -14,6 +14,7 @@ app.use('/export-ppt', require('./routes/exportPPT'));
 app.use('/export-html', require('./routes/exportHTML'));
 app.use('/notes', require('./routes/notes'));
 app.use('/common-sheet', require('./routes/commonSheet'));
+app.use('/outsourcing', require('./routes/outsourcing'));
 
 // ダッシュボード用サマリー
 app.get('/summary', (req, res) => {

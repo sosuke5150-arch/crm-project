@@ -4,7 +4,7 @@ const API = 'http://localhost:3001';
 
 const UPPER_MONTHS = ['9月', '10月', '11月', '12月', '1月', '2月'];
 const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
-const FORECAST_STATUSES = new Set(['forecast', 'developing']);
+const FORECAST_STATUSES = new Set(['forecast', 'developing', 'proposing']);
 
 const toM = ds => (ds || '').replace('検収', '').trim();
 const monthOrder = dateStr => {
@@ -77,8 +77,11 @@ export default function UpperHalfSales() {
           <tbody>
             {upperDeals.map((deal, i) => {
               const isShikakake = deal.status === 'shikakake';
+              const isForecast = FORECAST_STATUSES.has(deal.status);
               const isNew = deal.topics && deal.topics.toUpperCase().includes('NEW');
-              const bg = i % 2 === 0 ? 'var(--bg-inner)' : 'var(--bg-input)';
+              const bg = isForecast
+                ? 'rgba(251,146,60,0.05)'
+                : i % 2 === 0 ? 'var(--bg-inner)' : 'var(--bg-input)';
               return (
                 <tr key={deal.id} style={{ background: bg }}>
                   <td style={{ padding: '7px 12px', border, color: 'var(--customer-color)', fontWeight: 500 }}>
@@ -97,6 +100,11 @@ export default function UpperHalfSales() {
                     {isShikakake && (
                       <span style={{ color: light ? '#c2410c' : '#fb923c', fontSize: '11px', whiteSpace: 'nowrap' }}>
                         仕掛かり計上
+                      </span>
+                    )}
+                    {isForecast && (
+                      <span style={{ color: light ? '#c2410c' : '#fb923c', fontSize: '11px', fontWeight: 600 }}>
+                        見込
                       </span>
                     )}
                     {isNew && (
