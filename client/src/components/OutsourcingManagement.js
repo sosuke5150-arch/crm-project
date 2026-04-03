@@ -21,7 +21,7 @@ function getColors() {
     bgHeaderText:  '#ffffff',
     bgBase:        '#ffffff',
     bgAlt:         '#f2f2f2',
-    bgSummaryRow:  '#b8cce4',
+    bgSummaryRow:  '#dce8f4',
     text:          '#1a1a1a',
     textSub:       '#555',
     calcColor:     '#1a5fa8',
@@ -33,6 +33,10 @@ function getColors() {
     bgModalInput:  '#ffffff',
     bgBtn:         '#2e75b6',
     bgBtnCancel:   '#e0e0e0',
+    bgBudgetRow:      '#dce6f1',
+    bgActualRow:      '#e2efda',
+    budgetNumColor:   '#1a1a1a',
+    actualNumColor:   '#1a1a1a',
   };
   if (theme === 'earth') return {
     border:        '1px solid #b08050',
@@ -40,7 +44,7 @@ function getColors() {
     bgHeaderText:  '#fff0d8',
     bgBase:        '#faf6ef',
     bgAlt:         '#f0e8d8',
-    bgSummaryRow:  '#d0b890',
+    bgSummaryRow:  '#e8d8c0',
     text:          '#3a2410',
     textSub:       '#7a5030',
     calcColor:     '#8b5a1a',
@@ -52,6 +56,10 @@ function getColors() {
     bgModalInput:  '#2a1a0f',
     bgBtn:         '#7a4010',
     bgBtnCancel:   '#5a3820',
+    bgBudgetRow:      '#f0e8d0',
+    bgActualRow:      '#e8f0e0',
+    budgetNumColor:   '#3a2410',
+    actualNumColor:   '#3a2410',
   };
   return {
     border:        '1px solid #2a3a58',
@@ -71,6 +79,10 @@ function getColors() {
     bgModalInput:  '#0d1628',
     bgBtn:         '#2a5fa8',
     bgBtnCancel:   '#2a3a58',
+    bgBudgetRow:      '#0e1f3a',
+    bgActualRow:      '#0a1a28',
+    budgetNumColor:   '#90c8f0',
+    actualNumColor:   '#facc15',
   };
 }
 
@@ -148,6 +160,9 @@ export default function OutsourcingManagement() {
   const [newBpName,   setNewBpName]   = useState('');
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft,   setBudgetDraft]   = useState('');
+  const [memo,          setMemo]          = useState('');
+  const [editingMemo,   setEditingMemo]   = useState(false);
+  const [memoDraft,     setMemoDraft]     = useState('');
 
   // ===== データ読み込み =====
   useEffect(() => {
@@ -162,6 +177,7 @@ export default function OutsourcingManagement() {
         d.tasks.forEach(t => { tm[`${t.bp_id}-${t.year_month}`] = { task_name: t.task_name, task_color: t.task_color }; });
         setTasks(tm);
         setAnnualBudget(Number(d.settings.annual_budget) || 0);
+        setMemo(d.settings.memo || '');
       });
   }, []);
 
@@ -335,9 +351,32 @@ export default function OutsourcingManagement() {
       )}
 
       {/* ===== ページヘッダー ===== */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '16px' }}>
-        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>■25期 外注予算</h2>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '12px' }}>
+        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>■25期 外注予算管理表</h2>
         <span style={{ fontSize: '12px', color: S.textSub }}>(税別)</span>
+      </div>
+
+      {/* ===== 25期外注予算入力行 ===== */}
+      <div style={{ marginBottom: '16px' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: '13px', width: 'auto' }}>
+          <tbody>
+            <tr>
+              <td style={{ ...tdBase, padding: '4px 10px', fontWeight: 600, whiteSpace: 'nowrap' }}>年間外注予算</td>
+              <AmountCell
+                value={annualBudget}
+                S={S}
+                style={{ minWidth: '100px', maxWidth: '120px', color: S.budgetNumColor }}
+                onSave={val => {
+                  setAnnualBudget(val);
+                  fetch(`${API}/outsourcing/settings`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'annual_budget', value: String(val) }),
+                  });
+                }}
+              />
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* ===== 上部テーブル（予算・実績） ===== */}
@@ -346,58 +385,53 @@ export default function OutsourcingManagement() {
           <thead>
             <tr>
               <th style={{ ...thStyle, width: '110px' }}>BP</th>
-              <th style={{ ...thStyle, width: '36px' }}></th>
+              <th style={{ ...thStyle, width: '36px' }}>予実</th>
               {MONTH_LABELS.map((label, i) => (
                 <th key={MONTHS[i]} style={{ ...thStyle, minWidth: '84px' }}>{label}</th>
               ))}
               <th style={{ ...thStyle, minWidth: '90px' }}>合計</th>
-              <th style={{ ...thStyle, width: '60px' }}></th>
             </tr>
           </thead>
           <tbody>
             {bps.map((bp, bpIdx) => {
               const hlColor = bp.highlight_color || null;
-              const rowBg = hlColor || (bpIdx % 2 === 0 ? S.bgBase : S.bgAlt);
+              const bpRowBg   = hlColor || S.bgBudgetRow;
+              const actualRowBg = hlColor || S.bgBase;
               return [
                 // 予算行
-                <tr key={`${bp.id}-b`} style={{ background: rowBg }}>
+                <tr key={`${bp.id}-b`} style={{ background: bpRowBg }}>
                   <td rowSpan={2}
-                    style={{ ...tdBase, textAlign: 'center', fontWeight: 700, cursor: 'pointer', verticalAlign: 'middle' }}
+                    style={{ ...tdBase, textAlign: 'center', fontWeight: 700, cursor: 'pointer', verticalAlign: 'middle', position: 'relative', background: hlColor || S.bgBase }}
                     onClick={() => setEditingBp({ id: bp.id, name: bp.name, note: bp.note || '', highlight_color: bp.highlight_color || '' })}
                     title="クリックして編集"
                   >
                     {bp.name}
-                  </td>
-                  <td style={{ ...tdBase, color: S.textSub, fontSize: '11px', textAlign: 'center' }}>予算</td>
-                  {MONTHS.map(ym => (
-                    <AmountCell key={ym} value={getAmount(bp.id, ym, 'budget')} S={S}
-                      style={{ background: rowBg }}
-                      onSave={val => saveAmount(bp.id, ym, 'budget', val)} />
-                  ))}
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 700, color: S.calcColor }}>
-                    {fmtNum(bpBudgetTotal(bp.id))}
-                  </td>
-                  <td rowSpan={2} style={{ ...tdBase, textAlign: 'center', verticalAlign: 'middle' }}>
-                    {bp.note
-                      ? <span style={{ fontSize: '11px', color: S.textSub }}>{bp.note}</span>
-                      : null
-                    }
+                    {bp.note && <div style={{ fontSize: '10px', color: S.textSub, fontWeight: 400 }}>{bp.note}</div>}
                     <button
-                      onClick={() => deleteBp(bp.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.negColor, fontSize: '16px', lineHeight: 1, marginLeft: bp.note ? '6px' : 0 }}
+                      onClick={e => { e.stopPropagation(); deleteBp(bp.id); }}
+                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'none', border: 'none', cursor: 'pointer', color: S.negColor, fontSize: '11px', lineHeight: 1, padding: '0' }}
                       title="削除"
                     >×</button>
                   </td>
+                  <td style={{ ...tdBase, color: S.textSub, fontSize: '11px', textAlign: 'center', background: bpRowBg }}>予算</td>
+                  {MONTHS.map(ym => (
+                    <AmountCell key={ym} value={getAmount(bp.id, ym, 'budget')} S={S}
+                      style={{ background: bpRowBg, color: S.budgetNumColor }}
+                      onSave={val => saveAmount(bp.id, ym, 'budget', val)} />
+                  ))}
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 700, color: S.calcColor, background: bpRowBg }}>
+                    {fmtNum(bpBudgetTotal(bp.id))}
+                  </td>
                 </tr>,
                 // 実績行
-                <tr key={`${bp.id}-a`} style={{ background: rowBg }}>
-                  <td style={{ ...tdBase, color: S.textSub, fontSize: '11px', textAlign: 'center' }}>実績</td>
+                <tr key={`${bp.id}-a`} style={{ background: actualRowBg }}>
+                  <td style={{ ...tdBase, color: S.textSub, fontSize: '11px', textAlign: 'center', background: actualRowBg }}>実績</td>
                   {MONTHS.map(ym => (
                     <AmountCell key={ym} value={getAmount(bp.id, ym, 'actual')} S={S}
-                      style={{ background: rowBg }}
+                      style={{ background: actualRowBg, color: S.actualNumColor }}
                       onSave={val => saveAmount(bp.id, ym, 'actual', val)} />
                   ))}
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 700, color: S.calcColor }}>
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 700, color: S.actualNumColor, background: actualRowBg }}>
                     {fmtNum(bpActualTotal(bp.id))}
                   </td>
                 </tr>,
@@ -409,7 +443,6 @@ export default function OutsourcingManagement() {
               <td colSpan={2} style={{ ...sumTd, textAlign: 'left' }}>月次予算計</td>
               {MONTHS.map(ym => <td key={ym} style={sumTd}>{fmtNumZ(monthBudgetTotal(ym))}</td>)}
               <td style={sumTd}>{fmtNumZ(MONTHS.reduce((s, ym) => s + monthBudgetTotal(ym), 0))}</td>
-              <td style={{ ...tdBase, background: S.bgSummaryRow }}></td>
             </tr>
 
             {/* 月次実績計 */}
@@ -417,7 +450,6 @@ export default function OutsourcingManagement() {
               <td colSpan={2} style={{ ...sumTd, textAlign: 'left' }}>月次実績計</td>
               {MONTHS.map(ym => <td key={ym} style={sumTd}>{fmtNumZ(monthActualTotal(ym))}</td>)}
               <td style={sumTd}>{fmtNumZ(MONTHS.reduce((s, ym) => s + monthActualTotal(ym), 0))}</td>
-              <td style={{ ...tdBase, background: S.bgSummaryRow }}></td>
             </tr>
 
             {/* 月次残予算 */}
@@ -427,8 +459,7 @@ export default function OutsourcingManagement() {
                 const v = monthBudgetTotal(ym) - monthActualTotal(ym);
                 return <td key={ym} style={{ ...sumTd, color: v < 0 ? S.negColor : S.calcColor }}>{fmtNumZ(v)}</td>;
               })}
-              <td style={sumTd}></td>
-              <td style={{ ...tdBase, background: S.bgSummaryRow }}></td>
+              {(() => { const v = MONTHS.reduce((s, ym) => s + monthBudgetTotal(ym) - monthActualTotal(ym), 0); return <td style={{ ...sumTd, color: v < 0 ? S.negColor : S.calcColor }}>{fmtNumZ(v)}</td>; })()}
             </tr>
 
             {/* 全体残予算 */}
@@ -438,7 +469,6 @@ export default function OutsourcingManagement() {
                 <td key={MONTHS[i]} style={{ ...sumTd, color: v < 0 ? S.negColor : S.calcColor }}>{fmtNumZ(v)}</td>
               ))}
               <td style={sumTd}></td>
-              <td style={{ ...tdBase, background: S.bgSummaryRow }}></td>
             </tr>
           </tbody>
         </table>
@@ -516,12 +546,12 @@ export default function OutsourcingManagement() {
       </div>
 
       {/* ===== 右下サマリー ===== */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: '13px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <table style={{ borderCollapse: 'collapse', fontSize: '13px', width: 'auto' }}>
           <tbody>
             <tr>
-              <td style={{ ...tdBase, padding: '5px 16px' }}>年間外注予算</td>
-              <td style={{ ...tdBase, padding: '5px 16px', textAlign: 'right', fontWeight: 700, color: S.calcColor, cursor: 'pointer', minWidth: '130px' }}
+              <td style={{ ...tdBase, padding: '4px 10px', whiteSpace: 'nowrap' }}>年間外注予算</td>
+              <td style={{ ...tdBase, padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: S.budgetNumColor, cursor: 'pointer', minWidth: '100px' }}
                 onClick={() => { setBudgetDraft(String(annualBudget)); setEditingBudget(true); }}>
                 {editingBudget ? (
                   <input
@@ -535,15 +565,81 @@ export default function OutsourcingManagement() {
               </td>
             </tr>
             <tr>
-              <td style={{ ...tdBase, padding: '5px 16px' }}>想定外注費合計</td>
-              <td style={{ ...tdBase, padding: '5px 16px', textAlign: 'right', fontWeight: 700, color: S.calcColor }}>{totalEstimate.toLocaleString()}</td>
+              <td style={{ ...tdBase, padding: '4px 10px', whiteSpace: 'nowrap' }}>想定外注費合計</td>
+              <td style={{ ...tdBase, padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: S.actualNumColor }}>{totalEstimate.toLocaleString()}</td>
             </tr>
             <tr>
-              <td style={{ ...tdBase, padding: '5px 16px' }}>差分</td>
-              <td style={{ ...tdBase, padding: '5px 16px', textAlign: 'right', fontWeight: 700, color: diff < 0 ? S.negColor : S.calcColor }}>{diff.toLocaleString()}</td>
+              <td style={{ ...tdBase, padding: '4px 10px', whiteSpace: 'nowrap' }}>差分</td>
+              <td style={{ ...tdBase, padding: '4px 10px', textAlign: 'right', fontWeight: 700, color: diff < 0 ? S.negColor : S.calcColor }}>{diff.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* ===== メモ ===== */}
+      <div style={{ marginTop: '24px', maxWidth: '860px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: S.text, marginBottom: '8px' }}>経緯メモ</div>
+        {editingMemo ? (
+          <div>
+            <textarea
+              autoFocus
+              value={memoDraft}
+              onChange={e => setMemoDraft(e.target.value)}
+              rows={10}
+              style={{
+                width: '100%', padding: '10px 12px', boxSizing: 'border-box',
+                border: S.border, borderRadius: '4px',
+                background: S.bgBase, color: S.text,
+                fontSize: '13px', lineHeight: '1.7', resize: 'vertical', outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <button
+                onClick={() => {
+                  setMemo(memoDraft);
+                  setEditingMemo(false);
+                  fetch(`${API}/outsourcing/settings`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'memo', value: memoDraft }),
+                  });
+                }}
+                style={{ padding: '4px 16px', background: S.bgBtn, border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+              >保存</button>
+              <button
+                onClick={() => setEditingMemo(false)}
+                style={{ padding: '4px 12px', background: 'transparent', border: S.border, borderRadius: '4px', color: S.textSub, cursor: 'pointer', fontSize: '12px' }}
+              >キャンセル</button>
+            </div>
+          </div>
+        ) : memo ? (
+          <div style={{ background: 'transparent', padding: '0', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '10px', right: '12px', display: 'flex', gap: '6px' }}>
+              <button
+                onClick={() => { setMemoDraft(memo); setEditingMemo(true); }}
+                style={{ padding: '3px 12px', background: 'transparent', border: S.border, borderRadius: '4px', color: S.text, cursor: 'pointer', fontSize: '12px' }}
+              >編集</button>
+              <button
+                onClick={() => {
+                  if (!window.confirm('メモを削除しますか？')) return;
+                  setMemo('');
+                  fetch(`${API}/outsourcing/settings`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'memo', value: '' }),
+                  });
+                }}
+                style={{ padding: '3px 12px', background: 'transparent', border: `1px solid ${S.negColor}`, borderRadius: '4px', color: S.negColor, cursor: 'pointer', fontSize: '12px' }}
+              >削除</button>
+            </div>
+            <div style={{ fontSize: '13px', lineHeight: '1.8', color: S.text, whiteSpace: 'pre-wrap', paddingRight: '100px' }}>
+              {memo}
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setMemoDraft(''); setEditingMemo(true); }}
+            style={{ padding: '5px 16px', background: 'transparent', border: S.border, borderRadius: '4px', color: S.textSub, cursor: 'pointer', fontSize: '12px' }}
+          >＋ メモを追加</button>
+        )}
       </div>
     </div>
   );
