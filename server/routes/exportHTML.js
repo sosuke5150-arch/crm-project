@@ -7,7 +7,7 @@ const MONTH_ORDER  = ['9月','10月','11月','12月','1月','2月','3月','4月'
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
 const ACT_STS  = new Set(['won','done','monthly','shikakake']);
-const FORE_STS = new Set(['forecast','developing']);
+const FORE_STS = new Set(['forecast','developing','proposing']);
 const MAIN_IDS = new Set([5, 3]);
 const SALES_ROWS = [{ id: 5, name: 'マイナビ' }, { id: 3, name: 'ケイ・コーポレーション' }, { id: 0, name: '開発案件' }];
 const fmt     = v => Number(v||0).toLocaleString();
@@ -181,6 +181,8 @@ router.get('/', (req, res) => {
     const csFmtPct  = (num, den) => (!den || !num) ? '—' : (csParseNum(num) / csParseNum(den) * 100).toFixed(2) + '%';
     const csFmtDiff = (a, b) => (a === '' || b === '') ? '—' : (csParseNum(a) - csParseNum(b)).toLocaleString();
     const csEsc     = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    // リッチテキスト（HTMLを含む場合はそのまま出力、プレーンテキストは改行変換のみ）
+    const csRender  = s => { if (!s) return ''; if (/<[a-zA-Z][\s\S]*>/.test(s)) return s; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); };
 
     const csSections = [
       { id: 'tsuki', section: '2026年3月単月',       label25: '第25期3月度',      label24: '第24期3月度'      },
@@ -239,7 +241,7 @@ router.get('/', (req, res) => {
     const csTextRow = (label, text) => `
       <tr>
         <td style="border:${csBorder};padding:8px 12px;width:70px;background:${csBgSection};vertical-align:top;font-weight:700;text-align:center;white-space:nowrap;color:${csText}">${label}</td>
-        <td style="border:${csBorder};padding:10px 12px;font-size:13px;line-height:1.7;color:${csText}">${csEsc(text)}</td>
+        <td style="border:${csBorder};padding:10px 12px;font-size:13px;line-height:1.7;color:${csText}">${csRender(text)}</td>
       </tr>`;
     const escapeHtml = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 

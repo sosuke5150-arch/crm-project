@@ -93,6 +93,129 @@ function CalcCell({ value, bg }) {
   );
 }
 
+// ===== HTML変換ユーティリティ =====
+const toHTML = (val) => {
+  if (!val) return '';
+  if (/<[a-zA-Z][\s\S]*>/.test(val)) return val; // すでにHTML
+  return val
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+};
+
+// ===== リッチテキストエディタ =====
+const RICH_COLORS = [
+  { label: '赤', value: '#e53e3e' },
+  { label: '橙', value: '#ed8936' },
+  { label: '緑', value: '#48bb78' },
+  { label: '青', value: '#4299e1' },
+  { label: '紫', value: '#b794f4' },
+];
+
+function RichTextEditor({ value, onChange, minHeight }) {
+  const S = getSheetColors();
+  const editorRef = useRef(null);
+  const prevValueRef = useRef(undefined);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    if (value !== prevValueRef.current) {
+      editorRef.current.innerHTML = toHTML(value || '');
+      prevValueRef.current = value;
+    }
+  }, [value]);
+
+  const execCmd = (cmd, val = null) => {
+    editorRef.current.focus();
+    document.execCommand(cmd, false, val);
+    const html = editorRef.current.innerHTML;
+    prevValueRef.current = html;
+    onChange(html);
+  };
+
+  const handleInput = (e) => {
+    const html = e.currentTarget.innerHTML;
+    prevValueRef.current = html;
+    onChange(html);
+  };
+
+  const startEditing = () => {
+    setEditing(true);
+    setTimeout(() => editorRef.current?.focus(), 50);
+  };
+
+  const stopEditing = () => {
+    setEditing(false);
+  };
+
+  const btnBase = {
+    padding: '2px 8px', border: S.border, borderRadius: '3px',
+    cursor: 'pointer', fontSize: '12px', lineHeight: '1.6',
+    background: S.bgRow24, color: S.text, fontFamily: 'inherit',
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* 通常時: 右上に編集ボタン */}
+      {!editing && (
+        <button onClick={startEditing} style={{
+          position: 'absolute', top: '4px', right: '4px', zIndex: 1,
+          padding: '2px 10px', fontSize: '11px', border: S.border,
+          borderRadius: '3px', cursor: 'pointer',
+          background: S.bgRow24, color: S.textSub,
+        }}>
+          編集
+        </button>
+      )}
+
+      {/* 編集中: ツールバー */}
+      {editing && (
+        <div style={{
+          display: 'flex', gap: '4px', padding: '3px 6px', alignItems: 'center',
+          borderBottom: S.border, background: S.bgRow24, flexWrap: 'wrap',
+        }}>
+          <button onMouseDown={e => { e.preventDefault(); execCmd('bold'); }}
+            style={{ ...btnBase, fontWeight: 'bold', minWidth: '26px' }} title="太字">B</button>
+          {RICH_COLORS.map(({ label, value: c }) => (
+            <button key={c} onMouseDown={e => { e.preventDefault(); execCmd('foreColor', c); }}
+              title={`${label}色`}
+              style={{ ...btnBase, background: c, color: '#fff', border: 'none', minWidth: '26px', fontWeight: 'bold' }}>
+              A
+            </button>
+          ))}
+          <button onMouseDown={e => { e.preventDefault(); execCmd('removeFormat'); }}
+            style={{ ...btnBase, fontSize: '11px', color: S.textSub }} title="書式をすべて解除">
+            解除
+          </button>
+          <div style={{ flex: 1 }} />
+          <button onClick={stopEditing}
+            style={{ ...btnBase, fontSize: '11px', color: S.calcColor, border: `1px solid ${S.calcColor}` }}>
+            完了
+          </button>
+        </div>
+      )}
+
+      {/* エディタ本体 */}
+      <div ref={editorRef} contentEditable={editing} suppressContentEditableWarning
+        onInput={handleInput}
+        onBlur={e => {
+          const html = e.currentTarget.innerHTML;
+          prevValueRef.current = html;
+          onChange(html);
+        }}
+        style={{
+          minHeight, padding: '8px', outline: 'none',
+          lineHeight: '1.7', fontSize: '13px', fontFamily: 'inherit',
+          color: S.text, wordBreak: 'break-word', boxSizing: 'border-box',
+          cursor: editing ? 'text' : 'default',
+        }}
+      />
+    </div>
+  );
+}
+
 export default function CommonSheet() {
   const [tableData,   setTableData]   = useState(DEFAULT_TABLE);
   const [title,       setTitle]       = useState('25期3月全体会議（2月報告）');
@@ -419,11 +542,12 @@ export default function CommonSheet() {
               <td style={{ border: S.border, padding: '8px 12px', width: '80px', background: S.bgSection, verticalAlign: 'middle', fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap', color: S.text }}>
                 {label}
               </td>
-              <td style={{ border: S.border, padding: '4px', background: S.bgTextArea }}>
-                <textarea value={val} onChange={e => { set(e.target.value); save({ [key]: e.target.value }); }}
-                  onFocus={e => { e.target.style.outline = `1px solid ${S.calcColor}`; }}
-                  onBlur={e => { e.target.style.outline = 'none'; }}
-                  style={{ width: '100%', minHeight: h, padding: '8px', border: 'none', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '13px', lineHeight: '1.7', boxSizing: 'border-box', background: S.bgTextArea, color: S.text }} />
+              <td style={{ border: S.border, padding: 0, background: S.bgTextArea }}>
+                <RichTextEditor
+                  value={val}
+                  onChange={html => { set(html); save({ [key]: html }); }}
+                  minHeight={h}
+                />
               </td>
             </tr>
           ))}

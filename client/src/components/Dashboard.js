@@ -7,7 +7,7 @@ const MONTH_ORDER = ['9月検収','10月検収','11月検収','12月検収','1�
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
 const ACTUAL_STS = new Set(['won','done','monthly','shikakake']);
-const FORECAST_STS = new Set(['forecast','developing']);
+const FORECAST_STS = new Set(['forecast','developing','proposing']);
 const MONTH_LABEL = m => m.replace('検収', '');
 
 const PIE_COLORS_MAP = {
