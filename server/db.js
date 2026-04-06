@@ -35,6 +35,7 @@ try { db.exec(`ALTER TABLE deals ADD COLUMN inspection_date TEXT`); } catch {}
 try { db.exec(`ALTER TABLE deals ADD COLUMN topics TEXT`); } catch {}
 try { db.exec(`ALTER TABLE deals ADD COLUMN sort_order INTEGER`); } catch {}
 db.exec(`UPDATE deals SET sort_order = id WHERE sort_order IS NULL`);
+try { db.exec(`ALTER TABLE deals ADD COLUMN is_project INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE project_meta ADD COLUMN estimated_indirect INTEGER DEFAULT 0`); } catch {}
 
 db.exec(`

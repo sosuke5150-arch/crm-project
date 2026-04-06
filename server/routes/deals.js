@@ -10,13 +10,14 @@ router.get('/', (req, res) => {
         SELECT deals.*, customers.company as customer_name
         FROM deals
         JOIN customers ON deals.customer_id = customers.id
-        WHERE deals.customer_id = ?
+        WHERE deals.customer_id = ? AND (deals.is_project IS NULL OR deals.is_project = 0)
         ORDER BY deals.sort_order ASC
       `).all(customer_id)
     : db.prepare(`
         SELECT deals.*, customers.company as customer_name
         FROM deals
         JOIN customers ON deals.customer_id = customers.id
+        WHERE deals.is_project IS NULL OR deals.is_project = 0
         ORDER BY deals.sort_order ASC
       `).all();
   res.json(deals);
@@ -24,12 +25,12 @@ router.get('/', (req, res) => {
 
 // 登録
 router.post('/', (req, res) => {
-  const { customer_id, title, amount, status, inspection_date, topics } = req.body;
+  const { customer_id, title, amount, status, inspection_date, topics, is_project } = req.body;
   if (!customer_id || !title) return res.status(400).json({ error: '顧客と案件名は必須です' });
   const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), -1) as m FROM deals').get().m;
   const result = db.prepare(
-    'INSERT INTO deals (customer_id, title, amount, status, inspection_date, topics, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run(customer_id, title, amount || 0, status || 'proposing', inspection_date || null, topics || null, maxOrder + 1);
+    'INSERT INTO deals (customer_id, title, amount, status, inspection_date, topics, sort_order, is_project) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(customer_id, title, amount || 0, status || 'proposing', inspection_date || null, topics || null, maxOrder + 1, is_project ? 1 : 0);
   const deal = db.prepare('SELECT * FROM deals WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(deal);
 });

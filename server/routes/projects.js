@@ -17,10 +17,13 @@ router.get('/', (req, res) => {
       FROM deals d
       JOIN customers c ON d.customer_id = c.id
       LEFT JOIN project_meta pm ON pm.deal_id = d.id
-      WHERE d.amount >= 500000
-        AND d.title NOT LIKE 'マイコンパス月次保守開発%'
-        AND d.title NOT LIKE 'B2-Online%定期開発%'
-        AND d.status NOT IN ('proposing', 'planned', 'forecast')
+      WHERE (
+        (d.amount >= 500000
+          AND d.title NOT LIKE 'マイコンパス月次保守開発%'
+          AND d.title NOT LIKE 'B2-Online%定期開発%'
+          AND d.status NOT IN ('proposing', 'planned', 'forecast'))
+        OR d.is_project = 1
+      )
       ORDER BY CASE d.inspection_date
         WHEN '9月検収' THEN 1 WHEN '10月検収' THEN 2 WHEN '11月検収' THEN 3
         WHEN '12月検収' THEN 4 WHEN '1月検収' THEN 5 WHEN '2月検収' THEN 6

@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const API = 'http://localhost:3001';
+
+const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
+const EMPTY_FORM = { customer_id: '', title: '', status: 'won', amount: '', inspection_date: '', topics: '' };
 
 const STATUS_LABELS = {
   proposing: '提案中',
@@ -47,17 +50,63 @@ const STATUS_COLORS = {
 export default function ProjectList({ onSelect }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef(null);
+  const dragIndex = useRef(null);
 
-  useEffect(() => {
+  const loadProjects = () => {
     setLoading(true);
     fetch(`${API}/projects`)
       .then(r => r.json())
-      .then(data => {
-        setProjects(data);
-        setLoading(false);
-      })
+      .then(data => { setProjects(data); setLoading(false); })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadProjects();
+    fetch(`${API}/customers`).then(r => r.json()).then(setCustomers);
   }, []);
+
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showForm]);
+
+  const handleDragStart = (index) => {
+    dragIndex.current = index;
+  };
+
+  const handleDrop = async (dropIndex) => {
+    if (dragIndex.current === null || dragIndex.current === dropIndex) return;
+    const updated = [...projects];
+    const [moved] = updated.splice(dragIndex.current, 1);
+    updated.splice(dropIndex, 0, moved);
+    dragIndex.current = null;
+    setProjects(updated);
+    await fetch(`${API}/deals/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: updated.map(p => p.deal_id) }),
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await fetch(`${API}/deals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, is_project: 1 }),
+    });
+    setForm(EMPTY_FORM);
+    setShowForm(false);
+    setSubmitting(false);
+    loadProjects();
+  };
 
   const fmt = (n) => `¥${Math.round(Number(n || 0)).toLocaleString()}`;
   const fmtNum = (n) => Number(n || 0).toLocaleString();
@@ -66,16 +115,52 @@ export default function ProjectList({ onSelect }) {
 
   return (
     <div>
-      <h2>プロジェクト管理</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <h2 style={{ margin: 0 }}>プロジェクト管理</h2>
+        <button
+          onClick={() => setShowForm(v => !v)}
+          style={{ padding: '7px 16px', background: showForm ? 'transparent' : 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '6px', color: showForm ? 'var(--accent)' : 'var(--bg-inner)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          {showForm ? 'キャンセル' : '＋ 新規案件登録'}
+        </button>
+      </div>
 
       <div style={{ marginBottom: '12px', fontSize: '13px', color: '#6b7fa3' }}>
         受注額 50万円以上の受託開発案件をプロジェクトとして原価管理します。全 {projects.length} 件
       </div>
 
+      {/* 新規登録フォーム */}
+      {showForm && (
+        <div ref={formRef} className="card" style={{ marginBottom: '16px', padding: '16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '12px', color: 'var(--text-heading)' }}>新規案件登録</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-end' }}>
+            <select value={form.customer_id} onChange={e => setForm({...form, customer_id: e.target.value})} required>
+              <option value="">顧客を選択 *</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
+            </select>
+            <input placeholder="案件名 *" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required style={{ minWidth: '200px' }} />
+            <select value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+              {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <input type="number" placeholder="金額（円）*" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '140px' }} />
+            <select value={form.inspection_date} onChange={e => setForm({...form, inspection_date: e.target.value})}>
+              <option value="">検収月</option>
+              {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <input placeholder="トピックス" value={form.topics} onChange={e => setForm({...form, topics: e.target.value})} style={{ minWidth: '160px' }} />
+            <button type="submit" disabled={submitting} style={{ padding: '7px 18px', background: 'var(--accent)', color: 'var(--bg-inner)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'inherit', opacity: submitting ? 0.6 : 1 }}>
+              {submitting ? '登録中...' : '登録'}
+            </button>
+          </form>
+          <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '8px' }}>※ 金額が50万円以上の案件がプロジェクトとして表示されます</div>
+        </div>
+      )}
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table>
           <thead>
             <tr>
+              <th style={{ width: '24px' }}></th>
               <th>プロジェクト名</th>
               <th>顧客</th>
               <th style={{ textAlign: 'right' }}>受注額</th>
@@ -89,12 +174,12 @@ export default function ProjectList({ onSelect }) {
           <tbody>
             {projects.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: '#4a5f82', padding: '32px' }}>
+                <td colSpan={9} style={{ textAlign: 'center', color: '#4a5f82', padding: '32px' }}>
                   50万円以上の案件がありません
                 </td>
               </tr>
             )}
-            {projects.map(p => {
+            {projects.map((p, index) => {
               const progress = p.progress || 0;
               const profit = p.profit || 0;
               const light = isLightTheme();
@@ -105,9 +190,15 @@ export default function ProjectList({ onSelect }) {
               return (
                 <tr
                   key={p.deal_id}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => handleDrop(index)}
                   style={{ cursor: 'pointer' }}
                   onClick={() => onSelect(p.deal_id)}
                 >
+                  <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab', textAlign: 'center' }}
+                    onClick={e => e.stopPropagation()}>⠿</td>
                   <td>
                     <span className="link">{p.title}</span>
                   </td>
