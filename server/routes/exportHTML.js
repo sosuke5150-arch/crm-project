@@ -1486,7 +1486,10 @@ tr:hover td{background:${C.bgPanel}}
 
     // outer ring: customer breakdown
     var outerData   = d.custBreakdown.map(function(c) { return c.value; });
-    var outerColors = d.custBreakdown.map(function(c, i) { return PIE_COLORS[i % PIE_COLORS.length]; });
+    var outerColors = d.custBreakdown.map(function(c) {
+      var idx = DATA.allCustomers.findIndex(function(ac) { return ac.name === c.name; });
+      return PIE_COLORS[(idx >= 0 ? idx : PIE_COLORS.length - 1) % PIE_COLORS.length];
+    });
     var outerLabels = d.custBreakdown.map(function(c) { return c.name; });
 
     var datasets = [];
