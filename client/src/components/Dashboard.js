@@ -11,8 +11,8 @@ const FORECAST_STS = new Set(['forecast','developing','proposing']);
 const MONTH_LABEL = m => m.replace('検収', '');
 
 const PIE_COLORS_MAP = {
-  dark:  ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
-  excel: ['#4472c4','#ed7d31','#a9d18e','#ffc000','#e15f5f','#70ad47','#5b9bd5','#c55a11','#7030a0','#2e75b6','#843c0c','#bf9000'],
+  dark:  ['#6366f1','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
+  excel: ['#9b59b6','#27ae60','#a9d18e','#ffc000','#e15f5f','#70ad47','#5b9bd5','#c55a11','#7030a0','#2e75b6','#843c0c','#bf9000'],
   earth: ['#b5651d','#e9a84c','#7daa6e','#c87941','#922b21','#8b6914','#d4956a','#5c8a58','#a04000','#6b8e4e','#cd853f','#556b2f'],
 };
 
@@ -73,6 +73,7 @@ export default function Dashboard() {
   const [yojitsuData, setYojitsuData] = useState([]);
   const [customerData, setCustomerData] = useState([]);
   const [periodData, setPeriodData] = useState([]);
+  const [monthlyPieData, setMonthlyPieData] = useState([]);
 
   const theme = document.body.dataset.theme || 'dark';
   const colors = getChartColors();
@@ -140,6 +141,45 @@ export default function Dashboard() {
         { name: '下期', 予算: lBudget, 実績: lActual, 見込: lForecast },
         { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: uForecast + lForecast },
       ]);
+
+      // 月別予実円グラフ用データ
+      const monthlyPie = MONTH_LABELS.map(m => {
+        const actual   = actMap[m]  || 0;
+        const forecast = foreMap[m] || 0;
+        const target   = tgtMap[m]  || 0;
+        const total    = actual + forecast;
+        const diff     = total - target;
+        const rate     = target > 0 ? Math.round(total / target * 100) : null;
+        const noData   = target === 0 && total === 0;
+        let pieData;
+        if (noData) {
+          pieData = [{ name: '無データ', value: 1 }];
+        } else if (target === 0 || total >= target) {
+          pieData = [
+            ...(actual   > 0 ? [{ name: '実績', value: actual   }] : []),
+            ...(forecast > 0 ? [{ name: '見込', value: forecast }] : []),
+          ];
+        } else {
+          pieData = [
+            ...(actual   > 0 ? [{ name: '実績', value: actual   }] : []),
+            ...(forecast > 0 ? [{ name: '見込', value: forecast }] : []),
+            { name: '残', value: target - total },
+          ];
+        }
+        // 顧客別構成（外側リング用）
+        const custMap = {};
+        deals.forEach(d => {
+          if (toM(d.inspection_date) !== m) return;
+          if (!ACTUAL_STS.has(d.status) && !FORECAST_STS.has(d.status)) return;
+          const name = d.customer_name || '不明';
+          custMap[name] = (custMap[name] || 0) + (Number(d.amount) || 0);
+        });
+        const customerBreakdown = Object.entries(custMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value);
+        return { month: m, actual, forecast, target, total, diff, rate, pieData, noData, customerBreakdown };
+      });
+      setMonthlyPieData(monthlyPie);
     }).catch(() => {});
   }, []);
 
@@ -178,25 +218,6 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>月別売上額</h3>
-        {monthlyData.length === 0 ? (
-          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={monthlyData} margin={{ top: 4, right: 16, left: 16, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-              <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: cursorFill }} />
-              <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: 12, paddingTop: 8 }} />
-              <Bar dataKey="実績" stackId="a" fill={colors.actual} radius={[0, 0, 0, 0]} />
-              <Bar dataKey="見込" stackId="a" fill={colors.forecast} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      <div className="card">
         <h3 style={{ marginBottom: '20px' }}>月別 予実比較</h3>
         {yojitsuData.length === 0 ? (
           <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
@@ -224,6 +245,135 @@ export default function Dashboard() {
               <Bar dataKey="bar3" name="見込" fill={colors.forecast} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '20px' }}>月別 予実比較（円グラフ）</h3>
+        {monthlyPieData.length === 0 ? (
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
+              {monthlyPieData.map(d => {
+                const diffColor = d.diff > 0 ? colors.gain : d.diff < 0 ? colors.loss : 'var(--text-muted)';
+                const rateColor = d.rate === null ? 'var(--text-faint)' : d.rate >= 100 ? colors.gain : d.rate >= 80 ? colors.warn : colors.loss;
+                const segColor = name => ({
+                  '実績':   colors.actual,
+                  '見込':   colors.forecast,
+                  '残':     isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
+                  '無データ': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
+                })[name] || '#888';
+                return (
+                  <div key={d.month} style={{ background: 'var(--bg-inner)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{d.month}</div>
+                    <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto' }}>
+                      <PieChart width={120} height={120}>
+                        <Pie data={d.pieData} dataKey="value" cx="50%" cy="50%" innerRadius={26} outerRadius={40} strokeWidth={0} startAngle={90} endAngle={-270}>
+                          {d.pieData.map((seg, i) => <Cell key={i} fill={segColor(seg.name)} />)}
+                        </Pie>
+                        {(d.customerBreakdown?.length > 0) && (
+                          <Pie data={d.customerBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={43} outerRadius={57} strokeWidth={1} stroke="var(--bg-inner)" startAngle={90} endAngle={-270}>
+                            {d.customerBreakdown.map((seg, i) => {
+                              const idx = customerData.findIndex(c => c.customer === seg.name);
+                              return <Cell key={i} fill={PIE_COLORS[(idx >= 0 ? idx : i) % PIE_COLORS.length]} />;
+                            })}
+                          </Pie>
+                        )}
+                        <Tooltip
+                          formatter={(v, n) => [`¥${Number(v).toLocaleString()}`, n]}
+                          contentStyle={{ ...tooltipStyle, fontSize: 12, padding: '6px 10px' }}
+                        />
+                      </PieChart>
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 13, fontWeight: 700, color: rateColor, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                        {d.rate !== null ? `${d.rate}%` : '—'}
+                      </div>
+                    </div>
+                    {!d.noData && d.target > 0 && (
+                      <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 5 }}>
+                        予算 ¥{d.target.toLocaleString()}
+                      </div>
+                    )}
+                    {!d.noData && d.actual > 0 && (
+                      <div style={{ fontSize: 12, color: colors.actual, marginTop: 3 }}>
+                        実績 ¥{d.actual.toLocaleString()}
+                      </div>
+                    )}
+                    {!d.noData && d.forecast > 0 && (
+                      <div style={{ fontSize: 12, color: colors.forecast, marginTop: 3 }}>
+                        見込 ¥{d.forecast.toLocaleString()}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: d.noData ? 'var(--text-faint)' : diffColor, marginTop: 5, borderTop: d.noData ? 'none' : '1px solid var(--border)', paddingTop: d.noData ? 0 : 5 }}>
+                      {d.noData
+                        ? 'データなし'
+                        : d.target === 0
+                          ? `¥${(d.total / 10000).toFixed(0)}万`
+                          : `${d.diff >= 0 ? '+' : ''}¥${Math.round(d.diff).toLocaleString()}`}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '14px' }}>
+              {[{ label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }, { label: '残', color: isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)' }].map(i => (
+                <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: i.color }} />
+                  {i.label}
+                </div>
+              ))}
+            </div>
+
+            {/* 売上構成 */}
+            {customerData.length > 0 && (() => {
+              const total = customerData.reduce((s, d) => s + Number(d.total), 0);
+              // 顧客別: 実績+見込合計が大きい順に表示（その他にまとめる閾値なし）
+              return (
+                <div style={{ marginTop: '28px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.06em' }}>確定売上構成（顧客別）</div>
+                  <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                    <div style={{ flexShrink: 0 }}>
+                      <PieChart width={200} height={200}>
+                        <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={90} innerRadius={48} strokeWidth={0} startAngle={90} endAngle={-270}>
+                          {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip
+                          formatter={v => [`¥${Number(v).toLocaleString()}`, '']}
+                          contentStyle={tooltipStyle}
+                          labelStyle={{ color: 'var(--text-muted)', fontSize: 12 }}
+                          itemStyle={{ color: 'var(--text-body)', fontSize: 12 }}
+                        />
+                      </PieChart>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {customerData.map((d, i) => {
+                        const pct = total > 0 ? (Number(d.total) / total * 100).toFixed(1) : '0.0';
+                        const barW = total > 0 ? (Number(d.total) / total * 100) : 0;
+                        return (
+                          <div key={d.customer} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 12 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length], flexShrink: 0 }} />
+                            <span style={{ color: 'var(--text-td)', width: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>{d.customer}</span>
+                            <div style={{ flex: 1, background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                              <div style={{ width: `${barW}%`, height: '100%', background: PIE_COLORS[i % PIE_COLORS.length], borderRadius: 4 }} />
+                            </div>
+                            <span style={{ color: 'var(--text-muted)', width: 36, textAlign: 'right', flexShrink: 0 }}>{pct}%</span>
+                            <span style={{ color: 'var(--text-heading)', fontWeight: 600, width: 110, textAlign: 'right', flexShrink: 0 }}>¥{Number(d.total).toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 12, borderTop: '1px solid var(--border)', paddingTop: '6px', marginTop: '2px' }}>
+                        <div style={{ width: 8, height: 8, flexShrink: 0 }} />
+                        <span style={{ color: 'var(--text-muted)', width: 160, flexShrink: 0, fontWeight: 700 }}>合計</span>
+                        <div style={{ flex: 1 }} />
+                        <span style={{ color: 'var(--text-muted)', width: 36 }} />
+                        <span style={{ color: 'var(--text-heading)', fontWeight: 700, width: 110, textAlign: 'right', flexShrink: 0 }}>¥{total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </>
         )}
       </div>
 
@@ -318,41 +468,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '20px' }}>
-          <h3>顧客別 取引実績</h3>
-          {customerData.length > 0 && (
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              合計取引額：<span style={{ color: 'var(--accent)', fontWeight: 700 }}>
-                ¥{customerData.reduce((s, d) => s + Number(d.total), 0).toLocaleString()}
-              </span>
-            </span>
-          )}
-        </div>
-        {customerData.length === 0 ? (
-          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <ResponsiveContainer width="50%" height={280}>
-              <PieChart>
-                <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={110} innerRadius={50}>
-                  {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={v => `¥${Number(v).toLocaleString()}`} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-muted)' }} itemStyle={{ color: colors.actual }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: 280, overflowY: 'auto' }}>
-              {customerData.map((d, i) => (
-                <div key={d.customer} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: 12 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length], flexShrink: 0 }} />
-                  <span style={{ color: 'var(--text-td)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.customer}</span>
-                  <span style={{ color: 'var(--text-heading)', fontWeight: 600, whiteSpace: 'nowrap' }}>¥{Number(d.total).toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

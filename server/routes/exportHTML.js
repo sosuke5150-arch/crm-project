@@ -48,7 +48,7 @@ function getThemeColors(theme) {
       chartActual:  '#2e75b6',
       chartForecast:'#ed7d31',
       chartTarget:  '#a5a5a5',
-      pieColors:    ['#2e75b6','#7e3af2','#70ad47','#ed7d31','#c0392b','#4caf50','#2dd4bf','#fb923c','#a78bfa','#00b4d8','#ffc000','#e91e63'],
+      pieColors:    ['#9b59b6','#27ae60','#70ad47','#ed7d31','#c0392b','#4caf50','#2dd4bf','#fb923c','#a78bfa','#00b4d8','#ffc000','#e91e63'],
       statusColors: { done:'#16a34a', monthly:'#2e75b6', shikakake:'#d97706', won:'#2e75b6', developing:'#1d4ed8', forecast:'#d97706', proposing:'#7e22ce', planned:'#6b7280', open:'#6b7280' },
       scrollbarTrack: '#e8ecf0',
       scrollbarThumb: '#c8d3e0',
@@ -124,7 +124,7 @@ function getThemeColors(theme) {
     chartActual:  '#00d4ff',
     chartForecast:'#fb923c',
     chartTarget:  '#3b82f6',
-    pieColors:    ['#00d4ff','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
+    pieColors:    ['#6366f1','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
     statusColors: { done:'#4ade80', monthly:'#00d4ff', shikakake:'#f59e0b', won:'#00d4ff', developing:'#3b82f6', forecast:'#f59e0b', proposing:'#a855f7', planned:'#6b7280', open:'#6b7280' },
     scrollbarTrack: '#0d1120',
     scrollbarThumb: '#1e2a45',
@@ -321,6 +321,28 @@ router.get('/', (req, res) => {
       { name:'下期', budget:lTarget, actual:lActual, forecast:lForecast },
       { name:'通期', budget:uTarget+lTarget, actual:uActual+lActual, forecast:lForecast },
     ];
+
+    // ---- 月別予実円グラフ用データ ----
+    const monthlyPieArr = MONTH_ORDER.map((m, idx) => {
+      const actual   = monthActual[idx];
+      const forecast = monthForecast[idx];
+      const target   = targetRows.filter(r => r.month === m).reduce((s,r) => s+(Number(r.amount)||0), 0);
+      const total    = actual + forecast;
+      const diff     = total - target;
+      const rate     = target > 0 ? Math.round(total / target * 100) : null;
+      const noData   = target === 0 && total === 0;
+      const custMapM = {};
+      deals.forEach(d => {
+        if (!inM(d.inspection_date, m)) return;
+        if (!ACT_STS.has(d.status) && !FORE_STS.has(d.status)) return;
+        const name = d.customer_name || '不明';
+        custMapM[name] = (custMapM[name] || 0) + (Number(d.amount) || 0);
+      });
+      const custBreakdown = Object.entries(custMapM)
+        .map(([n, v]) => ({ name: n, value: v }))
+        .sort((a, b) => b.value - a.value);
+      return { month: m, actual, forecast, target, total, diff, rate, noData, custBreakdown };
+    });
 
     // ---- Per-row actual/forecast for sales table ----
     const actualsMap = {}, forecastsMap = {};
@@ -579,6 +601,7 @@ router.get('/', (req, res) => {
       periodData,
       allCustomers,
       MONTH_ORDER,
+      monthlyPieArr,
     });
 
     // ---- HTML ----
@@ -882,12 +905,6 @@ tr:hover td{background:${C.bgPanel}}
     </div>`).join('')}
   </div>
 
-  <!-- 月別売上額 -->
-  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
-    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別売上額</h3>
-    <canvas id="monthlyStackedBar" height="80"></canvas>
-  </div>
-
   <!-- 月別 予実比較 -->
   <div class="panel" style="padding:16px 20px">
     <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別 予実比較</h3>
@@ -895,7 +912,75 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 </div>
 
-<!-- Page 3: Period Comparison + Customer -->
+<!-- Page: 月別予実比較（円グラフ）+ 確定売上構成 -->
+<div class="slide">
+  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">DASHBOARD</h2>
+
+  <!-- 月別予実比較（円グラフ）-->
+  <div class="panel" style="padding:14px 16px;margin-bottom:14px">
+    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別 予実比較（円グラフ）</h3>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px">
+      ${monthlyPieArr.map((d, idx) => {
+        const diffColor = d.diff >= 0 ? C.colorGain : C.colorLoss;
+        const rateColor = d.rate === null ? C.textFaint : d.rate >= 100 ? C.colorGain : d.rate >= 80 ? C.colorWarn : C.colorLoss;
+        return `<div style="background:${C.bgInner};border:1px solid ${C.border};border-radius:8px;padding:10px 6px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:${C.textMuted};margin-bottom:5px">${d.month}</div>
+          <div style="position:relative;width:100px;height:100px;margin:0 auto">
+            <canvas id="mPie_${idx}" width="100" height="100"></canvas>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;font-weight:700;color:${rateColor};pointer-events:none;white-space:nowrap">${d.rate !== null ? d.rate + '%' : '—'}</div>
+          </div>
+          ${!d.noData && d.target > 0 ? `<div style="font-size:11px;color:${C.textFaint};margin-top:4px">予算 ¥${fmt(d.target)}</div>` : ''}
+          ${d.actual > 0 ? `<div style="font-size:11px;color:${C.chartActual};margin-top:2px">実績 ¥${fmt(d.actual)}</div>` : ''}
+          ${d.forecast > 0 ? `<div style="font-size:11px;color:${C.chartForecast};margin-top:2px">見込 ¥${fmt(d.forecast)}</div>` : ''}
+          <div style="font-size:12px;font-weight:700;color:${d.noData ? C.textFaint : diffColor};margin-top:4px;border-top:${!d.noData ? '1px solid '+C.border : 'none'};padding-top:${!d.noData ? '4px' : '0'}">
+            ${d.noData ? 'データなし' : d.target === 0 ? '¥'+fmt(d.total) : (d.diff>=0?'+':'')+'¥'+fmt(d.diff)}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:14px;justify-content:center">
+      ${[['実績',C.chartActual],['見込',C.chartForecast],['残','rgba(100,120,150,0.4)']].map(([l,c]) =>
+        `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:${C.textMuted}"><div style="width:9px;height:9px;border-radius:50%;background:${c}"></div>${l}</div>`
+      ).join('')}
+    </div>
+  </div>
+
+  <!-- 確定売上構成（顧客別）-->
+  <div class="panel" style="padding:14px 16px;flex:1">
+    <div style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">確定売上構成（顧客別）</div>
+    <div style="display:flex;gap:24px;align-items:center">
+      <div style="flex-shrink:0">
+        <canvas id="custCompositionDonut" width="180" height="180"></canvas>
+      </div>
+      <div style="flex:1">
+        ${allCustomers.map((c, i) => {
+          const col = C.pieColors[i % C.pieColors.length];
+          const custTotal = allCustomers.reduce((s,x) => s+x.total, 0);
+          const pct = custTotal > 0 ? (c.total / custTotal * 100).toFixed(1) : '0.0';
+          const barW = custTotal > 0 ? (c.total / custTotal * 100) : 0;
+          return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:5px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></div>
+            <span style="color:${C.textBody};min-width:120px;flex-shrink:1">${c.name}</span>
+            <div style="flex:1;background:rgba(100,120,150,0.15);border-radius:3px;height:5px;overflow:hidden">
+              <div style="width:${barW}%;height:100%;background:${col};border-radius:3px"></div>
+            </div>
+            <span style="color:${C.textMuted};width:34px;text-align:right;flex-shrink:0;font-size:11px">${pct}%</span>
+            <span style="color:${C.textHeading};font-weight:600;width:110px;text-align:right;flex-shrink:0">¥${fmt(c.total)}</span>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;border-top:1px solid ${C.border};padding-top:5px;margin-top:3px">
+          <div style="width:8px;flex-shrink:0"></div>
+          <span style="color:${C.textMuted};min-width:120px;flex-shrink:1;font-weight:700">合計</span>
+          <div style="flex:1"></div>
+          <span style="width:34px"></span>
+          <span style="color:${C.textHeading};font-weight:700;width:110px;text-align:right;flex-shrink:0">¥${fmt(allCustomers.reduce((s,c)=>s+c.total,0))}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page 3: Period Comparison -->
 <div class="slide">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
 
@@ -935,28 +1020,6 @@ tr:hover td{background:${C.bgPanel}}
     }).join('')}
   </div>
 
-  <!-- 顧客別 取引実績 -->
-  <div class="panel" style="padding:16px 20px">
-    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:600;color:${C.textHeading}">顧客別 取引実績</h3>
-      <span style="font-size:12px;color:${C.textMuted}">合計取引額：<span style="color:${C.accent};font-weight:700">¥${fmt(allCustomers.reduce((s,c)=>s+c.total,0))}</span></span>
-    </div>
-    <div style="display:flex;gap:24px;align-items:center">
-      <div style="flex-shrink:0">
-        <canvas id="custDonut" width="200" height="200"></canvas>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
-        ${allCustomers.map((c,i) => {
-          const col = C.pieColors[i % C.pieColors.length];
-          return `<div style="display:flex;align-items:center;gap:8px;font-size:12px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
-            <span style="color:${C.textBody};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</span>
-            <span style="color:${C.textHeading};font-weight:600;white-space:nowrap">¥${fmt(c.total)}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Page 8: Upper Half Sales -->
@@ -1198,13 +1261,13 @@ tr:hover td{background:${C.bgPanel}}
     <!-- 外注予算・実績テーブル -->
     ${ocBps.length === 0 ? `<div style="color:${C.textMuted};padding:32px;text-align:center">外注先データがありません</div>` : `
     <div>
-      <table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed">
+      <table style="border-collapse:collapse;font-size:13px;font-weight:700;width:100%;table-layout:fixed">
         <thead>
           <tr>
-            <th style="border:1px solid ${C.border};padding:6px 10px;background:${C.bgHeader};color:${C.textHeading};text-align:left;width:13%">外注先</th>
-            <th style="border:1px solid ${C.border};padding:6px 6px;background:${C.bgHeader};color:${C.textMuted};font-size:10px;width:4%"></th>
-            ${ocMonthLabels.map(l => `<th style="border:1px solid ${C.border};padding:6px 4px;background:${C.bgHeader};color:${C.textHeading};text-align:right;width:6%">${l}</th>`).join('')}
-            <th style="border:1px solid ${C.border};padding:6px 8px;background:${C.bgHeader};color:${C.textHeading};text-align:right;white-space:nowrap">合計</th>
+            <th style="border:1px solid ${C.border};padding:7px 10px;background:${C.bgHeader};color:${C.textHeading};text-align:left;width:13%">外注先</th>
+            <th style="border:1px solid ${C.border};padding:7px 6px;background:${C.bgHeader};color:${C.textMuted};font-size:12px;width:4%"></th>
+            ${ocMonthLabels.map(l => `<th style="border:1px solid ${C.border};padding:7px 4px;background:${C.bgHeader};color:${C.textHeading};text-align:right;width:6%">${l}</th>`).join('')}
+            <th style="border:1px solid ${C.border};padding:7px 8px;background:${C.bgHeader};color:${C.textHeading};text-align:right;white-space:nowrap">合計</th>
           </tr>
         </thead>
         <tbody>
@@ -1214,48 +1277,48 @@ tr:hover td{background:${C.bgPanel}}
             const hlStyle = bp.highlight_color ? `border-left:3px solid ${bp.highlight_color};` : '';
             return `
             <tr>
-              <td rowspan="2" style="border:1px solid ${C.border};padding:6px 10px;${hlStyle}font-weight:600;color:${C.textHeading};vertical-align:middle">
+              <td rowspan="2" style="border:1px solid ${C.border};padding:7px 10px;${hlStyle}font-weight:600;color:${C.textHeading};vertical-align:middle">
                 ${csEsc(bp.name)}
-                ${bp.note ? `<div style="font-size:10px;color:${C.textMuted};font-weight:400;margin-top:2px">${csEsc(bp.note)}</div>` : ''}
+                ${bp.note ? `<div style="font-size:12px;color:${C.textMuted};font-weight:400;margin-top:2px">${csEsc(bp.note)}</div>` : ''}
               </td>
-              <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px;white-space:nowrap">予算</td>
+              <td style="border:1px solid ${C.border};padding:5px 8px;color:${C.textMuted};font-size:12px;white-space:nowrap">予算</td>
               ${ocMonths.map(ym => {
                 const v = ocGet(bp.id, ym, 'budget');
                 const task = ocTaskMap[`${bp.id}-${ym}`] || '';
-                return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;color:${C.colorForecast}">
+                return `<td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;color:${C.colorForecast}">
                   ${v ? ocFmt(v) : '—'}
-                  ${task ? `<div style="font-size:9px;color:${C.textMuted}">${csEsc(task)}</div>` : ''}
+                  ${task ? `<div style="font-size:11px;color:${C.textMuted}">${csEsc(task)}</div>` : ''}
                 </td>`;
               }).join('')}
-              <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${bpBudget ? ocFmt(bpBudget) : '—'}</td>
+              <td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${bpBudget ? ocFmt(bpBudget) : '—'}</td>
             </tr>
             <tr>
-              <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px;white-space:nowrap">実績</td>
+              <td style="border:1px solid ${C.border};padding:5px 8px;color:${C.textMuted};font-size:12px;white-space:nowrap">実績</td>
               ${ocMonths.map(ym => {
                 const v = ocGet(bp.id, ym, 'actual');
-                return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
+                return `<td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
               }).join('')}
-              <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${bpActual ? ocFmt(bpActual) : '—'}</td>
+              <td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${bpActual ? ocFmt(bpActual) : '—'}</td>
             </tr>`;
           }).join('')}
           <!-- 合計行 -->
           <tr>
-            <td style="border:1px solid ${C.border};padding:6px 10px;font-weight:700;color:${C.textHeading}">合計</td>
-            <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px">予算</td>
+            <td style="border:1px solid ${C.border};padding:7px 10px;font-weight:700;color:${C.textHeading}">合計</td>
+            <td style="border:1px solid ${C.border};padding:5px 8px;color:${C.textMuted};font-size:12px">予算</td>
             ${ocMonths.map(ym => {
               const v = ocMonthBudgetTotal(ym);
-              return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${v ? ocFmt(v) : '—'}</td>`;
+              return `<td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${v ? ocFmt(v) : '—'}</td>`;
             }).join('')}
-            <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:700;color:${C.colorForecast}">${ocFmt(ocTotalBudget)}</td>
+            <td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:700;color:${C.colorForecast}">${ocFmt(ocTotalBudget)}</td>
           </tr>
           <tr>
-            <td style="border:1px solid ${C.border};padding:6px 10px"></td>
-            <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px">実績</td>
+            <td style="border:1px solid ${C.border};padding:7px 10px"></td>
+            <td style="border:1px solid ${C.border};padding:5px 8px;color:${C.textMuted};font-size:12px">実績</td>
             ${ocMonths.map(ym => {
               const v = ocMonthActualTotal(ym);
-              return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
+              return `<td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
             }).join('')}
-            <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:700;color:${C.colorActual}">${ocFmt(ocTotalActual)}</td>
+            <td style="border:1px solid ${C.border};padding:5px 8px;text-align:right;font-weight:700;color:${C.colorActual}">${ocFmt(ocTotalActual)}</td>
           </tr>
         </tbody>
       </table>
@@ -1273,6 +1336,47 @@ tr:hover td{background:${C.bgPanel}}
 <script>
 (function() {
   var DATA = ${chartData};
+
+  // ツールチップのグローバルデフォルト設定
+  Chart.defaults.plugins.tooltip.backgroundColor = '${C.bgPanel}';
+  Chart.defaults.plugins.tooltip.titleColor       = '${C.textHeading}';
+  Chart.defaults.plugins.tooltip.bodyColor        = '${C.textBody}';
+  Chart.defaults.plugins.tooltip.borderColor      = '${C.border}';
+  Chart.defaults.plugins.tooltip.borderWidth      = 1;
+  Chart.defaults.plugins.tooltip.padding          = 10;
+
+  // 月別円グラフ用：外部HTMLツールチップ（canvas内でテキストが切れる問題を解消）
+  var mPieTooltipEl = null;
+  function getMPieTooltip() {
+    if (!mPieTooltipEl) {
+      mPieTooltipEl = document.createElement('div');
+      mPieTooltipEl.style.cssText = 'position:fixed;pointer-events:none;background:${C.bgPanel};color:${C.textHeading};border:1px solid ${C.border};border-radius:6px;padding:8px 10px;font-size:11px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.2);white-space:nowrap;opacity:0;transition:opacity 0.1s';
+      document.body.appendChild(mPieTooltipEl);
+    }
+    return mPieTooltipEl;
+  }
+  function mPieExternalTooltip(context) {
+    var tooltip = context.tooltip;
+    var el = getMPieTooltip();
+    if (tooltip.opacity === 0) { el.style.opacity = '0'; return; }
+    var html = '';
+    if (tooltip.title && tooltip.title.length) {
+      html += '<div style="font-weight:700;margin-bottom:4px">' + tooltip.title[0] + '</div>';
+    }
+    (tooltip.body || []).forEach(function(b, i) {
+      var colors = tooltip.labelColors[i];
+      var bg = colors ? colors.backgroundColor : '#888';
+      html += '<div style="display:flex;align-items:center;gap:5px;color:${C.textBody}"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' + bg + ';flex-shrink:0"></span>' + (b.lines[0] || '') + '</div>';
+    });
+    el.innerHTML = html;
+    var rect = context.chart.canvas.getBoundingClientRect();
+    var x = rect.left + tooltip.caretX;
+    var y = rect.top + tooltip.caretY - el.offsetHeight - 10;
+    if (y < 4) y = rect.top + tooltip.caretY + 10;
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    el.style.opacity = '1';
+  }
 
   var MONTH_ORDER = ['9月','10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月'];
   var UPPER_IDX = 6;
@@ -1298,32 +1402,6 @@ tr:hover td{background:${C.bgPanel}}
         responsive: false,
         cutout: '75%',
         plugins: { legend: { display: false }, tooltip: { enabled: false } }
-      }
-    });
-  }
-
-  // Monthly Stacked Bar (Page 2) - 実績/見込 積み上げ
-  var monthlyStackedCtx = document.getElementById('monthlyStackedBar');
-  if (monthlyStackedCtx) {
-    new Chart(monthlyStackedCtx, {
-      type: 'bar',
-      data: {
-        labels: DATA.MONTH_ORDER,
-        datasets: [
-          { label: '実績', data: DATA.monthActual,   backgroundColor: '${C.chartActual}', borderRadius: 2, stack: 'a' },
-          { label: '見込', data: DATA.monthForecast, backgroundColor: '${C.chartForecast}', borderRadius: 2, stack: 'a' }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { stacked: true, ticks: { color: '${C.chartTick}', font: { size: 11 } }, grid: { color: '${C.borderSubtle}' } },
-          y: { stacked: true, ticks: { color: '${C.chartTick}', font: { size: 11 }, callback: function(v) { return '¥' + (v/10000).toFixed(0) + '万'; } }, grid: { color: '${C.borderSubtle}' } }
-        },
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '${C.chartLegend}', font: { size: 11 }, boxWidth: 14, padding: 12 } },
-          tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
-        }
       }
     });
   }
@@ -1354,7 +1432,7 @@ tr:hover td{background:${C.bgPanel}}
         },
         plugins: {
           legend: { position: 'bottom', labels: { color: '${C.chartLegend}', font: { size: 11 }, boxWidth: 14, padding: 12 } },
-          tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
+          tooltip: { backgroundColor: '${C.bgPanel}', titleColor: '${C.textHeading}', bodyColor: '${C.textBody}', borderColor: '${C.border}', borderWidth: 1, callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
         }
       }
     });
@@ -1381,32 +1459,71 @@ tr:hover td{background:${C.bgPanel}}
         },
         plugins: {
           legend: { position: 'bottom', labels: { color: '${C.chartLegend}', font: { size: 11 }, boxWidth: 14, padding: 12 } },
-          tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
+          tooltip: { backgroundColor: '${C.bgPanel}', titleColor: '${C.textHeading}', bodyColor: '${C.textBody}', borderColor: '${C.border}', borderWidth: 1, callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
         }
       }
     });
   }
 
-  // Customer Donut (Page 3)
-  var custDonutCtx = document.getElementById('custDonut');
-  if (custDonutCtx) {
-    var PIE_COLORS = ${JSON.stringify(C.pieColors)};
-    new Chart(custDonutCtx, {
+  // Monthly pie charts + customer composition
+  var PIE_COLORS = ${JSON.stringify(C.pieColors)};
+  var ACT_COLOR  = '${C.chartActual}';
+  var FORE_COLOR = '${C.chartForecast}';
+  var REM_COLOR  = 'rgba(100,120,150,0.2)';
+  var BG_INNER   = '${C.bgInner}';
+
+  DATA.monthlyPieArr.forEach(function(d, idx) {
+    var canvas = document.getElementById('mPie_' + idx);
+    if (!canvas) return;
+
+    // inner ring: progress
+    var innerData = [], innerColors = [];
+    if (d.actual   > 0) { innerData.push(d.actual);   innerColors.push(ACT_COLOR); }
+    if (d.forecast > 0) { innerData.push(d.forecast); innerColors.push(FORE_COLOR); }
+    var rem = d.target > 0 ? Math.max(0, d.target - d.total) : 0;
+    if (rem > 0) { innerData.push(rem); innerColors.push(REM_COLOR); }
+    if (innerData.length === 0) { innerData = [1]; innerColors = [REM_COLOR]; }
+
+    // outer ring: customer breakdown
+    var outerData   = d.custBreakdown.map(function(c) { return c.value; });
+    var outerColors = d.custBreakdown.map(function(c, i) { return PIE_COLORS[i % PIE_COLORS.length]; });
+    var outerLabels = d.custBreakdown.map(function(c) { return c.name; });
+
+    var datasets = [];
+    if (outerData.length > 0) {
+      datasets.push({ data: outerData, backgroundColor: outerColors, borderWidth: 1, borderColor: BG_INNER, label: '構成', hoverOffset: 2 });
+    }
+    datasets.push({ data: innerData, backgroundColor: innerColors, borderWidth: 0, label: '達成', hoverOffset: 2 });
+
+    new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: outerLabels, datasets: datasets },
+      options: {
+        responsive: false,
+        cutout: '38%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false, external: mPieExternalTooltip }
+        }
+      }
+    });
+  });
+
+  // 確定売上構成（顧客別）donut
+  var custCompCtx = document.getElementById('custCompositionDonut');
+  if (custCompCtx) {
+    new Chart(custCompCtx, {
       type: 'doughnut',
       data: {
         labels: DATA.allCustomers.map(function(c) { return c.name; }),
-        datasets: [{
-          data: DATA.allCustomers.map(function(c) { return c.total; }),
-          backgroundColor: DATA.allCustomers.map(function(c,i) { return PIE_COLORS[i % PIE_COLORS.length]; }),
-          borderWidth: 0
-        }]
+        datasets: [{ data: DATA.allCustomers.map(function(c) { return c.total; }), backgroundColor: DATA.allCustomers.map(function(c,i){ return PIE_COLORS[i%PIE_COLORS.length]; }), borderWidth: 0 }]
       },
       options: {
         responsive: false,
         cutout: '55%',
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
+          tooltip: { enabled: false, external: mPieExternalTooltip }
         }
       }
     });
