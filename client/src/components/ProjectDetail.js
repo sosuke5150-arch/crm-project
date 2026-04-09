@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 const API = 'http://localhost:3001';
 
+const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
+
 const STATUS_LABELS = {
   proposing: '提案中',
   planned: '提案予定',
@@ -81,6 +83,8 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
     order_date: '',
     acceptance_date: '',
   });
+  const [customers, setCustomers] = useState([]);
+  const [dealForm, setDealForm] = useState({ customer_id: '', status: '', amount: '', inspection_date: '' });
   const [infoEditing, setInfoEditing] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
   const [metaEditing, setMetaEditing] = useState(false);
@@ -122,6 +126,14 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
       if (ocData.length > 0) setOcOpen(true);
       if (exData.length > 0) setExOpen(true);
       if (icData.length > 0) setIcOpen(true);
+      if (detailRes.deal) {
+        setDealForm({
+          customer_id: detailRes.deal.customer_id ?? '',
+          status: detailRes.deal.status ?? '',
+          amount: detailRes.deal.amount ?? '',
+          inspection_date: detailRes.deal.inspection_date ?? '',
+        });
+      }
       if (detailRes.meta) {
         setMetaForm({
           estimated_hours: detailRes.meta.estimated_hours != null ? Number(detailRes.meta.estimated_hours).toFixed(1) : '',
@@ -142,6 +154,7 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
 
   useEffect(() => {
     fetch(`${API}/projects`).then(r => r.json()).then(data => setProjectIds(data.map(p => p.deal_id)));
+    fetch(`${API}/customers`).then(r => r.json()).then(setCustomers);
   }, []);
 
   useEffect(() => { load(); }, [dealId]);
@@ -437,19 +450,42 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           <div>
             <span style={labelStyle}>顧客名</span>
-            <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.customer_name}</div>
+            {infoEditing ? (
+              <select style={inputStyle} value={dealForm.customer_id} onChange={e => setDealForm({ ...dealForm, customer_id: e.target.value })}>
+                {customers.map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
+              </select>
+            ) : (
+              <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.customer_name}</div>
+            )}
           </div>
           <div>
             <span style={labelStyle}>ステータス</span>
-            <div><span style={{ fontSize: '13px', color: 'var(--text-td)' }}>{STATUS_LABELS[deal.status] || deal.status}</span></div>
+            {infoEditing ? (
+              <select style={inputStyle} value={dealForm.status} onChange={e => setDealForm({ ...dealForm, status: e.target.value })}>
+                {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            ) : (
+              <div><span style={{ fontSize: '13px', color: 'var(--text-td)' }}>{STATUS_LABELS[deal.status] || deal.status}</span></div>
+            )}
           </div>
           <div>
             <span style={labelStyle}>受注額</span>
-            <div style={{ fontSize: '16px', color: 'var(--accent)', fontWeight: 700 }}>{fmt(deal.amount)}</div>
+            {infoEditing ? (
+              <input style={inputStyle} type="number" value={dealForm.amount} onChange={e => setDealForm({ ...dealForm, amount: e.target.value })} />
+            ) : (
+              <div style={{ fontSize: '16px', color: 'var(--accent)', fontWeight: 700 }}>{fmt(deal.amount)}</div>
+            )}
           </div>
           <div>
             <span style={labelStyle}>検収月</span>
-            <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.inspection_date || '-'}</div>
+            {infoEditing ? (
+              <select style={inputStyle} value={dealForm.inspection_date} onChange={e => setDealForm({ ...dealForm, inspection_date: e.target.value })}>
+                <option value="">未設定</option>
+                {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            ) : (
+              <div style={{ fontSize: '14px', color: 'var(--text-heading)' }}>{deal.inspection_date || '-'}</div>
+            )}
           </div>
           {infoEditing ? (
             <>
@@ -485,7 +521,20 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
         </div>
         {infoEditing && (
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-            <button className="btn-edit" onClick={async () => { await saveMeta(); setInfoEditing(false); }}>保存</button>
+            <button className="btn-edit" onClick={async () => {
+              await fetch(`${API}/deals/${dealId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customer_id: dealForm.customer_id,
+                  status: dealForm.status,
+                  amount: Number(dealForm.amount) || 0,
+                  inspection_date: dealForm.inspection_date || null,
+                }),
+              });
+              await saveMeta();
+              setInfoEditing(false);
+            }}>保存</button>
             <button className="btn-delete" onClick={() => setInfoEditing(false)}>キャンセル</button>
           </div>
         )}

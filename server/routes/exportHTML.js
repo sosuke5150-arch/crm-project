@@ -150,7 +150,7 @@ router.get('/', (req, res) => {
 
     // ---- Data queries ----
     const deals = db.prepare(
-      `SELECT d.*, c.company as customer_name FROM deals d LEFT JOIN customers c ON d.customer_id = c.id ORDER BY d.sort_order ASC`
+      `SELECT d.*, c.company as customer_name FROM deals d LEFT JOIN customers c ON d.customer_id = c.id WHERE (d.is_project IS NULL OR d.is_project = 0) ORDER BY d.sort_order ASC`
     ).all();
 
     const targetRows = db.prepare('SELECT * FROM targets').all();
@@ -175,6 +175,25 @@ router.get('/', (req, res) => {
     } catch (e) {}
     let csTable = {};
     try { csTable = JSON.parse(cs.table_data); } catch (e) {}
+
+    // 外注管理データ
+    const ocBps     = db.prepare('SELECT * FROM outsourcing_bps ORDER BY sort_order, id').all();
+    const ocAmounts = db.prepare('SELECT * FROM outsourcing_amounts').all();
+    const ocTasks   = db.prepare('SELECT * FROM outsourcing_tasks').all();
+    const ocAnnualBudget = Number(db.prepare("SELECT value FROM outsourcing_settings WHERE key='annual_budget'").get()?.value || 0);
+    const ocMemo = db.prepare("SELECT value FROM outsourcing_settings WHERE key='memo'").get()?.value || '';
+    const ocMonths = ['2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'];
+    const ocMonthLabels = ocMonths.map(ym => { const [y,m] = ym.split('-'); return `${parseInt(m)}月`; });
+    const ocAmtMap = {};
+    ocAmounts.forEach(a => { ocAmtMap[`${a.bp_id}-${a.year_month}-${a.type}`] = a.amount; });
+    const ocTaskMap = {};
+    ocTasks.forEach(t => { ocTaskMap[`${t.bp_id}-${t.year_month}`] = t.task_name; });
+    const ocGet = (bpId, ym, type) => ocAmtMap[`${bpId}-${ym}-${type}`] || 0;
+    const ocFmt = v => (Number(v)||0).toLocaleString();
+    const ocMonthBudgetTotal = ym => ocBps.reduce((s,bp) => s + ocGet(bp.id,ym,'budget'), 0);
+    const ocMonthActualTotal = ym => ocBps.reduce((s,bp) => s + ocGet(bp.id,ym,'actual'), 0);
+    const ocTotalBudget = ocMonths.reduce((s,ym) => s + ocMonthBudgetTotal(ym), 0);
+    const ocTotalActual = ocMonths.reduce((s,ym) => s + ocMonthActualTotal(ym), 0);
 
     const csParseNum = v => { const n = Number(String(v || '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
     const csFmtNum  = v => (v === '' || v == null) ? '—' : csParseNum(v).toLocaleString();
@@ -1151,6 +1170,103 @@ tr:hover td{background:${C.bgPanel}}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== 外注管理 ===== -->
+<div class="slide">
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">OUTSOURCING</div>
+    <h2 style="font-size:26px;margin-top:4px">外注管理</h2>
+    <div style="font-size:12px;color:${C.textMuted}">25期 外注予算管理表</div>
+  </div>
+
+    <!-- サマリーカード -->
+    <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      ${[
+        { label:'年間外注予算', value: ocFmt(ocAnnualBudget)+'円', color: C.textHeading },
+        { label:'想定外注費合計', value: ocFmt(ocTotalBudget)+'円', color: C.colorForecast },
+        { label:'累計実績合計', value: ocFmt(ocTotalActual)+'円', color: C.colorActual },
+        { label:'残予算', value: ocFmt(ocAnnualBudget - ocTotalActual)+'円', color: (ocAnnualBudget - ocTotalActual) >= 0 ? C.colorGain : C.colorLoss },
+      ].map(k => `
+        <div style="flex:1;min-width:160px;background:${C.bgCard};border:1px solid ${C.border};border-radius:8px;padding:14px 18px">
+          <div style="font-size:11px;color:${C.textMuted};margin-bottom:4px">${k.label}</div>
+          <div style="font-size:18px;font-weight:700;color:${k.color}">${k.value}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 外注予算・実績テーブル -->
+    ${ocBps.length === 0 ? `<div style="color:${C.textMuted};padding:32px;text-align:center">外注先データがありません</div>` : `
+    <div>
+      <table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed">
+        <thead>
+          <tr>
+            <th style="border:1px solid ${C.border};padding:6px 10px;background:${C.bgHeader};color:${C.textHeading};text-align:left;width:13%">外注先</th>
+            <th style="border:1px solid ${C.border};padding:6px 6px;background:${C.bgHeader};color:${C.textMuted};font-size:10px;width:4%"></th>
+            ${ocMonthLabels.map(l => `<th style="border:1px solid ${C.border};padding:6px 4px;background:${C.bgHeader};color:${C.textHeading};text-align:right;width:6%">${l}</th>`).join('')}
+            <th style="border:1px solid ${C.border};padding:6px 8px;background:${C.bgHeader};color:${C.textHeading};text-align:right;white-space:nowrap">合計</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ocBps.map(bp => {
+            const bpBudget = ocMonths.reduce((s,ym) => s + ocGet(bp.id,ym,'budget'), 0);
+            const bpActual = ocMonths.reduce((s,ym) => s + ocGet(bp.id,ym,'actual'), 0);
+            const hlStyle = bp.highlight_color ? `border-left:3px solid ${bp.highlight_color};` : '';
+            return `
+            <tr>
+              <td rowspan="2" style="border:1px solid ${C.border};padding:6px 10px;${hlStyle}font-weight:600;color:${C.textHeading};vertical-align:middle">
+                ${csEsc(bp.name)}
+                ${bp.note ? `<div style="font-size:10px;color:${C.textMuted};font-weight:400;margin-top:2px">${csEsc(bp.note)}</div>` : ''}
+              </td>
+              <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px;white-space:nowrap">予算</td>
+              ${ocMonths.map(ym => {
+                const v = ocGet(bp.id, ym, 'budget');
+                const task = ocTaskMap[`${bp.id}-${ym}`] || '';
+                return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;color:${C.colorForecast}">
+                  ${v ? ocFmt(v) : '—'}
+                  ${task ? `<div style="font-size:9px;color:${C.textMuted}">${csEsc(task)}</div>` : ''}
+                </td>`;
+              }).join('')}
+              <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${bpBudget ? ocFmt(bpBudget) : '—'}</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px;white-space:nowrap">実績</td>
+              ${ocMonths.map(ym => {
+                const v = ocGet(bp.id, ym, 'actual');
+                return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
+              }).join('')}
+              <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${bpActual ? ocFmt(bpActual) : '—'}</td>
+            </tr>`;
+          }).join('')}
+          <!-- 合計行 -->
+          <tr>
+            <td style="border:1px solid ${C.border};padding:6px 10px;font-weight:700;color:${C.textHeading}">合計</td>
+            <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px">予算</td>
+            ${ocMonths.map(ym => {
+              const v = ocMonthBudgetTotal(ym);
+              return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorForecast}">${v ? ocFmt(v) : '—'}</td>`;
+            }).join('')}
+            <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:700;color:${C.colorForecast}">${ocFmt(ocTotalBudget)}</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid ${C.border};padding:6px 10px"></td>
+            <td style="border:1px solid ${C.border};padding:4px 8px;color:${C.textMuted};font-size:10px">実績</td>
+            ${ocMonths.map(ym => {
+              const v = ocMonthActualTotal(ym);
+              return `<td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:600;color:${C.colorActual}">${v ? ocFmt(v) : '—'}</td>`;
+            }).join('')}
+            <td style="border:1px solid ${C.border};padding:4px 8px;text-align:right;font-weight:700;color:${C.colorActual}">${ocFmt(ocTotalActual)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`}
+
+    <!-- 経緯メモ -->
+    ${ocMemo ? `
+    <div style="margin-top:24px">
+      <div style="font-size:13px;font-weight:700;color:${C.textHeading};margin-bottom:10px">経緯メモ</div>
+      <div style="background:${C.bgCard};border:1px solid ${C.border};border-radius:8px;padding:16px;font-size:13px;line-height:1.9;color:${C.textBody};white-space:pre-wrap">${csEsc(ocMemo)}</div>
+    </div>` : ''}
   </div>
 </div>
 
