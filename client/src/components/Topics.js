@@ -21,8 +21,7 @@ const emptyForm = {
 };
 
 function getRowStyle(status) {
-  const theme = document.body.dataset.theme || 'dark';
-  const isLight = theme === 'excel' || theme === 'earth';
+  const isLight = ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
   switch (status) {
     case '完了':     return { background: isLight ? '#bdd7ee' : 'rgba(0,160,220,0.13)' };
     case '失注':     return { background: isLight ? '#d9d9d9' : 'rgba(140,140,140,0.18)' };
@@ -109,7 +108,7 @@ export default function Topics() {
   };
 
   const companyNames = customers.map(c => c.company).filter(Boolean);
-  const isLight = theme === 'excel' || theme === 'earth';
+  const isLight = ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
 
   return (
     <div>
@@ -213,7 +212,7 @@ export default function Topics() {
                       style={{ ...rowStyle, cursor: 'grab' }}
                     >
                       {(() => {
-                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : item.status === '受注' ? { color: isLight ? '#1565c0' : '#00bcd4' } : {};
+                        const lostStyle = item.status === '失注' ? { color: '#e53935', fontWeight: 'normal' } : item.status === '受注' ? { color: isLight ? '#1565c0' : '#00bcd4' } : {};
                         return (<>
                           <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
                           <td style={lostStyle}>{item.customer || '-'}</td>

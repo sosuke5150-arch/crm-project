@@ -200,7 +200,7 @@ export default function Dashboard() {
           <div className="stat-value">{summary.forecastCount}</div>
         </div>
         <div className="stat">
-          <div className="stat-label">提案中</div>
+          <div className="stat-label">受注待ち</div>
           <div className="stat-value">{summary.proposingCount}</div>
         </div>
         <div className="stat">
@@ -213,7 +213,7 @@ export default function Dashboard() {
         </div>
         <div className="stat">
           <div className="stat-label">着地予想額（円）</div>
-          <div className="stat-value">{(summary.totalAmount + summary.totalForecast).toLocaleString()}</div>
+          <div className="stat-value">{(() => { const t = periodData.find(d => d.name === '通期'); return t ? (t.実績 + t.見込).toLocaleString() : '-'; })()}</div>
         </div>
       </div>
 

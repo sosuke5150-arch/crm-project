@@ -195,6 +195,21 @@ router.get('/', (req, res) => {
     const ocTotalBudget = ocMonths.reduce((s,ym) => s + ocMonthBudgetTotal(ym), 0);
     const ocTotalActual = ocMonths.reduce((s,ym) => s + ocMonthActualTotal(ym), 0);
 
+    // トピックスデータ
+    const topicsItems = db.prepare('SELECT * FROM topics_items ORDER BY section, sort_order, id').all();
+    const TOPICS_SECTIONS = ['既存顧客案件', '新規顧客案件'];
+    const topicsEsc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    const topicsFmt = v => { const n = Number(String(v||'').replace(/,/g,'')); return isNaN(n)||!v ? '-' : '¥' + n.toLocaleString(); };
+    const topicsStatusStyle = (status, theme) => {
+      const isLight = theme === 'excel' || theme === 'earth';
+      if (status === '失注')   return `background:${isLight?'#d9d9d9':'rgba(140,140,140,0.18)'};color:#e53935;`;
+      if (status === '受注')   return `background:${isLight?'#fffcd0':'rgba(240,220,0,0.07)'};color:${isLight?'#1565c0':'#00bcd4'};`;
+      if (status === '完了')   return `background:${isLight?'#bdd7ee':'rgba(0,160,220,0.13)'};`;
+      if (status === '締結済み') return `background:${isLight?'#f4cccc':'rgba(220,60,60,0.12)'};`;
+      if (status === '利用中') return `background:${isLight?'#e2efda':'rgba(80,200,100,0.11)'};`;
+      return '';
+    };
+
     const csParseNum = v => { const n = Number(String(v || '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
     const csFmtNum  = v => (v === '' || v == null) ? '—' : csParseNum(v).toLocaleString();
     const csFmtPct  = (num, den) => (!den || !num) ? '—' : (csParseNum(num) / csParseNum(den) * 100).toFixed(2) + '%';
@@ -283,10 +298,12 @@ router.get('/', (req, res) => {
     const lDiff = (lActual+lForecast) - lTarget;
 
     // ---- Status counts ----
-    const totalCount     = deals.length;
-    const doneCount      = deals.filter(d => ['done','monthly'].includes(d.status)).length;
-    const forecastCount  = deals.filter(d => ['forecast','developing'].includes(d.status)).length;
-    const proposingCount = deals.filter(d => ['proposing','planned'].includes(d.status)).length;
+    const DONE_MONTHS    = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収'];
+    const FORE_MONTHS    = ['4月検収','5月検収','6月検収','7月検収','8月検収'];
+    const totalCount     = db.prepare('SELECT COUNT(*) as count FROM deals').get().count;
+    const doneCount      = db.prepare(`SELECT COUNT(*) as count FROM deals WHERE status IN ('won','done','monthly','shikakake') AND inspection_date IN (${DONE_MONTHS.map(()=>'?').join(',')})`).get(...DONE_MONTHS).count;
+    const forecastCount  = db.prepare(`SELECT COUNT(*) as count FROM deals WHERE inspection_date IN (${FORE_MONTHS.map(()=>'?').join(',')})`).get(...FORE_MONTHS).count;
+    const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('proposing','planned')").get().count;
     const shikakakeAmount = deals.filter(d => d.status==='shikakake').reduce((s,d) => s+(Number(d.amount)||0), 0);
 
     // ---- Monthly chart ----
@@ -630,7 +647,23 @@ th{background:${C.bgTh};color:${C.textMid};font-size:12px;padding:8px;border:1px
 td{padding:8px;border:1px solid ${C.border};color:${C.textHeading}}
 tr:hover td{background:${C.bgPanel}}
 .tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px}
-@media print{.slide{page-break-after:always}.print-btn{display:none}@page{margin:8mm;size:A4 landscape}}
+@media print{
+  @page{margin:8mm;size:A4 landscape}
+  body{width:100%;margin:0;padding:0}
+  .slide{
+    page-break-after:always;
+    break-after:page;
+    min-height:0;
+    height:calc(210mm - 16mm);
+    width:calc(297mm - 16mm);
+    max-width:calc(297mm - 16mm);
+    overflow:hidden;
+    padding:24px 32px;
+    box-sizing:border-box;
+    display:block;
+  }
+  .print-btn{display:none}
+}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:${C.scrollbarTrack}}
 ::-webkit-scrollbar-thumb{background:${C.scrollbarThumb};border-radius:3px}
@@ -666,6 +699,7 @@ tr:hover td{background:${C.bgPanel}}
       <li>KPI概況と通期見通し</li>
       <li>月別売上推移と傾向</li>
       <li>上期・下期売上詳細</li>
+      <li>トピックス</li>
       <li>今後のアクション</li>
     </ol>
   </div>
@@ -886,7 +920,7 @@ tr:hover td{background:${C.bgPanel}}
       {label:'案件数',  value:totalCount,    color:C.accent},
       {label:'完了数',  value:doneCount,     color:C.accent},
       {label:'見込数',  value:forecastCount, color:C.accent},
-      {label:'提案中',  value:proposingCount,color:C.accent},
+      {label:'受注待ち', value:proposingCount,color:C.accent},
     ].map(s => `<div class="panel" style="padding:14px 16px">
       <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
       <div style="font-size:28px;font-weight:700;color:${s.color}">${s.value}</div>
@@ -906,7 +940,7 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 
   <!-- 月別 予実比較 -->
-  <div class="panel" style="padding:16px 20px">
+  <div class="panel" style="padding:16px 20px;overflow:hidden">
     <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">月別 予実比較</h3>
     <canvas id="yojitsuBar" height="80"></canvas>
   </div>
@@ -985,7 +1019,7 @@ tr:hover td{background:${C.bgPanel}}
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
 
   <!-- 上期・下期・通期 予実対比 -->
-  <div class="panel" style="margin-bottom:16px;padding:16px 20px">
+  <div class="panel" style="margin-bottom:16px;padding:16px 20px;overflow:hidden">
     <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">上期・下期・通期　予実対比</h3>
     <canvas id="periodBar" height="90"></canvas>
   </div>
@@ -1022,7 +1056,52 @@ tr:hover td{background:${C.bgPanel}}
 
 </div>
 
-<!-- Page 8: Upper Half Sales -->
+<!-- Page 8: Topics -->
+<div class="slide" style="overflow:auto">
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">TOPICS</div>
+    <h2 style="font-size:26px;margin-top:4px">トピックス</h2>
+  </div>
+  ${TOPICS_SECTIONS.map(section => {
+    const sectionItems = topicsItems.filter(it => it.section === section);
+    return `
+    <div style="margin-bottom:20px">
+      <div style="font-weight:700;font-size:13px;color:${C.accent};padding:6px 12px;background:${C.bgTh};border-bottom:1px solid ${C.border};letter-spacing:0.04em;margin-bottom:0">【${section}】</div>
+      <div class="panel" style="padding:0;margin-top:0">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:12%">顧客</th>
+              <th style="width:16%">プロジェクト</th>
+              <th style="width:10%">ステータス</th>
+              <th style="text-align:right;width:10%">金額</th>
+              <th style="width:10%">検収(予定)完了</th>
+              <th>トピックス</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sectionItems.length === 0
+              ? `<tr><td colspan="6" style="text-align:center;color:${C.textFaint};padding:16px">データがありません</td></tr>`
+              : sectionItems.map(item => {
+                  const rs = topicsStatusStyle(item.status, theme);
+                  return `<tr style="${rs}">
+                    <td style="font-size:12px;color:${C.textMid}">${topicsEsc(item.customer)||'-'}</td>
+                    <td>${topicsEsc(item.project)||'-'}</td>
+                    <td style="font-size:12px">${topicsEsc(item.status)||'-'}</td>
+                    <td style="text-align:right;font-size:12px">${topicsFmt(item.amount)}</td>
+                    <td style="font-size:12px">${topicsEsc(item.inspection_date)||'-'}</td>
+                    <td style="white-space:pre-wrap;font-size:12px">${topicsEsc(item.topics)||'-'}</td>
+                  </tr>`;
+                }).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('')}
+</div>
+
+<!-- Page 9: Upper Half Sales -->
 <div class="slide">
   <div style="margin-bottom:20px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">UPPER HALF</div>
@@ -1086,7 +1165,7 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 </div>
 
-<!-- Page 9: Lower Half Sales -->
+<!-- Page 10: Lower Half Sales -->
 <div class="slide">
   <div style="margin-bottom:20px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">LOWER HALF</div>
@@ -1414,7 +1493,7 @@ tr:hover td{background:${C.bgPanel}}
     var yBar2    = DATA.yojitsuData.map(function(d) { return d.bar2; });
     var yBar3    = DATA.yojitsuData.map(function(d) { return d.bar3; });
     var yBar2Colors = DATA.yojitsuData.map(function(d) { return d.hasActual ? '${C.chartActual}' : '${C.chartForecast}'; });
-    new Chart(yojitsuCtx, {
+    var yojitsuChart = new Chart(yojitsuCtx, {
       type: 'bar',
       data: {
         labels: yLabels,
@@ -1441,7 +1520,7 @@ tr:hover td{background:${C.bgPanel}}
   // 上期・下期・通期 予実対比 Bar (Page 3)
   var periodCtx = document.getElementById('periodBar');
   if (periodCtx) {
-    new Chart(periodCtx, {
+    var periodChart = new Chart(periodCtx, {
       type: 'bar',
       data: {
         labels: DATA.periodData.map(function(p) { return p.name; }),
@@ -1559,6 +1638,10 @@ tr:hover td{background:${C.bgPanel}}
       }
     });
   }
+  window.addEventListener('beforeprint', function() {
+    if (yojitsuChart) yojitsuChart.resize();
+    if (periodChart)  periodChart.resize();
+  });
 })();
 <\/script>
 <button class="print-btn" onclick="window.print()">PDF出力</button>
