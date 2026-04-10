@@ -15,6 +15,7 @@ app.use('/export-html', require('./routes/exportHTML'));
 app.use('/notes', require('./routes/notes'));
 app.use('/common-sheet', require('./routes/commonSheet'));
 app.use('/outsourcing', require('./routes/outsourcing'));
+app.use('/topics', require('./routes/topics'));
 
 // ダッシュボード用サマリー
 app.get('/summary', (req, res) => {

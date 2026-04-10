@@ -95,4 +95,19 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS topics_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    section TEXT NOT NULL DEFAULT '既存顧客案件',
+    customer TEXT DEFAULT '',
+    project TEXT DEFAULT '',
+    status TEXT DEFAULT '',
+    amount TEXT DEFAULT '',
+    inspection_date TEXT DEFAULT '',
+    topics TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 module.exports = db;
