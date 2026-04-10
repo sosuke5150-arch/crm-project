@@ -26,7 +26,7 @@ function getRowStyle(status) {
   switch (status) {
     case '完了':     return { background: isLight ? '#bdd7ee' : 'rgba(0,160,220,0.13)' };
     case '失注':     return { background: isLight ? '#d9d9d9' : 'rgba(140,140,140,0.18)' };
-    case '受注':     return { background: isLight ? '#ffff99' : 'rgba(240,220,0,0.14)' };
+    case '受注':     return { background: isLight ? '#fffcd0' : 'rgba(240,220,0,0.07)' };
     case '締結済み': return { background: isLight ? '#f4cccc' : 'rgba(220,60,60,0.12)' };
     case '利用中':   return { background: isLight ? '#e2efda' : 'rgba(80,200,100,0.11)' };
     default:         return {};
@@ -212,7 +212,7 @@ export default function Topics() {
                       style={{ ...rowStyle, cursor: 'grab' }}
                     >
                       {(() => {
-                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : {};
+                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : item.status === '受注' ? { color: '#b35000' } : {};
                         return (<>
                           <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
                           <td style={lostStyle}>{item.customer || '-'}</td>
