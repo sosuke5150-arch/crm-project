@@ -212,7 +212,7 @@ export default function Topics() {
                       style={{ ...rowStyle, cursor: 'grab' }}
                     >
                       {(() => {
-                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : item.status === '受注' ? { color: '#1565c0' } : {};
+                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : item.status === '受注' ? { color: isLight ? '#1565c0' : '#00bcd4' } : {};
                         return (<>
                           <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
                           <td style={lostStyle}>{item.customer || '-'}</td>
