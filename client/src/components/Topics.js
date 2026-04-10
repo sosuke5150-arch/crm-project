@@ -109,6 +109,7 @@ export default function Topics() {
   };
 
   const companyNames = customers.map(c => c.company).filter(Boolean);
+  const isLight = theme === 'excel' || theme === 'earth';
 
   return (
     <div>
