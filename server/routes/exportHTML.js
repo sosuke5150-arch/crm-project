@@ -649,19 +649,22 @@ tr:hover td{background:${C.bgPanel}}
 .tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px}
 @media print{
   @page{margin:8mm;size:A4 landscape}
-  body{width:100%;margin:0;padding:0}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .slide{
     page-break-after:always;
     break-after:page;
+    page-break-inside:avoid;
     min-height:0;
-    height:calc(210mm - 16mm);
-    width:calc(297mm - 16mm);
-    max-width:calc(297mm - 16mm);
-    overflow:hidden;
-    padding:24px 32px;
-    box-sizing:border-box;
-    display:block;
+    overflow:visible;
+    padding:16px 20px;
+    font-size:11px;
   }
+  table{font-size:10px;width:100%}
+  th,td{padding:3px 5px!important;font-size:10px!important}
+  .kpi-value{font-size:18px!important}
+  .kpi-card{padding:10px 12px!important}
+  canvas{max-width:100%!important}
+  .fit-page{zoom:0.68}
   .print-btn{display:none}
 }
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -853,7 +856,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page 7: Sales Management Table -->
-<div class="slide">
+<div class="slide fit-page">
   <div style="margin-bottom:20px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">BUDGET VS ACTUAL</div>
     <h2 style="font-size:26px;margin-top:4px">売上管理表（予実対比）</h2>
@@ -888,7 +891,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page 7b: Budget Background & Policy -->
-<div class="slide">
+<div class="slide fit-page">
   <div style="margin-bottom:24px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">BUDGET NOTES</div>
     <h2 style="font-size:26px;margin-top:4px">予算経緯・重要方針</h2>
@@ -947,7 +950,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page: 月別予実比較（円グラフ）+ 確定売上構成 -->
-<div class="slide">
+<div class="slide fit-page">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">DASHBOARD</h2>
 
   <!-- 月別予実比較（円グラフ）-->
@@ -1316,7 +1319,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- ===== 外注管理 ===== -->
-<div class="slide">
+<div class="slide fit-page">
   <div style="margin-bottom:20px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">OUTSOURCING</div>
     <h2 style="font-size:26px;margin-top:4px">外注管理</h2>
