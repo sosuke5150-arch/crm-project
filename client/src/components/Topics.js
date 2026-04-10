@@ -69,12 +69,17 @@ function getRowBg(status, isLight) {
 
 export default function Topics() {
   const [items, setItems] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [theme, setTheme] = useState(document.body.dataset.theme || 'dark');
 
   useEffect(() => {
     fetch(`${API}/topics`)
       .then(r => r.json())
       .then(setItems)
+      .catch(() => {});
+    fetch(`${API}/customers`)
+      .then(r => r.json())
+      .then(data => setCustomers(data.map(c => c.company || c.name).filter(Boolean)))
       .catch(() => {});
     const obs = new MutationObserver(() => setTheme(document.body.dataset.theme || 'dark'));
     obs.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
@@ -237,16 +242,22 @@ export default function Topics() {
                     });
                     return (
                       <tr key={item.id}>
-                        <td style={td()}>
-                          <input
+                        <td style={td({ padding: '4px 6px' })}>
+                          <select
                             value={item.customer || ''}
-                            onChange={e => localUpdate(item.id, 'customer', e.target.value)}
-                            onBlur={() => {
+                            onChange={e => {
+                              const val = e.target.value;
+                              localUpdate(item.id, 'customer', val);
                               const cur = items.find(it => it.id === item.id);
-                              if (cur) saveItem(cur);
+                              if (cur) saveItem({ ...cur, customer: val });
                             }}
-                            style={inputStyle}
-                          />
+                            style={selectStyle}
+                          >
+                            <option value="">—</option>
+                            {customers.map(c => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
                         </td>
                         <td style={td()}>
                           <input
