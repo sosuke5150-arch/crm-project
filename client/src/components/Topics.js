@@ -209,12 +209,12 @@ export default function Topics() {
                       onDragStart={() => handleDragStart(globalIndex)}
                       onDragOver={e => e.preventDefault()}
                       onDrop={() => handleDrop(globalIndex)}
-                      style={{ ...rowStyle, cursor: 'grab' }}
+                      style={{ ...rowStyle, cursor: 'grab', ...(item.status === '失注' ? { color: '#e53935', fontWeight: 600 } : {}) }}
                     >
                       <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
                       <td>{item.customer || '-'}</td>
                       <td>{item.project || '-'}</td>
-                      <td style={item.status === '失注' ? { color: '#e53935', fontWeight: 600 } : {}}>{item.status || '-'}</td>
+                      <td>{item.status || '-'}</td>
                       <td style={{ textAlign: 'right' }}>{item.amount || '-'}</td>
                       <td>{item.inspection_date || '-'}</td>
                       <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px' }}>{item.topics || '-'}</td>
