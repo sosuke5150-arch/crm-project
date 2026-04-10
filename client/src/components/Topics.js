@@ -263,9 +263,9 @@ export default function Topics() {
                           <input
                             value={item.project || ''}
                             onChange={e => localUpdate(item.id, 'project', e.target.value)}
-                            onBlur={() => {
+                            onBlur={e => {
                               const cur = items.find(it => it.id === item.id);
-                              if (cur) saveItem(cur);
+                              if (cur) saveItem({ ...cur, project: e.target.value });
                             }}
                             style={inputStyle}
                           />
@@ -290,9 +290,9 @@ export default function Topics() {
                           <input
                             value={item.amount || ''}
                             onChange={e => localUpdate(item.id, 'amount', e.target.value)}
-                            onBlur={() => {
+                            onBlur={e => {
                               const cur = items.find(it => it.id === item.id);
-                              if (cur) saveItem(cur);
+                              if (cur) saveItem({ ...cur, amount: e.target.value });
                             }}
                             style={{ ...inputStyle, textAlign: 'right' }}
                           />
@@ -317,9 +317,9 @@ export default function Topics() {
                           <textarea
                             value={item.topics || ''}
                             onChange={e => localUpdate(item.id, 'topics', e.target.value)}
-                            onBlur={() => {
+                            onBlur={e => {
                               const cur = items.find(it => it.id === item.id);
-                              if (cur) saveItem(cur);
+                              if (cur) saveItem({ ...cur, topics: e.target.value });
                             }}
                             rows={Math.max(2, (item.topics || '').split('\n').length)}
                             style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
