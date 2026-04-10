@@ -218,7 +218,7 @@ export default function Topics() {
                           <td style={lostStyle}>{item.customer || '-'}</td>
                           <td style={lostStyle}>{item.project || '-'}</td>
                           <td style={lostStyle}>{item.status || '-'}</td>
-                          <td style={{ textAlign: 'right', ...lostStyle }}>{item.amount || '-'}</td>
+                          <td style={{ textAlign: 'right', ...lostStyle }}>{item.amount ? `¥${Number(String(item.amount).replace(/,/g, '')).toLocaleString()}` : '-'}</td>
                           <td style={lostStyle}>{item.inspection_date || '-'}</td>
                           <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px', ...lostStyle }}>{item.topics || '-'}</td>
                         </>);
