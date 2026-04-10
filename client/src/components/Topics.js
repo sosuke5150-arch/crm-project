@@ -209,15 +209,20 @@ export default function Topics() {
                       onDragStart={() => handleDragStart(globalIndex)}
                       onDragOver={e => e.preventDefault()}
                       onDrop={() => handleDrop(globalIndex)}
-                      style={{ ...rowStyle, cursor: 'grab', ...(item.status === '失注' ? { color: '#e53935', fontWeight: 600 } : {}) }}
+                      style={{ ...rowStyle, cursor: 'grab' }}
                     >
-                      <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
-                      <td>{item.customer || '-'}</td>
-                      <td>{item.project || '-'}</td>
-                      <td>{item.status || '-'}</td>
-                      <td style={{ textAlign: 'right' }}>{item.amount || '-'}</td>
-                      <td>{item.inspection_date || '-'}</td>
-                      <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px' }}>{item.topics || '-'}</td>
+                      {(() => {
+                        const lostStyle = item.status === '失注' ? { color: '#e53935' } : {};
+                        return (<>
+                          <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
+                          <td style={lostStyle}>{item.customer || '-'}</td>
+                          <td style={lostStyle}>{item.project || '-'}</td>
+                          <td style={lostStyle}>{item.status || '-'}</td>
+                          <td style={{ textAlign: 'right', ...lostStyle }}>{item.amount || '-'}</td>
+                          <td style={lostStyle}>{item.inspection_date || '-'}</td>
+                          <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px', ...lostStyle }}>{item.topics || '-'}</td>
+                        </>);
+                      })()}
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <button className="btn-edit" onClick={() => handleEditStart(item)}>修正</button>
                         <button className="btn-edit" onClick={() => handleDuplicate(item)} style={{ color: '#a78bfa' }}>複製</button>
