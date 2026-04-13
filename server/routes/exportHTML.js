@@ -202,10 +202,10 @@ router.get('/', (req, res) => {
     const topicsFmt = v => { const n = Number(String(v||'').replace(/,/g,'')); return isNaN(n)||!v ? '-' : '¥' + n.toLocaleString(); };
     const topicsStatusStyle = (status, theme) => {
       const isLight = theme === 'excel' || theme === 'earth';
-      if (status === '失注')   return `background:${isLight?'#d9d9d9':'rgba(140,140,140,0.18)'};color:#e53935;`;
+      if (status === '失注')   return `background:${isLight?'#b8b8b8':'rgba(140,140,140,0.35)'};color:#e53935;`;
       if (status === '受注')   return `background:${isLight?'#fffcd0':'rgba(240,220,0,0.07)'};color:${isLight?'#1565c0':'#00bcd4'};`;
       if (status === '完了')   return `background:${isLight?'#bdd7ee':'rgba(0,160,220,0.13)'};`;
-      if (status === '締結済み') return `background:${isLight?'#f4cccc':'rgba(220,60,60,0.12)'};`;
+      if (status === '締結済み') return `background:${isLight?'#cce8f4':'rgba(0,160,220,0.15)'};`;
       if (status === '利用中') return `background:${isLight?'#e2efda':'rgba(80,200,100,0.11)'};`;
       return '';
     };
@@ -665,6 +665,8 @@ tr:hover td{background:${C.bgPanel}}
   .kpi-card{padding:10px 12px!important}
   canvas{max-width:100%!important}
   .fit-page{zoom:0.68}
+  .slide-pair-v{page-break-after:always;break-after:page;page-break-inside:avoid}
+  .slide-pair-v>.slide{page-break-after:avoid!important;break-after:avoid!important}
   .print-btn{display:none}
 }
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -914,7 +916,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page 2: KPI Dashboard (Dashboard style) -->
-<div class="slide">
+<div class="slide fit-page">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
 
   <!-- 統計カード上段: 案件数/完了数/見込数/提案中 -->
@@ -1018,7 +1020,7 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page 3: Period Comparison -->
-<div class="slide">
+<div class="slide fit-page">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
 
   <!-- 上期・下期・通期 予実対比 -->

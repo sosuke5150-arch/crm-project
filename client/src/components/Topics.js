@@ -24,9 +24,9 @@ function getRowStyle(status) {
   const isLight = ['excel', 'earth'].includes(document.body.dataset.theme || 'dark');
   switch (status) {
     case '完了':     return { background: isLight ? '#bdd7ee' : 'rgba(0,160,220,0.13)' };
-    case '失注':     return { background: isLight ? '#d9d9d9' : 'rgba(140,140,140,0.18)' };
+    case '失注':     return { background: isLight ? '#b8b8b8' : 'rgba(140,140,140,0.35)' };
     case '受注':     return { background: isLight ? '#fffcd0' : 'rgba(240,220,0,0.07)' };
-    case '締結済み': return { background: isLight ? '#f4cccc' : 'rgba(220,60,60,0.12)' };
+    case '締結済み': return { background: isLight ? '#cce8f4' : 'rgba(0,160,220,0.15)' };
     case '利用中':   return { background: isLight ? '#e2efda' : 'rgba(80,200,100,0.11)' };
     default:         return {};
   }
