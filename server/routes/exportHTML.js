@@ -667,7 +667,9 @@ tr:hover td{background:${C.bgPanel}}
   .fit-page{zoom:0.68}
   .slide-pair-v{page-break-after:always;break-after:page;page-break-inside:avoid}
   .slide-pair-v>.slide{page-break-after:avoid!important;break-after:avoid!important}
-  .print-btn{display:none}
+  .paged-hidden{display:block!important}
+  #page-nav{display:none!important}
+  .print-btn{display:none!important}
 }
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:${C.scrollbarTrack}}
@@ -1669,7 +1671,56 @@ tr:hover td{background:${C.bgPanel}}
   });
 })();
 <\/script>
-<button class="print-btn" onclick="window.print()">PDF出力</button>
+<div id="page-nav" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9998;align-items:center;gap:12px;background:${C.bgPanel};border:1px solid ${C.border};border-radius:10px;padding:10px 20px;box-shadow:0 4px 16px rgba(0,0,0,0.4)">
+  <button id="prev-btn" onclick="pageNav(-1)" style="background:${C.bgTh};color:${C.textHeading};border:1px solid ${C.border};border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.05em">← 前へ</button>
+  <span id="page-counter" style="font-size:13px;font-weight:700;color:${C.textMuted};min-width:60px;text-align:center">1 / 1</span>
+  <button id="next-btn" onclick="pageNav(1)" style="background:${C.bgTh};color:${C.textHeading};border:1px solid ${C.border};border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.05em">次へ →</button>
+</div>
+<button class="print-btn" id="print-btn-main">PDF出力</button>
+<script>
+(function(){
+  var pages = Array.from(document.querySelectorAll('body > .slide, body > .slide-pair-v'));
+  if (pages.length === 0) return;
+  var current = 0;
+  var counter = document.getElementById('page-counter');
+  var prevBtn = document.getElementById('prev-btn');
+  var nextBtn = document.getElementById('next-btn');
+  var nav     = document.getElementById('page-nav');
+  nav.style.display = 'flex';
+  function showPage(idx) {
+    pages.forEach(function(p, i){
+      p.style.display = i === idx ? '' : 'none';
+    });
+    current = idx;
+    counter.textContent = (idx + 1) + ' / ' + pages.length;
+    prevBtn.style.opacity = idx === 0 ? '0.35' : '1';
+    prevBtn.style.cursor  = idx === 0 ? 'default' : 'pointer';
+    nextBtn.style.opacity = idx === pages.length - 1 ? '0.35' : '1';
+    nextBtn.style.cursor  = idx === pages.length - 1 ? 'default' : 'pointer';
+    window.scrollTo(0, 0);
+  }
+  window.pageNav = function(dir) {
+    var next = current + dir;
+    if (next >= 0 && next < pages.length) showPage(next);
+  };
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   pageNav(-1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  pageNav(1);
+  });
+  document.getElementById('print-btn-main').addEventListener('click', function() {
+    pages.forEach(function(p){ p.style.display = ''; });
+    try { Object.values(Chart.instances).forEach(function(c){ c.resize(); }); } catch(e){}
+    setTimeout(function() {
+      window.print();
+      setTimeout(function() { showPage(current); }, 300);
+    }, 300);
+  });
+  window.addEventListener('afterprint', function() {
+    showPage(current);
+  });
+  showPage(0);
+})();
+<\/script>
 </body>
 </html>`;
 
