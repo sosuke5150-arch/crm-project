@@ -1582,6 +1582,12 @@ tr:hover td{background:${C.bgPanel}}
     }
     datasets.push({ data: innerData, backgroundColor: innerColors, borderWidth: 0, label: '達成', hoverOffset: 2 });
 
+    var innerLabelsArr = [];
+    if (d.actual   > 0) innerLabelsArr.push('実績');
+    if (d.forecast > 0) innerLabelsArr.push('見込');
+    if (rem        > 0) innerLabelsArr.push('残');
+    if (innerLabelsArr.length === 0) innerLabelsArr = ['—'];
+    var hasOuter = outerData.length > 0;
     new Chart(canvas, {
       type: 'doughnut',
       data: { labels: outerLabels, datasets: datasets },
@@ -1590,7 +1596,21 @@ tr:hover td{background:${C.bgPanel}}
         cutout: '38%',
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false, external: mPieExternalTooltip }
+          tooltip: {
+            enabled: false,
+            external: mPieExternalTooltip,
+            callbacks: {
+              title: function(items) {
+                if (!items.length) return '';
+                var it = items[0];
+                if (hasOuter && it.datasetIndex === 0) return outerLabels[it.dataIndex] || '';
+                return innerLabelsArr[it.dataIndex] || '';
+              },
+              label: function(item) {
+                return ': ¥' + Number(item.raw).toLocaleString();
+              }
+            }
+          }
         }
       }
     });

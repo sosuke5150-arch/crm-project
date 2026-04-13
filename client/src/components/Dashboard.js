@@ -261,7 +261,7 @@ export default function Dashboard() {
                 const segColor = name => ({
                   '実績':   colors.actual,
                   '見込':   colors.forecast,
-                  '残':     isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)',
+                  '残':     isLight ? 'rgba(0,0,0,0.40)' : 'rgba(255,255,255,0.40)',
                   '無データ': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
                 })[name] || '#888';
                 return (
@@ -283,6 +283,7 @@ export default function Dashboard() {
                         <Tooltip
                           formatter={(v, n) => [`¥${Number(v).toLocaleString()}`, n]}
                           contentStyle={{ ...tooltipStyle, fontSize: 12, padding: '6px 10px' }}
+                          wrapperStyle={{ zIndex: 999 }}
                         />
                       </PieChart>
                       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 13, fontWeight: 700, color: rateColor, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
@@ -316,7 +317,7 @@ export default function Dashboard() {
               })}
             </div>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '14px' }}>
-              {[{ label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }, { label: '残', color: isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)' }].map(i => (
+              {[{ label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }, { label: '残', color: isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)' }].map(i => (
                 <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: i.color }} />
                   {i.label}
