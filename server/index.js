@@ -76,14 +76,20 @@ app.get('/summary/yojitsu', (req, res) => {
 app.get('/summary/by-customer', (req, res) => {
   const db = require('./db');
   const rows = db.prepare(`
-    SELECT c.company as customer, SUM(d.amount) as total
+    SELECT c.company as customer, SUM(d.amount) as total,
+           GROUP_CONCAT(d.title, '|||') as dealNames
     FROM deals d
     JOIN customers c ON d.customer_id = c.id
     WHERE d.status IN ('won','done','monthly','shikakake')
     GROUP BY d.customer_id
     ORDER BY total DESC
   `).all();
-  res.json(rows);
+  res.json(rows.map(r => ({
+    ...r,
+    dealNames: r.dealNames
+      ? [...new Set(r.dealNames.split('|||'))]
+      : []
+  })));
 });
 
 const PORT = 3001;

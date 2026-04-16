@@ -339,10 +339,16 @@ export default function Dashboard() {
                           {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                         </Pie>
                         <Tooltip
-                          formatter={v => [`¥${Number(v).toLocaleString()}`, '']}
-                          contentStyle={tooltipStyle}
-                          labelStyle={{ color: 'var(--text-muted)', fontSize: 12 }}
-                          itemStyle={{ color: 'var(--text-body)', fontSize: 12 }}
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0].payload;
+                            return (
+                              <div style={tooltipStyle}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 4, fontWeight: 700 }}>{d.customer}</p>
+                                <p style={{ color: 'var(--text-heading)', fontWeight: 700, fontSize: 13 }}>¥{Number(d.total).toLocaleString()}</p>
+                              </div>
+                            );
+                          }}
                         />
                       </PieChart>
                     </div>
