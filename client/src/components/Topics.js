@@ -18,6 +18,7 @@ const emptyForm = {
   amount: '',
   inspection_date: '',
   topics: '',
+  row_color: '',
 };
 
 function getRowStyle(status) {
@@ -79,6 +80,7 @@ export default function Topics() {
       amount:          item.amount || '',
       inspection_date: item.inspection_date || '',
       topics:          item.topics || '',
+      row_color:       item.row_color || '',
     });
   };
 
@@ -194,6 +196,22 @@ export default function Topics() {
                           rows={3}
                           style={{ width: '100%', resize: 'vertical', background: 'var(--bg-panel)', color: 'var(--text-body)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', fontFamily: 'Inter,sans-serif', fontSize: '13px' }}
                         />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>文字色</label>
+                          <input
+                            type="color"
+                            value={editForm.row_color || '#c9d1e8'}
+                            onChange={e => setEditForm({ ...editForm, row_color: e.target.value })}
+                            style={{ width: '32px', height: '22px', border: 'none', padding: 0, cursor: 'pointer', background: 'none' }}
+                          />
+                          {editForm.row_color && (
+                            <button
+                              type="button"
+                              onClick={() => setEditForm({ ...editForm, row_color: '' })}
+                              style={{ fontSize: '10px', padding: '1px 6px', background: 'none', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-muted)', cursor: 'pointer' }}
+                            >リセット</button>
+                          )}
+                        </div>
                       </td>
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <button className="btn-edit" onClick={() => handleEditSave(item.id)}>保存</button>
@@ -213,14 +231,15 @@ export default function Topics() {
                     >
                       {(() => {
                         const lostStyle = item.status === '失注' ? { color: '#e53935', fontWeight: 'normal' } : item.status === '受注' ? { color: isLight ? '#1565c0' : '#00bcd4' } : {};
+                        const colorStyle = item.row_color ? { color: item.row_color } : {};
                         return (<>
                           <td style={{ color: 'var(--text-faint)', fontSize: '16px', cursor: 'grab' }}>⠿</td>
-                          <td style={lostStyle}>{item.customer || '-'}</td>
-                          <td style={lostStyle}>{item.project || '-'}</td>
-                          <td style={lostStyle}>{item.status || '-'}</td>
-                          <td style={{ textAlign: 'right', ...lostStyle }}>{item.amount ? `¥${Number(String(item.amount).replace(/,/g, '')).toLocaleString()}` : '-'}</td>
-                          <td style={lostStyle}>{item.inspection_date || '-'}</td>
-                          <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px', ...lostStyle }}>{item.topics || '-'}</td>
+                          <td style={{ ...lostStyle, ...colorStyle }}>{item.customer || '-'}</td>
+                          <td style={{ ...lostStyle, ...colorStyle }}>{item.project || '-'}</td>
+                          <td style={{ ...lostStyle, ...colorStyle }}>{item.status || '-'}</td>
+                          <td style={{ textAlign: 'right', ...lostStyle, ...colorStyle }}>{item.amount ? `¥${Number(String(item.amount).replace(/,/g, '')).toLocaleString()}` : '-'}</td>
+                          <td style={{ ...lostStyle, ...colorStyle }}>{item.inspection_date || '-'}</td>
+                          <td style={{ whiteSpace: 'pre-wrap', maxWidth: '300px', ...lostStyle, ...colorStyle }}>{item.topics || '-'}</td>
                         </>);
                       })()}
                       <td style={{ whiteSpace: 'nowrap' }}>

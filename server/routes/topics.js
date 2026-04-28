@@ -13,12 +13,12 @@ router.get('/', (req, res) => {
 // POST new item
 router.post('/', (req, res) => {
   try {
-    const { section = '既存顧客案件', customer = '', project = '', status = '', amount = '', inspection_date = '', topics = '' } = req.body;
+    const { section = '既存顧客案件', customer = '', project = '', status = '', amount = '', inspection_date = '', topics = '', row_color = '' } = req.body;
     const maxRow = db.prepare('SELECT MAX(sort_order) as m FROM topics_items WHERE section = ?').get(section);
     const nextOrder = (maxRow?.m || 0) + 1;
     const result = db.prepare(
-      'INSERT INTO topics_items (section, customer, project, status, amount, inspection_date, topics, sort_order) VALUES (?,?,?,?,?,?,?,?)'
-    ).run(section, customer, project, status, amount, inspection_date, topics, nextOrder);
+      'INSERT INTO topics_items (section, customer, project, status, amount, inspection_date, topics, sort_order, row_color) VALUES (?,?,?,?,?,?,?,?,?)'
+    ).run(section, customer, project, status, amount, inspection_date, topics, nextOrder, row_color);
     const newItem = db.prepare('SELECT * FROM topics_items WHERE id = ?').get(result.lastInsertRowid);
     res.json(newItem);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -51,10 +51,10 @@ router.post('/reorder', (req, res) => {
 // PUT update item
 router.put('/:id', (req, res) => {
   try {
-    const { section = '既存顧客案件', customer = '', project = '', status = '', amount = '', inspection_date = '', topics = '' } = req.body;
+    const { section = '既存顧客案件', customer = '', project = '', status = '', amount = '', inspection_date = '', topics = '', row_color = '' } = req.body;
     db.prepare(
-      'UPDATE topics_items SET section=?, customer=?, project=?, status=?, amount=?, inspection_date=?, topics=? WHERE id=?'
-    ).run(section, customer, project, status, amount, inspection_date, topics, req.params.id);
+      'UPDATE topics_items SET section=?, customer=?, project=?, status=?, amount=?, inspection_date=?, topics=?, row_color=? WHERE id=?'
+    ).run(section, customer, project, status, amount, inspection_date, topics, row_color, req.params.id);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

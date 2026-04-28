@@ -110,4 +110,6 @@ db.exec(`
   );
 `);
 
+try { db.exec(`ALTER TABLE topics_items ADD COLUMN row_color TEXT DEFAULT ''`); } catch {}
+
 module.exports = db;
