@@ -1091,13 +1091,14 @@ tr:hover td{background:${C.bgPanel}}
               ? `<tr><td colspan="6" style="text-align:center;color:${C.textFaint};padding:16px">データがありません</td></tr>`
               : sectionItems.map(item => {
                   const rs = topicsStatusStyle(item.status, theme);
+                  const rc = item.row_color ? `color:${item.row_color};` : '';
                   return `<tr style="${rs}">
-                    <td style="font-size:12px;color:${C.textMid}">${topicsEsc(item.customer)||'-'}</td>
-                    <td>${topicsEsc(item.project)||'-'}</td>
-                    <td style="font-size:12px">${topicsEsc(item.status)||'-'}</td>
-                    <td style="text-align:right;font-size:12px">${topicsFmt(item.amount)}</td>
-                    <td style="font-size:12px">${topicsEsc(item.inspection_date)||'-'}</td>
-                    <td style="white-space:pre-wrap;font-size:12px">${topicsEsc(item.topics)||'-'}</td>
+                    <td style="font-size:12px;color:${item.row_color||C.textMid}">${topicsEsc(item.customer)||'-'}</td>
+                    <td style="${rc}">${topicsEsc(item.project)||'-'}</td>
+                    <td style="font-size:12px;${rc}">${topicsEsc(item.status)||'-'}</td>
+                    <td style="text-align:right;font-size:12px;${rc}">${topicsFmt(item.amount)}</td>
+                    <td style="font-size:12px;${rc}">${topicsEsc(item.inspection_date)||'-'}</td>
+                    <td style="white-space:pre-wrap;font-size:12px;${rc}">${topicsEsc(item.topics)||'-'}</td>
                   </tr>`;
                 }).join('')
             }
