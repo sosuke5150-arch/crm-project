@@ -298,12 +298,10 @@ router.get('/', (req, res) => {
     const lDiff = (lActual+lForecast) - lTarget;
 
     // ---- Status counts ----
-    const DONE_MONTHS    = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収'];
-    const FORE_MONTHS    = ['4月検収','5月検収','6月検収','7月検収','8月検収'];
-    const totalCount     = db.prepare('SELECT COUNT(*) as count FROM deals').get().count;
-    const doneCount      = db.prepare(`SELECT COUNT(*) as count FROM deals WHERE status IN ('won','done','monthly','shikakake') AND inspection_date IN (${DONE_MONTHS.map(()=>'?').join(',')})`).get(...DONE_MONTHS).count;
-    const forecastCount  = db.prepare(`SELECT COUNT(*) as count FROM deals WHERE inspection_date IN (${FORE_MONTHS.map(()=>'?').join(',')})`).get(...FORE_MONTHS).count;
-    const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('proposing','planned')").get().count;
+    const totalCount     = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0").get().count;
+    const doneCount      = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('won','done','monthly','shikakake')").get().count;
+    const forecastCount  = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('forecast','developing','proposing')").get().count;
+    const waitingCount   = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status='waiting'").get().count;
     const shikakakeAmount = deals.filter(d => d.status==='shikakake').reduce((s,d) => s+(Number(d.amount)||0), 0);
 
     // ---- Monthly chart ----
@@ -612,7 +610,7 @@ router.get('/', (req, res) => {
       achieveRate,
       doneCount,
       forecastCount,
-      proposingCount,
+      waitingCount,
       totalCount,
       yojitsuData,
       periodData,
@@ -927,7 +925,7 @@ tr:hover td{background:${C.bgPanel}}
       {label:'案件数',  value:totalCount,    color:C.accent},
       {label:'完了数',  value:doneCount,     color:C.accent},
       {label:'見込数',  value:forecastCount, color:C.accent},
-      {label:'受注待ち', value:proposingCount,color:C.accent},
+      {label:'受注待ち', value:waitingCount,  color:C.accent},
     ].map(s => `<div class="panel" style="padding:14px 16px">
       <div style="font-size:12px;color:${C.textMuted};margin-bottom:6px">${s.label}</div>
       <div style="font-size:28px;font-weight:700;color:${s.color}">${s.value}</div>
@@ -1646,13 +1644,13 @@ tr:hover td{background:${C.bgPanel}}
     new Chart(statusDonut2Ctx, {
       type: 'doughnut',
       data: {
-        labels: ['完了', '見込・開発中', '提案中・予定', 'その他'],
+        labels: ['完了', '見込数', '受注待ち', 'その他'],
         datasets: [{
           data: [
             DATA.doneCount,
             DATA.forecastCount,
-            DATA.proposingCount,
-            Math.max(0, DATA.totalCount - DATA.doneCount - DATA.forecastCount - DATA.proposingCount)
+            DATA.waitingCount,
+            Math.max(0, DATA.totalCount - DATA.doneCount - DATA.forecastCount - DATA.waitingCount)
           ],
           backgroundColor: ['${C.colorActual}', '${C.colorForecast}', '${C.statusColors.proposing}', '#6b7280'],
           borderWidth: 0
