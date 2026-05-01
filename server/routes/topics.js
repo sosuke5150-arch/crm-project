@@ -29,11 +29,10 @@ router.post('/duplicate/:id', (req, res) => {
   try {
     const src = db.prepare('SELECT * FROM topics_items WHERE id = ?').get(req.params.id);
     if (!src) return res.status(404).json({ error: 'not found' });
-    const maxRow = db.prepare('SELECT MAX(sort_order) as m FROM topics_items WHERE section = ?').get(src.section);
-    const nextOrder = (maxRow?.m || 0) + 1;
+    db.prepare('UPDATE topics_items SET sort_order = sort_order + 1 WHERE section = ? AND sort_order > ?').run(src.section, src.sort_order);
     const result = db.prepare(
       'INSERT INTO topics_items (section, customer, project, status, amount, inspection_date, topics, sort_order) VALUES (?,?,?,?,?,?,?,?)'
-    ).run(src.section, src.customer, src.project, src.status, src.amount, src.inspection_date, src.topics, nextOrder);
+    ).run(src.section, src.customer, src.project, src.status, src.amount, src.inspection_date, src.topics, src.sort_order + 1);
     res.json(db.prepare('SELECT * FROM topics_items WHERE id = ?').get(result.lastInsertRowid));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
