@@ -7,7 +7,7 @@ const MONTH_ORDER = ['9月検収','10月検収','11月検収','12月検収','1�
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
 const ACTUAL_STS = new Set(['won','done','monthly','shikakake']);
-const FORECAST_STS = new Set(['forecast','developing','proposing']);
+const FORECAST_STS = new Set(['forecast','developing','proposing','waiting']);
 const MONTH_LABEL = m => m.replace('検収', '');
 
 const PIE_COLORS_MAP = {
@@ -68,7 +68,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState({ customerCount: 0, dealCount: 0, doneCount: 0, forecastCount: 0, proposingCount: 0, totalAmount: 0, totalForecast: 0, totalTarget: 0 });
+  const [summary, setSummary] = useState({ customerCount: 0, dealCount: 0, doneCount: 0, forecastCount: 0, proposingCount: 0, waitingCount: 0, totalAmount: 0, totalForecast: 0, totalTarget: 0 });
   const [monthlyData, setMonthlyData] = useState([]);
   const [yojitsuData, setYojitsuData] = useState([]);
   const [customerData, setCustomerData] = useState([]);
@@ -201,7 +201,7 @@ export default function Dashboard() {
         </div>
         <div className="stat">
           <div className="stat-label">受注待ち</div>
-          <div className="stat-value">{summary.proposingCount}</div>
+          <div className="stat-value">{summary.waitingCount}</div>
         </div>
         <div className="stat">
           <div className="stat-label">売上目標（円）</div>

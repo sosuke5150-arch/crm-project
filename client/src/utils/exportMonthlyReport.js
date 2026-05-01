@@ -4,7 +4,7 @@ import ExcelJS from 'exceljs';
 const MAIN_CUSTOMER_IDS = new Set([5, 3]);
 
 const STATUS_LABELS = {
-  proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中',
+  proposing: '提案中', planned: '提案予定', waiting: '受注待ち', won: '受注', developing: '開発中',
   shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込',
 };
 

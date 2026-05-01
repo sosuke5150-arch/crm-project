@@ -7,7 +7,7 @@ const MONTH_ORDER  = ['9月','10月','11月','12月','1月','2月','3月','4月'
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
 const ACT_STS  = new Set(['won','done','monthly','shikakake']);
-const FORE_STS = new Set(['forecast','developing','proposing']);
+const FORE_STS = new Set(['forecast','developing','proposing','waiting']);
 const MAIN_IDS = new Set([5, 3]);
 const SALES_ROWS = [{ id: 5, name: 'マイナビ' }, { id: 3, name: 'ケイ・コーポレーション' }, { id: 0, name: '開発案件' }];
 const fmt     = v => Number(v||0).toLocaleString();
@@ -49,7 +49,7 @@ function getThemeColors(theme) {
       chartForecast:'#ed7d31',
       chartTarget:  '#a5a5a5',
       pieColors:    ['#9b59b6','#27ae60','#70ad47','#ed7d31','#c0392b','#4caf50','#2dd4bf','#fb923c','#a78bfa','#00b4d8','#ffc000','#e91e63'],
-      statusColors: { done:'#16a34a', monthly:'#2e75b6', shikakake:'#d97706', won:'#2e75b6', developing:'#1d4ed8', forecast:'#d97706', proposing:'#7e22ce', planned:'#6b7280', open:'#6b7280' },
+      statusColors: { done:'#16a34a', monthly:'#2e75b6', shikakake:'#d97706', won:'#2e75b6', developing:'#1d4ed8', forecast:'#d97706', proposing:'#7e22ce', planned:'#6b7280', open:'#6b7280', waiting:'#c2410c' },
       scrollbarTrack: '#e8ecf0',
       scrollbarThumb: '#c8d3e0',
     };
@@ -87,7 +87,7 @@ function getThemeColors(theme) {
       chartForecast:'#c45510',
       chartTarget:  '#4a7a96',
       pieColors:    ['#a06820','#b5651d','#3a8040','#c45510','#4a7a96','#d4924a','#5a9060','#8b4513','#7a96b5','#c8a060','#b89010','#966432'],
-      statusColors: { done:'#3a8040', monthly:'#4a7a96', shikakake:'#c45510', won:'#4a7a96', developing:'#2e5f7a', forecast:'#c45510', proposing:'#7a3a8a', planned:'#7a6252', open:'#7a6252' },
+      statusColors: { done:'#3a8040', monthly:'#4a7a96', shikakake:'#c45510', won:'#4a7a96', developing:'#2e5f7a', forecast:'#c45510', proposing:'#7a3a8a', planned:'#7a6252', open:'#7a6252', waiting:'#c2410c' },
       scrollbarTrack: '#e8ddd0',
       scrollbarThumb: '#c4a882',
     };
@@ -125,7 +125,7 @@ function getThemeColors(theme) {
     chartForecast:'#fb923c',
     chartTarget:  '#3b82f6',
     pieColors:    ['#6366f1','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
-    statusColors: { done:'#4ade80', monthly:'#00d4ff', shikakake:'#f59e0b', won:'#00d4ff', developing:'#3b82f6', forecast:'#f59e0b', proposing:'#a855f7', planned:'#6b7280', open:'#6b7280' },
+    statusColors: { done:'#4ade80', monthly:'#00d4ff', shikakake:'#f59e0b', won:'#00d4ff', developing:'#3b82f6', forecast:'#f59e0b', proposing:'#a855f7', planned:'#6b7280', open:'#6b7280', waiting:'#fb923c' },
     scrollbarTrack: '#0d1120',
     scrollbarThumb: '#1e2a45',
   };
@@ -134,12 +134,12 @@ function getThemeColors(theme) {
 const STATUS_LABELS = {
   done:'完了', monthly:'継続', shikakake:'仕掛中', won:'受注',
   developing:'開発中', forecast:'見込', proposing:'提案中',
-  planned:'提案予定', open:'保留',
+  planned:'提案予定', open:'保留', waiting:'受注待ち',
 };
 const STATUS_COLORS = {
   done:'#4ade80', monthly:'#00d4ff', shikakake:'#f59e0b', won:'#00d4ff',
   developing:'#3b82f6', forecast:'#f59e0b', proposing:'#a855f7',
-  planned:'#6b7280', open:'#6b7280',
+  planned:'#6b7280', open:'#6b7280', waiting:'#fb923c',
 };
 
 // ========== GET /export-html ==========

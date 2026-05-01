@@ -15,7 +15,7 @@ const KAIHATSU_ID = 0;
 const ROWS = [...MAIN_CUSTOMERS, { id: KAIHATSU_ID, name: '開発案件' }];
 
 const ACTUAL_STATUSES = new Set(['won','done','monthly','shikakake']);
-const FORECAST_STATUSES = new Set(['forecast','developing','proposing']);
+const FORECAST_STATUSES = new Set(['forecast','developing','proposing','waiting']);
 
 const toMonth = s => s?.replace('検収','') || null;
 const yen = v => `¥${(Number(v)||0).toLocaleString()}`;

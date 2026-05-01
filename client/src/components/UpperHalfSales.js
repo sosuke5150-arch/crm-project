@@ -4,7 +4,7 @@ const API = 'http://localhost:3001';
 
 const UPPER_MONTHS = ['9月', '10月', '11月', '12月', '1月', '2月'];
 const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
-const FORECAST_STATUSES = new Set(['forecast', 'developing', 'proposing']);
+const FORECAST_STATUSES = new Set(['forecast', 'developing', 'proposing', 'waiting']);
 
 const toM = ds => (ds || '').replace('検収', '').trim();
 const monthOrder = dateStr => {

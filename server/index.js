@@ -21,15 +21,16 @@ app.use('/topics', require('./routes/topics'));
 app.get('/summary', (req, res) => {
   const db = require('./db');
   const customerCount = db.prepare('SELECT COUNT(*) as count FROM customers').get().count;
-  const dealCount = db.prepare('SELECT COUNT(*) as count FROM deals').get().count;
-  const doneCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('won','done','monthly','shikakake') AND inspection_date IN ('9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収')").get().count;
-  const developingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status = 'developing'").get().count;
-  const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE status IN ('proposing','planned')").get().count;
-  const forecastCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE inspection_date IN ('4月検収','5月検収','6月検収','7月検収','8月検収')").get().count;
+  const dealCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0").get().count;
+  const doneCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('won','done','monthly','shikakake')").get().count;
+  const developingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status = 'developing'").get().count;
+  const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('proposing','planned')").get().count;
+  const waitingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status = 'waiting'").get().count;
+  const forecastCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('forecast','developing','proposing')").get().count;
   const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('won','done','monthly','shikakake')").get().total || 0;
   const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('forecast','developing')").get().total || 0;
   const totalTarget = db.prepare("SELECT SUM(amount) as total FROM targets").get().total || 0;
-  res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, forecastCount, totalAmount, totalForecast, totalTarget });
+  res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, waitingCount, forecastCount, totalAmount, totalForecast, totalTarget });
 });
 
 // 検収月別売上集計（実績・見込み別）

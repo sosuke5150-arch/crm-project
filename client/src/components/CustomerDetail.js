@@ -10,8 +10,8 @@ const formatPhone = (phone) => {
   return phone;
 };
 
-const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
-const STATUS_COLORS = { proposing: '#f9a8d4', planned: '#f9a8d4', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
+const STATUS_LABELS = { proposing: '提案中', planned: '提案予定', waiting: '受注待ち', won: '受注', developing: '開発中', shikakake: '仕掛計上', monthly: '月額', done: '完了', forecast: '見込' };
+const STATUS_COLORS = { proposing: '#f9a8d4', planned: '#f9a8d4', waiting: '#fb923c', developing: '#facc15', shikakake: '#facc15', forecast: '#ff4d6a' };
 
 const INSPECTION_OPTIONS = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
 
