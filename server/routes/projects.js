@@ -24,12 +24,7 @@ router.get('/', (req, res) => {
           AND d.status NOT IN ('proposing', 'planned', 'forecast'))
         OR d.is_project = 1
       )
-      ORDER BY CASE d.inspection_date
-        WHEN '9月検収' THEN 1 WHEN '10月検収' THEN 2 WHEN '11月検収' THEN 3
-        WHEN '12月検収' THEN 4 WHEN '1月検収' THEN 5 WHEN '2月検収' THEN 6
-        WHEN '3月検収' THEN 7 WHEN '4月検収' THEN 8 WHEN '5月検収' THEN 9
-        WHEN '6月検収' THEN 10 WHEN '7月検収' THEN 11 WHEN '8月検収' THEN 12
-        ELSE 99 END ASC, d.id ASC
+      ORDER BY d.sort_order ASC, d.id ASC
     `).all();
 
     // 各プロジェクトの実績集計を追加

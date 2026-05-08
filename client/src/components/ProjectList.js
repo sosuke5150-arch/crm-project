@@ -47,6 +47,8 @@ const STATUS_COLORS = {
   open: '#fbbf24',
 };
 
+const EMPTY_FILTER = { keyword: '', customer: '', status: '', inspection_date: '' };
+
 export default function ProjectList({ onSelect }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,7 @@ export default function ProjectList({ onSelect }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState(EMPTY_FILTER);
   const formRef = useRef(null);
   const dragIndex = useRef(null);
 
@@ -76,16 +79,20 @@ export default function ProjectList({ onSelect }) {
     }
   }, [showForm]);
 
-  const handleDragStart = (index) => {
-    dragIndex.current = index;
+  const handleDragStart = (dealId) => {
+    dragIndex.current = dealId;
   };
 
-  const handleDrop = async (dropIndex) => {
-    if (dragIndex.current === null || dragIndex.current === dropIndex) return;
-    const updated = [...projects];
-    const [moved] = updated.splice(dragIndex.current, 1);
-    updated.splice(dropIndex, 0, moved);
+  const handleDrop = async (dropDealId) => {
+    if (dragIndex.current === null || dragIndex.current === dropDealId) return;
+    const fromId = dragIndex.current;
     dragIndex.current = null;
+    const updated = [...projects];
+    const fromIdx = updated.findIndex(p => p.deal_id === fromId);
+    const toIdx = updated.findIndex(p => p.deal_id === dropDealId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
     setProjects(updated);
     await fetch(`${API}/deals/reorder`, {
       method: 'POST',
@@ -111,12 +118,23 @@ export default function ProjectList({ onSelect }) {
   const fmt = (n) => `¥${Math.round(Number(n || 0)).toLocaleString()}`;
   const fmtNum = (n) => Number(n || 0).toLocaleString();
 
+  const filteredProjects = projects.filter(p => {
+    if (filter.keyword && !p.title.includes(filter.keyword)) return false;
+    if (filter.customer && p.customer_name !== filter.customer) return false;
+    if (filter.status && p.status !== filter.status) return false;
+    if (filter.inspection_date && p.inspection_date !== filter.inspection_date) return false;
+    return true;
+  });
+
+  const uniqueCustomers = [...new Set(projects.map(p => p.customer_name).filter(Boolean))];
+  const isFiltered = Object.values(filter).some(v => v !== '');
+
   if (loading) return <div style={{ color: '#6b7fa3', padding: '40px' }}>読み込み中...</div>;
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <h2 style={{ margin: 0 }}>プロジェクト管理</h2>
+        <h2 style={{ margin: 0 }}>プロジェクト原価管理</h2>
         <button
           onClick={() => setShowForm(v => !v)}
           style={{ padding: '7px 16px', background: showForm ? 'transparent' : 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '6px', color: showForm ? 'var(--accent)' : 'var(--bg-inner)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -126,7 +144,50 @@ export default function ProjectList({ onSelect }) {
       </div>
 
       <div style={{ marginBottom: '12px', fontSize: '13px', color: '#6b7fa3' }}>
-        受注額 50万円以上の受託開発案件をプロジェクトとして原価管理します。全 {projects.length} 件
+        受注額 50万円以上の受託開発案件をプロジェクトとして原価管理します。
+        {isFiltered ? ` ${filteredProjects.length} 件 / 全 ${projects.length} 件` : ` 全 ${projects.length} 件`}
+      </div>
+
+      {/* 絞り込み検索 */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
+        <input
+          placeholder="プロジェクト名で検索"
+          value={filter.keyword}
+          onChange={e => setFilter({ ...filter, keyword: e.target.value })}
+          style={{ minWidth: '200px', fontSize: '13px' }}
+        />
+        <select
+          value={filter.customer}
+          onChange={e => setFilter({ ...filter, customer: e.target.value })}
+          style={{ fontSize: '13px' }}
+        >
+          <option value="">顧客 すべて</option>
+          {uniqueCustomers.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select
+          value={filter.status}
+          onChange={e => setFilter({ ...filter, status: e.target.value })}
+          style={{ fontSize: '13px' }}
+        >
+          <option value="">ステータス すべて</option>
+          {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select
+          value={filter.inspection_date}
+          onChange={e => setFilter({ ...filter, inspection_date: e.target.value })}
+          style={{ fontSize: '13px' }}
+        >
+          <option value="">検収月 すべて</option>
+          {INSPECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        {isFiltered && (
+          <button
+            onClick={() => setFilter(EMPTY_FILTER)}
+            style={{ padding: '5px 12px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-faint)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            クリア
+          </button>
+        )}
       </div>
 
       {/* 新規登録フォーム */}
@@ -172,14 +233,14 @@ export default function ProjectList({ onSelect }) {
             </tr>
           </thead>
           <tbody>
-            {projects.length === 0 && (
+            {filteredProjects.length === 0 && (
               <tr>
                 <td colSpan={9} style={{ textAlign: 'center', color: '#4a5f82', padding: '32px' }}>
-                  50万円以上の案件がありません
+                  {isFiltered ? '条件に一致するプロジェクトがありません' : '50万円以上の案件がありません'}
                 </td>
               </tr>
             )}
-            {projects.map((p, index) => {
+            {filteredProjects.map((p, index) => {
               const progress = p.progress || 0;
               const profit = p.profit || 0;
               const light = isLightTheme();
@@ -191,9 +252,9 @@ export default function ProjectList({ onSelect }) {
                 <tr
                   key={p.deal_id}
                   draggable
-                  onDragStart={() => handleDragStart(index)}
+                  onDragStart={() => handleDragStart(p.deal_id)}
                   onDragOver={e => e.preventDefault()}
-                  onDrop={() => handleDrop(index)}
+                  onDrop={() => handleDrop(p.deal_id)}
                   style={{ cursor: 'pointer' }}
                   onClick={() => onSelect(p.deal_id)}
                 >

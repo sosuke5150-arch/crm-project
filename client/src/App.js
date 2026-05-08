@@ -74,7 +74,7 @@ function App() {
         <button className={page === 'sales' ? 'active' : ''} onClick={() => setPage('sales')}>売上管理表</button>
         <button className={page === 'upper-half-sales' ? 'active' : ''} onClick={() => setPage('upper-half-sales')}>上期売上一覧</button>
         <button className={page === 'lower-half-sales' ? 'active' : ''} onClick={() => setPage('lower-half-sales')}>下期売上一覧</button>
-        <button className={['projects', 'project-detail'].includes(page) ? 'active' : ''} onClick={goToProjectList}>プロジェクト管理</button>
+        <button className={['projects', 'project-detail'].includes(page) ? 'active' : ''} onClick={goToProjectList}>プロジェクト原価管理</button>
         <button className={page === 'common-sheet' ? 'active' : ''} onClick={() => setPage('common-sheet')}>共通シート</button>
         <button className={page === 'outsourcing' ? 'active' : ''} onClick={() => setPage('outsourcing')}>外注管理</button>
         <button className={page === 'topics' ? 'active' : ''} onClick={() => setPage('topics')}>トピックス</button>
