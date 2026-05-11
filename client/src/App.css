@@ -330,6 +330,21 @@ h3 {
 .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
 .stat-value { font-size: 28px; font-weight: 700; color: var(--stat-value); }
 
+input, select, textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-body);
+  font-family: 'Inter', sans-serif;
+}
+input::placeholder, textarea::placeholder { color: var(--text-faint); }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
+}
+select option { background: var(--bg-input); color: var(--text-body); }
+
 form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
 form input, form select {
   padding: 9px 14px;
