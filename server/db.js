@@ -112,4 +112,20 @@ db.exec(`
 
 try { db.exec(`ALTER TABLE topics_items ADD COLUMN row_color TEXT DEFAULT ''`); } catch {}
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS customer_scoring (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_name TEXT DEFAULT '',
+    product_name TEXT DEFAULT '',
+    assignee TEXT DEFAULT '',
+    visitor TEXT DEFAULT '',
+    last_visit_date TEXT DEFAULT '',
+    claim_status TEXT DEFAULT '',
+    ticket_status TEXT DEFAULT '',
+    score INTEGER DEFAULT 3,
+    notes TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 module.exports = db;

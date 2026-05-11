@@ -12,6 +12,8 @@ import ProjectDetail from './components/ProjectDetail';
 import CommonSheet from './components/CommonSheet';
 import OutsourcingManagement from './components/OutsourcingManagement';
 import Topics from './components/Topics';
+import CustomerScoringList from './components/CustomerScoringList';
+import CustomerScoringDetail from './components/CustomerScoringDetail';
 import './App.css';
 
 const THEMES = [
@@ -26,6 +28,7 @@ function App() {
   const [projectDealId, setProjectDealId] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark');
   const [generatingPPT, setGeneratingPPT] = useState(false);
+  const [selectedScoringId, setSelectedScoringId] = useState(null);
 
   const handleExportPPT = async () => {
     setGeneratingPPT(true);
@@ -42,6 +45,8 @@ function App() {
   const goToCustomerList = () => { setSelectedCustomerId(null); setPage('customers'); };
   const goToProject = (dealId) => { setProjectDealId(dealId); setPage('project-detail'); };
   const goToProjectList = () => { setProjectDealId(null); setPage('projects'); };
+  const goToScoring = (id) => { setSelectedScoringId(id); setPage('scoring-detail'); };
+  const goToScoringList = () => { setSelectedScoringId(null); setPage('scoring'); };
 
   return (
     <div className="app">
@@ -78,6 +83,7 @@ function App() {
         <button className={page === 'common-sheet' ? 'active' : ''} onClick={() => setPage('common-sheet')}>共通シート</button>
         <button className={page === 'outsourcing' ? 'active' : ''} onClick={() => setPage('outsourcing')}>外注管理</button>
         <button className={page === 'topics' ? 'active' : ''} onClick={() => setPage('topics')}>トピックス</button>
+        <button className={['scoring', 'scoring-detail'].includes(page) ? 'active' : ''} onClick={goToScoringList} style={{ paddingLeft: '24px' }}>顧客スコアリング</button>
 
         <div style={{ marginTop: 'auto', padding: '16px 16px 8px' }}>
           <button
@@ -114,6 +120,8 @@ function App() {
         {page === 'common-sheet' && <CommonSheet />}
         {page === 'outsourcing' && <OutsourcingManagement />}
         {page === 'topics' && <Topics />}
+        {page === 'scoring' && <CustomerScoringList onSelect={goToScoring} />}
+        {page === 'scoring-detail' && <CustomerScoringDetail scoringId={selectedScoringId} onBack={goToScoringList} />}
       </main>
     </div>
   );

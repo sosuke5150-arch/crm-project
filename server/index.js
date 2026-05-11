@@ -16,6 +16,7 @@ app.use('/notes', require('./routes/notes'));
 app.use('/common-sheet', require('./routes/commonSheet'));
 app.use('/outsourcing', require('./routes/outsourcing'));
 app.use('/topics', require('./routes/topics'));
+app.use('/customer-scoring', require('./routes/customerScoring'));
 
 // ダッシュボード用サマリー
 app.get('/summary', (req, res) => {
