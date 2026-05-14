@@ -143,7 +143,7 @@ export default function DealList() {
   const [targets, setTargets] = useState({});
   const [exportMonth, setExportMonth] = useState('');
   const [exporting, setExporting] = useState(false);
-  const dragIndex = useRef(null);
+  const dragId = useRef(null);
   const currentMonthRef = useRef(null);
 
   const load = () => {
@@ -209,21 +209,27 @@ export default function DealList() {
     });
   };
 
-  const handleDragStart = (index) => {
-    dragIndex.current = index;
+  const handleDragStart = (id) => {
+    dragId.current = id;
   };
 
-  const handleDrop = async (dropIndex) => {
-    if (dragIndex.current === null || dragIndex.current === dropIndex) return;
-    const updated = [...deals];
-    const [moved] = updated.splice(dragIndex.current, 1);
-    updated.splice(dropIndex, 0, moved);
-    dragIndex.current = null;
-    setDeals(updated);
+  const handleDrop = async (dropId) => {
+    if (dragId.current === null || dragId.current === dropId) return;
+    const fromIdx = sortedFiltered.findIndex(d => d.id === dragId.current);
+    const toIdx = sortedFiltered.findIndex(d => d.id === dropId);
+    if (fromIdx === -1 || toIdx === -1) { dragId.current = null; return; }
+    const newOrder = [...sortedFiltered];
+    const [moved] = newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, moved);
+    dragId.current = null;
+    const filteredIdSet = new Set(sortedFiltered.map(d => d.id));
+    const rest = deals.filter(d => !filteredIdSet.has(d.id));
+    const newDeals = [...newOrder, ...rest].map((d, i) => ({ ...d, sort_order: i }));
+    setDeals(newDeals);
     await fetch(`${API}/deals/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: updated.map(d => d.id) }),
+      body: JSON.stringify({ ids: newDeals.map(d => d.id) }),
     });
   };
 
@@ -246,6 +252,14 @@ export default function DealList() {
     matchExact(filters.inspection_date, d.inspection_date || '') &&
     match(filters.topics, d.topics || '')
   );
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const ai = INSPECTION_OPTIONS.indexOf(a.inspection_date || '');
+    const bi = INSPECTION_OPTIONS.indexOf(b.inspection_date || '');
+    const am = ai === -1 ? 99 : ai;
+    const bm = bi === -1 ? 99 : bi;
+    if (am !== bm) return am - bm;
+    return (a.sort_order || 0) - (b.sort_order || 0);
+  });
 
   return (
     <div>
@@ -291,10 +305,10 @@ export default function DealList() {
             <tr><th></th><th>顧客</th><th>案件名</th><th>ステータス</th><th>金額</th><th>検収月</th><th>トピックス</th><th></th></tr>
           </thead>
           <tbody>
-            {filtered.flatMap((d, index) => {
+            {sortedFiltered.flatMap((d, index) => {
               const rows = [];
               const isLastOfMonth = d.inspection_date &&
-                (index === filtered.length - 1 || filtered[index + 1].inspection_date !== d.inspection_date);
+                (index === sortedFiltered.length - 1 || sortedFiltered[index + 1].inspection_date !== d.inspection_date);
               const monthTotal = isLastOfMonth
                 ? filtered.filter(x => x.inspection_date === d.inspection_date).reduce((s, x) => s + (Number(x.amount) || 0), 0)
                 : 0;
@@ -329,11 +343,11 @@ export default function DealList() {
             ) : (
               <tr
                 key={d.id}
-                ref={d.inspection_date === currentMonth && filtered.findIndex(x => x.inspection_date === currentMonth) === index ? currentMonthRef : null}
+                ref={d.inspection_date === currentMonth && sortedFiltered.findIndex(x => x.inspection_date === currentMonth) === index ? currentMonthRef : null}
                 draggable
-                onDragStart={() => handleDragStart(index)}
+                onDragStart={() => handleDragStart(d.id)}
                 onDragOver={e => e.preventDefault()}
-                onDrop={() => handleDrop(index)}
+                onDrop={() => handleDrop(d.id)}
                 style={{ cursor: 'grab' }}
               >
                 {(() => {
@@ -375,9 +389,9 @@ export default function DealList() {
               }
               return rows;
             })}
-            {filtered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-faint)'}}>{Object.values(filters).some(f => f.length > 0) ? '検索結果がありません' : '案件データがありません'}</td></tr>}
+            {sortedFiltered.length === 0 && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--text-faint)'}}>{Object.values(filters).some(f => f.length > 0) ? '検索結果がありません' : '案件データがありません'}</td></tr>}
 
-            {filtered.length > 0 && (
+            {sortedFiltered.length > 0 && (
               <tr>
                 <td colSpan={4} style={{textAlign:'right', color:'var(--text-body)', fontWeight:600, paddingTop:'16px'}}>合計</td>
                 <td style={{color:'var(--accent)', fontWeight:700, paddingTop:'16px', textAlign:'right'}}>
