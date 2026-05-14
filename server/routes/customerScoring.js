@@ -3,8 +3,17 @@ const router = express.Router();
 const db = require('../db');
 
 router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM customer_scoring ORDER BY created_at DESC').all();
+  db.exec(`UPDATE customer_scoring SET sort_order = id WHERE sort_order IS NULL`);
+  const rows = db.prepare('SELECT * FROM customer_scoring ORDER BY sort_order ASC').all();
   res.json(rows);
+});
+
+router.post('/reorder', (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids required' });
+  const update = db.prepare('UPDATE customer_scoring SET sort_order = ? WHERE id = ?');
+  ids.forEach((id, i) => update.run(i, id));
+  res.json({ success: true });
 });
 
 router.post('/', (req, res) => {
