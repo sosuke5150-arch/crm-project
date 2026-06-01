@@ -17,10 +17,10 @@ router.post('/reorder', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { customer_name, product_name, assignee, visitor, last_visit_date, claim_status, ticket_status, score, notes } = req.body;
+  const { customer_name, product_name, assignee, visitor, last_visit_date, president_visit_date, claim_status, ticket_status, score, notes } = req.body;
   const result = db.prepare(
-    'INSERT INTO customer_scoring (customer_name, product_name, assignee, visitor, last_visit_date, claim_status, ticket_status, score, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(customer_name || '', product_name || '', assignee || '', visitor || '', last_visit_date || '', claim_status || '', ticket_status || '', score || 3, notes || '');
+    'INSERT INTO customer_scoring (customer_name, product_name, assignee, visitor, last_visit_date, president_visit_date, claim_status, ticket_status, score, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(customer_name || '', product_name || '', assignee || '', visitor || '', last_visit_date || '', president_visit_date || '', claim_status || '', ticket_status || '', score || 3, notes || '');
   res.status(201).json(db.prepare('SELECT * FROM customer_scoring WHERE id = ?').get(result.lastInsertRowid));
 });
 
@@ -31,10 +31,10 @@ router.get('/:id', (req, res) => {
 });
 
 router.put('/:id', (req, res) => {
-  const { customer_name, product_name, assignee, visitor, last_visit_date, claim_status, ticket_status, score, notes } = req.body;
+  const { customer_name, product_name, assignee, visitor, last_visit_date, president_visit_date, claim_status, ticket_status, score, notes } = req.body;
   db.prepare(
-    'UPDATE customer_scoring SET customer_name=?, product_name=?, assignee=?, visitor=?, last_visit_date=?, claim_status=?, ticket_status=?, score=?, notes=? WHERE id=?'
-  ).run(customer_name || '', product_name || '', assignee || '', visitor || '', last_visit_date || '', claim_status || '', ticket_status || '', score || 3, notes || '', req.params.id);
+    'UPDATE customer_scoring SET customer_name=?, product_name=?, assignee=?, visitor=?, last_visit_date=?, president_visit_date=?, claim_status=?, ticket_status=?, score=?, notes=? WHERE id=?'
+  ).run(customer_name || '', product_name || '', assignee || '', visitor || '', last_visit_date || '', president_visit_date || '', claim_status || '', ticket_status || '', score || 3, notes || '', req.params.id);
   res.json(db.prepare('SELECT * FROM customer_scoring WHERE id = ?').get(req.params.id));
 });
 

@@ -195,6 +195,16 @@ router.get('/', (req, res) => {
     const ocTotalBudget = ocMonths.reduce((s,ym) => s + ocMonthBudgetTotal(ym), 0);
     const ocTotalActual = ocMonths.reduce((s,ym) => s + ocMonthActualTotal(ym), 0);
 
+    // 顧客スコアリングデータ
+    const scoringRows = db.prepare('SELECT * FROM customer_scoring ORDER BY sort_order, id').all();
+    const scoringToday = new Date();
+    const scoringDaysSince = dateStr => {
+      if (!dateStr) return null;
+      const d = new Date(dateStr);
+      if (isNaN(d)) return null;
+      return Math.floor((scoringToday - d) / 86400000);
+    };
+
     // トピックスデータ
     const topicsItems = db.prepare('SELECT * FROM topics_items ORDER BY section, sort_order, id').all();
     const TOPICS_SECTIONS = ['既存顧客案件', '新規顧客案件'];
@@ -1417,6 +1427,63 @@ tr:hover td{background:${C.bgPanel}}
       <div style="background:${C.bgCard};border:1px solid ${C.border};border-radius:8px;padding:16px;font-size:13px;line-height:1.9;color:${C.textBody};white-space:pre-wrap">${csEsc(ocMemo)}</div>
     </div>` : ''}
   </div>
+</div>
+
+<!-- Page: 顧客スコアリング -->
+<div class="slide" style="overflow:auto">
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">CUSTOMER SCORING</div>
+    <h2 style="font-size:26px;margin-top:4px">顧客スコアリング</h2>
+    <div style="font-size:12px;color:${C.textMuted}">${scoringToday.getFullYear()}年${scoringToday.getMonth()+1}月${scoringToday.getDate()}日現在</div>
+  </div>
+  ${scoringRows.length === 0
+    ? `<div style="color:${C.textFaint};padding:32px;text-align:center">データがありません</div>`
+    : `<div class="panel" style="padding:0;overflow:hidden">
+    <table style="font-size:12px">
+      <thead>
+        <tr>
+          <th style="text-align:left">顧客名</th>
+          <th style="text-align:left">プロダクト名</th>
+          <th style="text-align:left">顧客担当者</th>
+          <th style="text-align:left">訪問者</th>
+          <th style="text-align:center">最終訪問日</th>
+          <th style="text-align:center">経過日数</th>
+          <th style="text-align:center">クレーム状況</th>
+          <th style="text-align:center">チケット消化</th>
+          <th style="text-align:center;min-width:120px">スコア</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${scoringRows.map((r, i) => {
+          const bg = i % 2 === 0 ? C.bgPanel : C.bgInner;
+          const days = scoringDaysSince(r.last_visit_date);
+          const daysColor = days === null ? C.textFaint : days <= 30 ? C.colorActual : days <= 60 ? C.colorWarn : C.colorLoss;
+          const score = Number(r.score) || 0;
+          const scoreColor = score <= 3 ? C.colorLoss : score <= 6 ? C.colorWarn : C.colorActual;
+          const scoreLabel = score <= 3 ? '要注意' : score <= 6 ? '普通' : '良好';
+          const bars = Array.from({length:10}, (_,idx) =>
+            `<span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${idx < score ? scoreColor : C.border};margin:0 1px"></span>`
+          ).join('');
+          return `<tr style="background:${bg}">
+            <td style="font-weight:600;color:${C.accent}">${csEsc(r.customer_name)||'-'}</td>
+            <td style="color:${C.textBody}">${csEsc(r.product_name)||'-'}</td>
+            <td style="color:${C.textMid}">${csEsc(r.assignee)||'-'}</td>
+            <td style="color:${C.textMid}">${csEsc(r.visitor)||'-'}</td>
+            <td style="text-align:center;color:${C.textMid}">${csEsc(r.last_visit_date)||'-'}</td>
+            <td style="text-align:center;font-weight:600;color:${daysColor}">${days !== null ? days + '日' : '-'}</td>
+            <td style="text-align:center;color:${C.textBody}">${csEsc(r.claim_status)||'-'}</td>
+            <td style="text-align:center;color:${C.textBody}">${csEsc(r.ticket_status)||'-'}</td>
+            <td style="text-align:center">
+              <div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px">
+                <span style="font-size:15px;font-weight:800;color:${scoreColor}">${score} <span style="font-size:10px;color:${scoreColor};font-weight:600">${scoreLabel}</span></span>
+                <div>${bars}</div>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`}
 </div>
 
 <script>

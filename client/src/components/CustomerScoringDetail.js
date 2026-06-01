@@ -45,7 +45,7 @@ function StarRating({ score }) {
 
 const emptyForm = {
   customer_name: '', product_name: '', assignee: '', visitor: '',
-  last_visit_date: '', claim_status: '', ticket_status: '', score: 3, notes: '',
+  last_visit_date: '', president_visit_date: '', claim_status: '', ticket_status: '', score: 3, notes: '',
 };
 
 export default function CustomerScoringDetail({ scoringId, onBack }) {
@@ -126,6 +126,7 @@ export default function CustomerScoringDetail({ scoringId, onBack }) {
                 ['assignee', '顧客担当者', 'text'],
                 ['visitor', '訪問者（自社）', 'text'],
                 ['last_visit_date', '最終訪問日', 'date'],
+                ['president_visit_date', '社長訪問日', 'date'],
               ].map(([key, label, type]) => (
                 <div key={key}>
                   <label style={labelStyle}>{label}</label>
@@ -141,6 +142,7 @@ export default function CustomerScoringDetail({ scoringId, onBack }) {
                 ['顧客担当者', item.assignee],
                 ['訪問者', item.visitor ? `${item.visitor}（自社）` : ''],
                 ['最終訪問日', item.last_visit_date],
+                ['社長訪問日', item.president_visit_date],
               ].map(([label, value]) => (
                 <div key={label} style={{ display: 'flex', gap: 8 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 100, flexShrink: 0 }}>{label}</span>

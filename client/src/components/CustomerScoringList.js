@@ -38,7 +38,7 @@ function getCategory(score) {
 
 const emptyForm = {
   customer_name: '', product_name: '', assignee: '', visitor: '',
-  last_visit_date: '', claim_status: 'なし', ticket_status: '順調', score: 5, notes: '',
+  last_visit_date: '', president_visit_date: '', claim_status: 'なし', ticket_status: '順調', score: 5, notes: '',
 };
 
 const FILTERS = ['すべて', '要注意', '良好', '普通'];
@@ -146,16 +146,22 @@ export default function CustomerScoringList({ onSelect }) {
     });
   };
 
+  const today = new Date();
+  const todayLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日現在`;
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>顧客スコアリング</h2>
-        <button
-          onClick={() => setShowForm(true)}
-          style={{ padding: '8px 16px', background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 6, color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-        >
-          + 新規登録
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-muted)' }}>{todayLabel}</span>
+          <button
+            onClick={() => setShowForm(true)}
+            style={{ padding: '8px 16px', background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 6, color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            + 新規登録
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center' }}>
@@ -179,8 +185,8 @@ export default function CustomerScoringList({ onSelect }) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['', '顧客名', '顧客担当者', '最終訪問日', '経過日', '訪問者（自社）', 'クレーム状況', 'チケット消化状況', 'エンゲージメント強度', ''].map(h => (
-                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--bg-th, var(--border))', minWidth: h === '最終訪問日' ? 120 : undefined }}>{h}</th>
+              {['', '顧客名', '最終訪問日', '経過日', '訪問者（自社）', '社長訪問日', '社長訪問経過日', 'クレーム状況', 'チケット消化状況', 'エンゲージメント強度', ''].map(h => (
+                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--bg-th, var(--border))', minWidth: h === '最終訪問日' ? 120 : h === '社長訪問日' ? 140 : undefined }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -211,7 +217,6 @@ export default function CustomerScoringList({ onSelect }) {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.product_name}</div>
                     )}
                   </td>
-                  <td style={{ padding: '12px 14px', color: 'var(--text-td)', fontSize: 13 }}>{item.assignee || '-'}</td>
                   <td style={{ padding: '12px 14px', color: 'var(--text-td)', fontSize: 13 }}>{item.last_visit_date || '-'}</td>
                   <td style={{ padding: '12px 14px', fontSize: 13, whiteSpace: 'nowrap' }}>
                     {(() => {
@@ -223,6 +228,15 @@ export default function CustomerScoringList({ onSelect }) {
                   </td>
                   <td style={{ padding: '12px 14px', color: 'var(--text-td)', fontSize: 13 }}>
                     {item.visitor || '-'}
+                  </td>
+                  <td style={{ padding: '12px 14px', color: 'var(--text-td)', fontSize: 13 }}>{item.president_visit_date || '-'}</td>
+                  <td style={{ padding: '12px 14px', fontSize: 13, whiteSpace: 'nowrap' }}>
+                    {(() => {
+                      if (!item.president_visit_date) return <span style={{ color: 'var(--text-faint)' }}>-</span>;
+                      const days = Math.floor((Date.now() - new Date(item.president_visit_date)) / 86400000);
+                      const color = days >= 180 ? '#dc2626' : days >= 90 ? '#c2410c' : 'var(--text-td)';
+                      return <span style={{ color, fontWeight: days >= 90 ? 600 : 400 }}>{days}日</span>;
+                    })()}
                   </td>
                   <td style={{ padding: '12px 14px' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: cl.bg, color: cl.text, border: `1px solid ${cl.border}`, boxShadow: cl.shadow, whiteSpace: 'nowrap' }}>
@@ -291,6 +305,7 @@ export default function CustomerScoringList({ onSelect }) {
                   ['assignee', '顧客担当者', 'text'],
                   ['visitor', '訪問者（自社）', 'text'],
                   ['last_visit_date', '最終訪問日', 'date'],
+                  ['president_visit_date', '社長訪問日', 'date'],
                 ].map(([key, label, type]) => (
                   <div key={key}>
                     <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>{label}</label>
@@ -365,6 +380,7 @@ export default function CustomerScoringList({ onSelect }) {
                   ['assignee', '顧客担当者', 'text', false],
                   ['visitor', '訪問者（自社）', 'text', false],
                   ['last_visit_date', '最終訪問日', 'date', false],
+                  ['president_visit_date', '社長訪問日', 'date', false],
                 ].map(([key, label, type, required]) => (
                   <div key={key}>
                     <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>{label}{required && ' *'}</label>

@@ -112,6 +112,7 @@ db.exec(`
 
 try { db.exec(`ALTER TABLE topics_items ADD COLUMN row_color TEXT DEFAULT ''`); } catch {}
 try { db.exec(`ALTER TABLE customer_scoring ADD COLUMN sort_order INTEGER`); } catch {}
+try { db.exec(`ALTER TABLE customer_scoring ADD COLUMN president_visit_date TEXT DEFAULT ''`); } catch {}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS customer_scoring (
