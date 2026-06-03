@@ -219,19 +219,35 @@ function RichTextEditor({ value, onChange, minHeight }) {
 
 export default function CommonSheet() {
   const [tableData,   setTableData]   = useState(DEFAULT_TABLE);
+  const [sectionLabels, setSectionLabels] = useState(
+    Object.fromEntries(SECTIONS.map(s => [s.id, { section: s.section, label25: s.label25, label24: s.label24 }]))
+  );
   const [title,       setTitle]       = useState('25期3月全体会議（2月報告）');
   const [author,      setAuthor]      = useState('開発（マイナビ＋開発案件）：生田目 真史');
   const [gaiyou,      setGaiyou]      = useState('');
   const [kadai,       setKadai]       = useState('');
   const [taisaku,     setTaisaku]     = useState('');
   const [jiyoYosoku,  setJiyoYosoku]  = useState('');
-  const saveTimer = useRef(null);
-  const titleRef  = useRef(null);
-  const authorRef = useRef(null);
+  const saveTimer    = useRef(null);
+  const titleRef     = useRef(null);
+  const authorRef    = useRef(null);
+  const sectionRefs  = useRef(
+    Object.fromEntries(SECTIONS.map(s => [s.id, { section: null, label25: null, label24: null }]))
+  );
 
   // contentEditable はReactが直接DOM更新しないためrefで同期
   useEffect(() => { if (titleRef.current && titleRef.current.textContent !== title) titleRef.current.textContent = title; }, [title]);
   useEffect(() => { if (authorRef.current && authorRef.current.textContent !== author) authorRef.current.textContent = author; }, [author]);
+  useEffect(() => {
+    SECTIONS.forEach(({ id }) => {
+      const refs = sectionRefs.current[id];
+      if (!refs) return;
+      const labels = sectionLabels[id];
+      if (refs.section  && document.activeElement !== refs.section  && refs.section.textContent  !== labels.section)  refs.section.textContent  = labels.section;
+      if (refs.label25  && document.activeElement !== refs.label25  && refs.label25.textContent  !== labels.label25)  refs.label25.textContent  = labels.label25;
+      if (refs.label24  && document.activeElement !== refs.label24  && refs.label24.textContent  !== labels.label24)  refs.label24.textContent  = labels.label24;
+    });
+  }, [sectionLabels]);
 
   // 画像読み取り
   const [imgAnalyzing,  setImgAnalyzing]  = useState(false);
@@ -333,6 +349,16 @@ export default function CommonSheet() {
       if (d.taisaku)     setTaisaku(d.taisaku);
       if (d.jiyo_yosoku) setJiyoYosoku(d.jiyo_yosoku);
       if (d.table_data)  { try { setTableData(JSON.parse(d.table_data)); } catch(e) {} }
+      if (d.section_labels) {
+        try {
+          const parsed = JSON.parse(d.section_labels);
+          setSectionLabels(prev => {
+            const next = { ...prev };
+            Object.entries(parsed).forEach(([id, lbls]) => { if (next[id]) next[id] = { ...next[id], ...lbls }; });
+            return next;
+          });
+        } catch(e) {}
+      }
     }).catch(() => {});
   }, []);
 
@@ -354,6 +380,12 @@ export default function CommonSheet() {
     save({ table_data: JSON.stringify(next) });
   };
 
+  const updateSectionLabel = (id, field, val) => {
+    const next = { ...sectionLabels, [id]: { ...sectionLabels[id], [field]: val } };
+    setSectionLabels(next);
+    save({ section_labels: JSON.stringify(next) });
+  };
+
   const S = getSheetColors();
 
   const th = (extra = {}) => ({
@@ -364,9 +396,11 @@ export default function CommonSheet() {
     border: S.border, padding: '5px 6px', background: bg, fontSize: '12px', color: S.text, ...extra,
   });
 
-  const SectionRow = ({ label }) => (
+  const SectionRow = ({ label, domRef, onBlur }) => (
     <tr>
       <td colSpan={9} contentEditable suppressContentEditableWarning
+        ref={domRef}
+        onBlur={onBlur}
         style={{ border: S.border, padding: '4px 8px', background: S.bgSection, fontWeight: 700, fontSize: '12px', outline: 'none', color: S.text }}>
         {label}
       </td>
@@ -498,12 +532,19 @@ export default function CommonSheet() {
             </tr>
           </thead>
           <tbody>
-            {SECTIONS.map(({ id, section, label25, label24 }) => {
+            {SECTIONS.map(({ id }) => {
               const d = tableData[id];
+              const lbl = sectionLabels[id];
               return [
-                <SectionRow key={`s_${id}`} label={section} />,
+                <SectionRow key={`s_${id}`} label={lbl.section}
+                  domRef={el => { sectionRefs.current[id].section = el; }}
+                  onBlur={e => updateSectionLabel(id, 'section', e.currentTarget.textContent)}
+                />,
                 <tr key={`25_${id}`}>
-                  <td contentEditable suppressContentEditableWarning style={td(S.bgRow25, { outline: 'none', fontWeight: 700 })}>{label25}</td>
+                  <td contentEditable suppressContentEditableWarning
+                    ref={el => { sectionRefs.current[id].label25 = el; }}
+                    onBlur={e => updateSectionLabel(id, 'label25', e.currentTarget.textContent)}
+                    style={td(S.bgRow25, { outline: 'none', fontWeight: 700 })}>{lbl.label25}</td>
                   <NumCell value={d.b25} onChange={v => updateTable(id, 'b25', v)} bg={S.bgRow25} />
                   <CalcCell value={fmtPct(d.b25, d.b24)} bg={S.bgRow25} />
                   <NumCell value={d.a25} onChange={v => updateTable(id, 'a25', v)} bg={S.bgRow25} />
@@ -514,7 +555,10 @@ export default function CommonSheet() {
                   <CalcCell value={fmtPct(d.f25, d.b25)} bg={S.bgRow25} />
                 </tr>,
                 <tr key={`24_${id}`}>
-                  <td contentEditable suppressContentEditableWarning style={td(S.bgRow24, { outline: 'none' })}>{label24}</td>
+                  <td contentEditable suppressContentEditableWarning
+                    ref={el => { sectionRefs.current[id].label24 = el; }}
+                    onBlur={e => updateSectionLabel(id, 'label24', e.currentTarget.textContent)}
+                    style={td(S.bgRow24, { outline: 'none' })}>{lbl.label24}</td>
                   <NumCell value={d.b24} onChange={v => updateTable(id, 'b24', v)} bg={S.bgRow24} />
                   <CalcCell value="—" bg={S.bgRow24} />
                   <NumCell value={d.a24} onChange={v => updateTable(id, 'a24', v)} bg={S.bgRow24} />

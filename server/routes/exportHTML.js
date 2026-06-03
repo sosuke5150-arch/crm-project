@@ -228,12 +228,18 @@ router.get('/', (req, res) => {
     // リッチテキスト（HTMLを含む場合はそのまま出力、プレーンテキストは改行変換のみ）
     const csRender  = s => { if (!s) return ''; if (/<[a-zA-Z][\s\S]*>/.test(s)) return s; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); };
 
-    const csSections = [
+    const csSectionsDefault = [
       { id: 'tsuki', section: '2026年3月単月',       label25: '第25期3月度',      label24: '第24期3月度'      },
       { id: 'q2',    section: '第25期 第3四半期',    label25: '第25期 第3四半期', label24: '第24期 第3四半期' },
       { id: 'cum',   section: '期初〜当月までの累積', label25: '第25期 累積',      label24: '第24期 累積'      },
       { id: 'full',  section: '通期',                label25: '第25期 通期',      label24: '第24期 通期'      },
     ];
+    let savedSectionLabels = {};
+    try { savedSectionLabels = JSON.parse(cs.section_labels || '{}'); } catch (e) {}
+    const csSections = csSectionsDefault.map(s => ({
+      ...s,
+      ...(savedSectionLabels[s.id] || {}),
+    }));
     const csCalcColor = theme === 'dark' ? '#60b8e8' : theme === 'earth' ? '#8b5a1a' : '#1a5fa8';
     const csNegColor  = theme === 'dark' ? '#ff6060' : '#c00000';
     const csBgHeader  = theme === 'dark' ? '#1a2f58' : theme === 'earth' ? '#6b3e1e' : '#2f5496';
