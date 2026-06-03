@@ -51,8 +51,9 @@ function getSheetColors() {
 }
 
 // ===== ユーティリティ =====
-const parseNum = v => { const n = Number(String(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
-const fmtNum   = v => { if (v === '' || v == null) return ''; const n = Number(v); return isNaN(n) ? '' : n.toLocaleString(); };
+const toHalf   = s => String(s || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFF10 + 0x30));
+const parseNum = v => { const n = Number(toHalf(String(v)).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+const fmtNum   = v => { if (v === '' || v == null) return ''; const h = toHalf(String(v)).replace(/,/g, ''); const n = Number(h); return isNaN(n) ? '' : n.toLocaleString(); };
 const fmtPct   = (num, den) => (!den || !num) ? '—' : (parseNum(num) / parseNum(den) * 100).toFixed(2) + '%';
 const fmtDiff  = (a, b) => (a === '' || b === '') ? '—' : (parseNum(a) - parseNum(b)).toLocaleString();
 
