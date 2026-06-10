@@ -1449,36 +1449,64 @@ tr:hover td{background:${C.bgPanel}}
       <thead>
         <tr>
           <th style="text-align:left">顧客名</th>
-          <th style="text-align:left">プロダクト名</th>
-          <th style="text-align:left">顧客担当者</th>
-          <th style="text-align:left">訪問者</th>
           <th style="text-align:center">最終訪問日</th>
-          <th style="text-align:center">経過日数</th>
+          <th style="text-align:center">経過日</th>
+          <th style="text-align:left">訪問者（自社）</th>
+          <th style="text-align:center">社長訪問日</th>
+          <th style="text-align:center">社長訪問経過日</th>
           <th style="text-align:center">クレーム状況</th>
-          <th style="text-align:center">チケット消化</th>
-          <th style="text-align:center;min-width:120px">スコア</th>
+          <th style="text-align:center">チケット消化状況</th>
+          <th style="text-align:center;min-width:120px">エンゲージメント強度</th>
         </tr>
       </thead>
       <tbody>
         ${scoringRows.map((r, i) => {
           const bg = i % 2 === 0 ? C.bgPanel : C.bgInner;
           const days = scoringDaysSince(r.last_visit_date);
-          const daysColor = days === null ? C.textFaint : days <= 30 ? C.colorActual : days <= 60 ? C.colorWarn : C.colorLoss;
+          const daysColor = days === null ? C.textFaint : days >= 180 ? '#dc2626' : days >= 90 ? '#c2410c' : C.textMid;
+          const daysFw = days !== null && days >= 90 ? '600' : '400';
+          const pdays = scoringDaysSince(r.president_visit_date);
+          const pdaysColor = pdays === null ? C.textFaint : pdays >= 180 ? '#dc2626' : pdays >= 90 ? '#c2410c' : C.textMid;
+          const pdaysFw = pdays !== null && pdays >= 90 ? '600' : '400';
           const score = Number(r.score) || 0;
           const scoreColor = score <= 3 ? C.colorLoss : score <= 6 ? C.colorWarn : C.colorActual;
           const scoreLabel = score <= 3 ? '要注意' : score <= 6 ? '普通' : '良好';
           const bars = Array.from({length:10}, (_,idx) =>
             `<span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${idx < score ? scoreColor : C.border};margin:0 1px"></span>`
           ).join('');
+          const claimMap = {
+            'なし':              { icon:'✔', color:'#059669', bg:'#d1fae5', border:'#6ee7b7' },
+            '軽度クレーム対応中':  { icon:'⚡', color:'#b45309', bg:'#fef3c7', border:'#fcd34d' },
+            '大型クレーム対応中':  { icon:'🔥', color:'#c2410c', bg:'#ffedd5', border:'#fdba74' },
+            '是正検討中':         { icon:'▲',  color:'#dc2626', bg:'#fee2e2', border:'#fca5a5' },
+          };
+          const ticketMap = {
+            '順調':    { dots:3, color:'#059669', bg:'#d1fae5', border:'#6ee7b7' },
+            'やや滞留': { dots:2, color:'#b45309', bg:'#fef3c7', border:'#fcd34d' },
+            '滞留':    { dots:1, color:'#dc2626', bg:'#fee2e2', border:'#fca5a5' },
+          };
+          const cl = claimMap[r.claim_status] || claimMap['なし'];
+          const tk = ticketMap[r.ticket_status] || ticketMap['順調'];
+          const tkDots = Array.from({length:3}, (_,idx) =>
+            `<span style="font-size:10px;color:${idx < tk.dots ? tk.color : '#d1d5db'}">●</span>`
+          ).join('');
           return `<tr style="background:${bg}">
             <td style="font-weight:600;color:${C.accent}">${csEsc(r.customer_name)||'-'}</td>
-            <td style="color:${C.textBody}">${csEsc(r.product_name)||'-'}</td>
-            <td style="color:${C.textMid}">${csEsc(r.assignee)||'-'}</td>
-            <td style="color:${C.textMid}">${csEsc(r.visitor)||'-'}</td>
             <td style="text-align:center;color:${C.textMid}">${csEsc(r.last_visit_date)||'-'}</td>
-            <td style="text-align:center;font-weight:600;color:${daysColor}">${days !== null ? days + '日' : '-'}</td>
-            <td style="text-align:center;color:${C.textBody}">${csEsc(r.claim_status)||'-'}</td>
-            <td style="text-align:center;color:${C.textBody}">${csEsc(r.ticket_status)||'-'}</td>
+            <td style="text-align:center;font-weight:${daysFw};color:${daysColor}">${days !== null ? days + '日' : '-'}</td>
+            <td style="color:${C.textMid}">${csEsc(r.visitor)||'-'}</td>
+            <td style="text-align:center;color:${C.textMid}">${csEsc(r.president_visit_date)||'-'}</td>
+            <td style="text-align:center;font-weight:${pdaysFw};color:${pdaysColor}">${pdays !== null ? pdays + '日' : '-'}</td>
+            <td style="text-align:center">
+              <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;color:${cl.color};background:${cl.bg};border:1px solid ${cl.border}">
+                <span style="font-size:10px">${cl.icon}</span>${csEsc(r.claim_status)||'なし'}
+              </span>
+            </td>
+            <td style="text-align:center">
+              <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;color:${tk.color};background:${tk.bg};border:1px solid ${tk.border}">
+                ${tkDots} ${csEsc(r.ticket_status)||'順調'}
+              </span>
+            </td>
             <td style="text-align:center">
               <div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px">
                 <span style="font-size:15px;font-weight:800;color:${scoreColor}">${score} <span style="font-size:10px;color:${scoreColor};font-weight:600">${scoreLabel}</span></span>
