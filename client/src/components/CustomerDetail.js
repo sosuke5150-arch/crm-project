@@ -122,6 +122,8 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
 
   const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
   const totalAmount = deals.filter(d => ACTUAL_STATUSES.has(d.status)).reduce((sum, d) => sum + d.amount, 0);
+  const expectedAmount = deals.filter(d => d.status === 'done' || d.status === 'forecast').reduce((sum, d) => sum + d.amount, 0);
+  const forecastAmount = deals.filter(d => d.status === 'forecast').reduce((sum, d) => sum + d.amount, 0);
   const fullAddress = [customer.postal_code ? `〒${customer.postal_code}` : null, customer.prefecture, customer.address, customer.building]
     .filter(Boolean).join(' ') || '-';
 
@@ -274,7 +276,11 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3>取引一覧</h3>
-          <span style={{ fontSize: '13px', color: '#6b7fa3' }}>受注合計：<strong style={{ color: '#00d4ff' }}>¥{totalAmount.toLocaleString()}</strong></span>
+          <span style={{ fontSize: '13px', color: '#6b7fa3', display: 'flex', gap: '24px' }}>
+            <span>今期受注予定額：<strong style={{ color: '#f9a8d4' }}>¥{expectedAmount.toLocaleString()}</strong></span>
+            <span>確定売上額：<strong style={{ color: '#00d4ff' }}>¥{totalAmount.toLocaleString()}</strong></span>
+            <span>受注見込額：<strong style={{ color: '#86efac' }}>¥{forecastAmount.toLocaleString()}</strong></span>
+          </span>
         </div>
         <table>
           <thead>
