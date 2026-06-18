@@ -57,6 +57,59 @@
   --chart-warn:     #facc15;
 }
 
+/* サイバー */
+body[data-theme="cyber"] {
+  --bg-main:    #040609;
+  --bg-sidebar: #060a14;
+  --bg-panel:   #0a0e1c;
+  --bg-input:   #0d1222;
+  --bg-inner:   #040609;
+  --border:            #162038;
+  --border-subtle:     #0c1426;
+  --border-mid:        #1e2d48;
+  --text-heading:  #eef5ff;
+  --text-body:     #a8bcd8;
+  --text-muted:    #4e6888;
+  --text-faint:    #2e4865;
+  --text-mid:      #6880a8;
+  --text-td:       #88a4c0;
+  --accent:        #00eaff;
+  --accent-hover:  #40f0ff;
+  --accent-glow:   rgba(0,234,255,0.5);
+  --accent-bg:     rgba(0,234,255,0.07);
+  --accent-bg-soft:rgba(0,234,255,0.04);
+  --accent-border: rgba(0,234,255,0.55);
+  --logo-color:  #00eaff;
+  --logo-shadow: rgba(0,234,255,0.7);
+  --sidebar-text:          #4e6888;
+  --sidebar-active-color:  #00eaff;
+  --sidebar-active-bg:     rgba(0,234,255,0.09);
+  --sidebar-hover-bg:      rgba(0,234,255,0.05);
+  --sidebar-hover-border:  rgba(0,234,255,0.35);
+  --stat-value:    #00eaff;
+  --link-color:    #00eaff;
+  --link-shadow:   rgba(0,234,255,0.6);
+  --customer-color:#00eaff;
+  --delete-color:  #ff3d5a;
+  --delete-bg:     rgba(255,61,90,0.1);
+  --delete-border: rgba(255,61,90,0.5);
+  --scrollbar-track:       #060a14;
+  --scrollbar-thumb:       #162038;
+  --scrollbar-thumb-hover: #1e2d48;
+  --table-row-hover:   rgba(0,234,255,0.04);
+  --table-row-hover-text: #c8d8f0;
+  --stat-hover-border: rgba(0,234,255,0.3);
+  --focus-shadow: rgba(0,234,255,0.1);
+  --btn-back-hover-border: rgba(0,234,255,0.3);
+  --btn-back-hover-bg:     rgba(0,234,255,0.05);
+  --chart-actual:   #00eaff;
+  --chart-forecast: #ff6eb0;
+  --chart-target:   #7c5cfc;
+  --chart-gain:     #20e8a0;
+  --chart-loss:     #ff3d5a;
+  --chart-warn:     #ffcc00;
+}
+
 /* エクセル（ライト） */
 body[data-theme="excel"] {
   --bg-main:    #f0f2f5;
@@ -201,9 +254,9 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(
 /* テーマ切替 */
 .theme-switcher {
   padding: 0 16px 20px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
 .theme-card {
@@ -533,4 +586,119 @@ select.status-select option { background: var(--bg-input); color: var(--text-bod
   padding: 10px 0;
   border: none;
   color: var(--text-body);
+}
+
+/* ============================================================
+   ダークテーマ サイバー強化
+   ============================================================ */
+
+body[data-theme="cyber"] {
+  background-image:
+    linear-gradient(rgba(0,234,255,0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,234,255,0.016) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+body[data-theme="cyber"] .sidebar {
+  border-right-color: rgba(0,234,255,0.14);
+  box-shadow: 4px 0 32px rgba(0,0,0,0.8);
+}
+
+body[data-theme="cyber"] .logo {
+  text-shadow: 0 0 16px rgba(0,234,255,0.9), 0 0 40px rgba(0,234,255,0.4);
+  letter-spacing: 0.14em;
+}
+
+body[data-theme="cyber"] .sidebar button.active {
+  text-shadow: 0 0 14px rgba(0,234,255,0.7);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+body[data-theme="cyber"] .card {
+  border-color: rgba(0,234,255,0.1);
+  box-shadow:
+    0 0 0 1px rgba(0,234,255,0.04),
+    0 4px 40px rgba(0,0,0,0.75),
+    inset 0 1px 0 rgba(0,234,255,0.07);
+}
+
+body[data-theme="cyber"] h2 {
+  color: #f0f8ff;
+  text-shadow: 0 0 30px rgba(0,234,255,0.25);
+}
+
+body[data-theme="cyber"] h3 {
+  color: rgba(0,234,255,0.55);
+  letter-spacing: 0.12em;
+}
+
+body[data-theme="cyber"] .stat {
+  border-color: rgba(0,234,255,0.08);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.65);
+}
+
+body[data-theme="cyber"] .stat:hover {
+  border-color: rgba(0,234,255,0.32);
+  box-shadow: 0 0 24px rgba(0,234,255,0.1), 0 4px 24px rgba(0,0,0,0.65);
+}
+
+body[data-theme="cyber"] .stat-value {
+  text-shadow: 0 0 22px rgba(0,234,255,0.65);
+}
+
+body[data-theme="cyber"] th {
+  color: rgba(0,234,255,0.5);
+  letter-spacing: 0.1em;
+}
+
+body[data-theme="cyber"] form button {
+  box-shadow: 0 0 16px rgba(0,234,255,0.3), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+body[data-theme="cyber"] form button:hover {
+  box-shadow: 0 0 32px rgba(0,234,255,0.6), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+body[data-theme="cyber"] input:focus,
+body[data-theme="cyber"] select:focus,
+body[data-theme="cyber"] textarea:focus {
+  border-color: rgba(0,234,255,0.65);
+  box-shadow: 0 0 0 3px rgba(0,234,255,0.1), 0 0 16px rgba(0,234,255,0.15);
+}
+
+body[data-theme="cyber"] .btn-edit:hover {
+  box-shadow: 0 0 14px rgba(0,234,255,0.25);
+}
+
+body[data-theme="cyber"] .btn-back {
+  border-color: rgba(0,234,255,0.15);
+}
+
+body[data-theme="cyber"] .link:hover {
+  text-shadow: 0 0 14px rgba(0,234,255,0.8);
+}
+
+body[data-theme="cyber"] .status-open {
+  box-shadow: 0 0 8px rgba(251,191,36,0.2);
+}
+body[data-theme="cyber"] .status-won {
+  box-shadow: 0 0 8px rgba(32,232,160,0.2);
+}
+body[data-theme="cyber"] .status-lost {
+  box-shadow: 0 0 8px rgba(255,61,90,0.2);
+}
+
+body[data-theme="cyber"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: rgba(4,6,9,0.95) !important;
+  border: 1px solid rgba(0,234,255,0.35) !important;
+  box-shadow: 0 0 20px rgba(0,234,255,0.18) !important;
+  border-radius: 6px !important;
+}
+
+body[data-theme="cyber"] .recharts-legend-item-text {
+  color: var(--text-muted) !important;
+}
+
+body[data-theme="cyber"] .recharts-pie-sector path {
+  filter: drop-shadow(0 0 4px rgba(0,234,255,0.25));
 }

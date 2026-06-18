@@ -12,6 +12,7 @@ const MONTH_LABEL = m => m.replace('検収', '');
 
 const PIE_COLORS_MAP = {
   dark:  ['#6366f1','#e879f9','#84cc16','#f59e0b','#f43f5e','#38bdf8','#34d399','#fb923c','#a78bfa','#2dd4bf','#facc15','#ec4899'],
+  cyber: ['#00eaff','#ff6eb0','#7c5cfc','#20e8a0','#ffcc00','#ff3d5a','#a78bfa','#ff9f45','#00d4aa','#e879f9','#44eeff','#ffdd44'],
   excel: ['#9b59b6','#27ae60','#a9d18e','#ffc000','#e15f5f','#70ad47','#5b9bd5','#c55a11','#7030a0','#2e75b6','#843c0c','#bf9000'],
   earth: ['#b5651d','#e9a84c','#7daa6e','#c87941','#922b21','#8b6914','#d4956a','#5c8a58','#a04000','#6b8e4e','#cd853f','#556b2f'],
 };
@@ -79,10 +80,13 @@ export default function Dashboard() {
   const colors = getChartColors();
   const PIE_COLORS = PIE_COLORS_MAP[theme] || PIE_COLORS_MAP.dark;
   const isLight = theme === 'excel' || theme === 'earth';
-  const cursorFill = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)';
+  const isCyber = theme === 'cyber';
+  const cursorFill = isLight ? 'rgba(0,0,0,0.04)' : isCyber ? 'rgba(0,234,255,0.06)' : 'rgba(255,255,255,0.03)';
   const headingStyle = isLight
     ? { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--accent)' }
-    : { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00d4ff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
+    : isCyber
+      ? { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00eaff, #ff6eb0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 8px rgba(0,234,255,0.4))' }
+      : { fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', background: 'linear-gradient(90deg, #00d4ff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
 
   useEffect(() => {
     fetch(`${API}/summary`).then(r => r.json()).then(setSummary).catch(() => {});
@@ -224,8 +228,24 @@ export default function Dashboard() {
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={yojitsuData} margin={{ top: 4, right: 16, left: 16, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+              {isCyber && (
+                <defs>
+                  <linearGradient id="cg1Target" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7c5cfc" stopOpacity={0.85}/>
+                    <stop offset="95%" stopColor="#7c5cfc" stopOpacity={0.18}/>
+                  </linearGradient>
+                  <linearGradient id="cg1Actual" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00eaff" stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor="#00eaff" stopOpacity={0.18}/>
+                  </linearGradient>
+                  <linearGradient id="cg1Forecast" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ff6eb0" stopOpacity={0.85}/>
+                    <stop offset="95%" stopColor="#ff6eb0" stopOpacity={0.18}/>
+                  </linearGradient>
+                </defs>
+              )}
+              <CartesianGrid strokeDasharray="3 3" stroke={isCyber ? 'rgba(0,234,255,0.1)' : 'var(--border)'} />
+              <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={{ stroke: isCyber ? 'rgba(0,234,255,0.15)' : 'var(--border)' }} tickLine={false} />
               <YAxis tickFormatter={v => `¥${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<YojitsuTooltip colors={colors} />} cursor={{ fill: cursorFill }} />
               <Legend content={() => (
@@ -238,11 +258,11 @@ export default function Dashboard() {
                   ))}
                 </div>
               )} />
-              <Bar dataKey="目標" name="目標" fill={colors.target} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="bar2" name="実績" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="目標" name="目標" fill={isCyber ? 'url(#cg1Target)' : colors.target} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="bar2" name="実績" radius={[4, 4, 0, 0]} fillOpacity={isCyber ? 0.8 : 1}>
                 {yojitsuData.map((d, i) => <Cell key={i} fill={d._hasActual ? colors.actual : colors.forecast} />)}
               </Bar>
-              <Bar dataKey="bar3" name="見込" fill={colors.forecast} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="bar3" name="見込" fill={isCyber ? 'url(#cg1Forecast)' : colors.forecast} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -255,25 +275,50 @@ export default function Dashboard() {
         ) : (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
-              {monthlyPieData.map(d => {
+              {monthlyPieData.map((d, mi) => {
                 const diffColor = d.diff > 0 ? colors.gain : d.diff < 0 ? colors.loss : 'var(--text-muted)';
                 const rateColor = d.rate === null ? 'var(--text-faint)' : d.rate >= 100 ? colors.gain : d.rate >= 80 ? colors.warn : colors.loss;
-                const segColor = name => ({
-                  '実績':   colors.actual,
-                  '見込':   colors.forecast,
-                  '残':     isLight ? 'rgba(0,0,0,0.40)' : 'rgba(255,255,255,0.40)',
-                  '無データ': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
-                })[name] || '#888';
+                const segColor = name => {
+                  if (isCyber) return ({
+                    '実績':   `url(#pia${mi})`,
+                    '見込':   `url(#pif${mi})`,
+                    '残':     'rgba(0,234,255,0.13)',
+                    '無データ': 'rgba(0,234,255,0.05)',
+                  })[name] || '#888';
+                  return ({
+                    '実績':   colors.actual,
+                    '見込':   colors.forecast,
+                    '残':     isLight ? 'rgba(0,0,0,0.40)' : 'rgba(255,255,255,0.40)',
+                    '無データ': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)',
+                  })[name] || '#888';
+                };
                 return (
-                  <div key={d.month} style={{ background: 'var(--bg-inner)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{d.month}</div>
+                  <div key={d.month} style={{
+                    background: isCyber ? 'rgba(4,6,9,0.85)' : 'var(--bg-inner)',
+                    border: `1px solid ${isCyber ? 'rgba(0,234,255,0.22)' : 'var(--border)'}`,
+                    borderRadius: 10, padding: '12px 8px 10px', textAlign: 'center',
+                    ...(isCyber && { boxShadow: '0 0 16px rgba(0,234,255,0.07), inset 0 0 30px rgba(0,234,255,0.02)' }),
+                  }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: isCyber ? colors.actual : 'var(--text-muted)', marginBottom: 6, ...(isCyber && { textShadow: '0 0 10px rgba(0,234,255,0.6)' }) }}>{d.month}</div>
                     <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto' }}>
                       <PieChart width={120} height={120}>
+                        {isCyber && (
+                          <defs>
+                            <linearGradient id={`pia${mi}`} x1="1" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#44eeff" stopOpacity={1}/>
+                              <stop offset="100%" stopColor="#006688" stopOpacity={0.75}/>
+                            </linearGradient>
+                            <linearGradient id={`pif${mi}`} x1="1" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#ff88cc" stopOpacity={1}/>
+                              <stop offset="100%" stopColor="#bb1166" stopOpacity={0.75}/>
+                            </linearGradient>
+                          </defs>
+                        )}
                         <Pie data={d.pieData} dataKey="value" cx="50%" cy="50%" innerRadius={26} outerRadius={40} strokeWidth={0} startAngle={90} endAngle={-270}>
                           {d.pieData.map((seg, i) => <Cell key={i} fill={segColor(seg.name)} />)}
                         </Pie>
                         {(d.customerBreakdown?.length > 0) && (
-                          <Pie data={d.customerBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={43} outerRadius={57} strokeWidth={1} stroke="var(--bg-inner)" startAngle={90} endAngle={-270}>
+                          <Pie data={d.customerBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={43} outerRadius={57} strokeWidth={isCyber ? 0.5 : 1} stroke={isCyber ? 'rgba(0,234,255,0.15)' : 'var(--bg-inner)'} startAngle={90} endAngle={-270}>
                             {d.customerBreakdown.map((seg, i) => {
                               const idx = customerData.findIndex(c => c.customer === seg.name);
                               return <Cell key={i} fill={PIE_COLORS[(idx >= 0 ? idx : i) % PIE_COLORS.length]} />;
@@ -286,7 +331,7 @@ export default function Dashboard() {
                           wrapperStyle={{ zIndex: 999 }}
                         />
                       </PieChart>
-                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 13, fontWeight: 700, color: rateColor, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 13, fontWeight: 700, color: rateColor, pointerEvents: 'none', whiteSpace: 'nowrap', ...(isCyber && { textShadow: `0 0 12px ${rateColor}cc` }) }}>
                         {d.rate !== null ? `${d.rate}%` : '—'}
                       </div>
                     </div>
@@ -296,16 +341,16 @@ export default function Dashboard() {
                       </div>
                     )}
                     {!d.noData && d.actual > 0 && (
-                      <div style={{ fontSize: 12, color: colors.actual, marginTop: 3 }}>
+                      <div style={{ fontSize: 12, color: colors.actual, marginTop: 3, ...(isCyber && { textShadow: '0 0 8px rgba(0,234,255,0.5)' }) }}>
                         実績 ¥{d.actual.toLocaleString()}
                       </div>
                     )}
                     {!d.noData && d.forecast > 0 && (
-                      <div style={{ fontSize: 12, color: colors.forecast, marginTop: 3 }}>
+                      <div style={{ fontSize: 12, color: colors.forecast, marginTop: 3, ...(isCyber && { textShadow: '0 0 8px rgba(255,110,176,0.5)' }) }}>
                         見込 ¥{d.forecast.toLocaleString()}
                       </div>
                     )}
-                    <div style={{ fontSize: 13, fontWeight: 700, color: d.noData ? 'var(--text-faint)' : diffColor, marginTop: 5, borderTop: d.noData ? 'none' : '1px solid var(--border)', paddingTop: d.noData ? 0 : 5 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: d.noData ? 'var(--text-faint)' : diffColor, marginTop: 5, borderTop: d.noData ? 'none' : `1px solid ${isCyber ? 'rgba(0,234,255,0.15)' : 'var(--border)'}`, paddingTop: d.noData ? 0 : 5, ...(isCyber && !d.noData && { textShadow: `0 0 10px ${diffColor}aa` }) }}>
                       {d.noData
                         ? 'データなし'
                         : d.target === 0
@@ -317,7 +362,7 @@ export default function Dashboard() {
               })}
             </div>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '14px' }}>
-              {[{ label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }, { label: '残', color: isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)' }].map(i => (
+              {[{ label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }, { label: '残', color: isLight ? 'rgba(0,0,0,0.45)' : isCyber ? 'rgba(0,234,255,0.22)' : 'rgba(255,255,255,0.45)' }].map(i => (
                 <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: i.color }} />
                   {i.label}
@@ -331,11 +376,11 @@ export default function Dashboard() {
               // 顧客別: 実績+見込合計が大きい順に表示（その他にまとめる閾値なし）
               return (
                 <div style={{ marginTop: '28px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.06em' }}>確定売上構成（顧客別）</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isCyber ? colors.actual : 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.08em', ...(isCyber && { textShadow: '0 0 10px rgba(0,234,255,0.5)' }) }}>確定売上構成（顧客別）</div>
                   <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-                    <div style={{ flexShrink: 0 }}>
+                    <div style={{ flexShrink: 0, ...(isCyber && { filter: 'drop-shadow(0 0 10px rgba(0,234,255,0.3))' }) }}>
                       <PieChart width={200} height={200}>
-                        <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={90} innerRadius={48} strokeWidth={0} startAngle={90} endAngle={-270}>
+                        <Pie data={customerData} dataKey="total" nameKey="customer" cx="50%" cy="50%" outerRadius={90} innerRadius={48} strokeWidth={isCyber ? 1 : 0} stroke={isCyber ? 'rgba(4,6,9,0.7)' : 'none'} startAngle={90} endAngle={-270}>
                           {customerData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                         </Pie>
                         <Tooltip
@@ -360,8 +405,8 @@ export default function Dashboard() {
                           <div key={d.customer} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 12 }}>
                             <div style={{ width: 8, height: 8, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length], flexShrink: 0 }} />
                             <span style={{ color: 'var(--text-td)', width: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>{d.customer}</span>
-                            <div style={{ flex: 1, background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-                              <div style={{ width: `${barW}%`, height: '100%', background: PIE_COLORS[i % PIE_COLORS.length], borderRadius: 4 }} />
+                            <div style={{ flex: 1, background: isLight ? 'rgba(0,0,0,0.06)' : isCyber ? 'rgba(0,234,255,0.08)' : 'rgba(255,255,255,0.05)', borderRadius: 4, height: isCyber ? 7 : 6, overflow: 'hidden' }}>
+                              <div style={{ width: `${barW}%`, height: '100%', background: isCyber ? `linear-gradient(90deg, ${PIE_COLORS[i % PIE_COLORS.length]}, ${PIE_COLORS[(i + 3) % PIE_COLORS.length]}88)` : PIE_COLORS[i % PIE_COLORS.length], borderRadius: 4, ...(isCyber && { boxShadow: `0 0 8px ${PIE_COLORS[i % PIE_COLORS.length]}bb` }) }} />
                             </div>
                             <span style={{ color: 'var(--text-muted)', width: 36, textAlign: 'right', flexShrink: 0 }}>{pct}%</span>
                             <span style={{ color: 'var(--text-heading)', fontWeight: 600, width: 110, textAlign: 'right', flexShrink: 0 }}>¥{Number(d.total).toLocaleString()}</span>
@@ -392,8 +437,24 @@ export default function Dashboard() {
           <>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={periodData} margin={{ top: 16, right: 24, left: 16, bottom: 4 }} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" tick={{ fill: 'var(--text-body)', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                {isCyber && (
+                  <defs>
+                    <linearGradient id="cg2Target" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7c5cfc" stopOpacity={0.85}/>
+                      <stop offset="95%" stopColor="#7c5cfc" stopOpacity={0.18}/>
+                    </linearGradient>
+                    <linearGradient id="cg2Actual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#00eaff" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#00eaff" stopOpacity={0.18}/>
+                    </linearGradient>
+                    <linearGradient id="cg2Forecast" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ff6eb0" stopOpacity={0.85}/>
+                      <stop offset="95%" stopColor="#ff6eb0" stopOpacity={0.18}/>
+                    </linearGradient>
+                  </defs>
+                )}
+                <CartesianGrid strokeDasharray="3 3" stroke={isCyber ? 'rgba(0,234,255,0.1)' : 'var(--border)'} />
+                <XAxis dataKey="name" tick={{ fill: 'var(--text-body)', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: isCyber ? 'rgba(0,234,255,0.15)' : 'var(--border)' }} tickLine={false} />
                 <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{ fill: cursorFill }}
@@ -433,9 +494,9 @@ export default function Dashboard() {
                     ))}
                   </div>
                 )} />
-                <Bar dataKey="予算" fill={colors.target} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="実績" fill={colors.actual} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="見込" fill={colors.forecast} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="予算" fill={isCyber ? 'url(#cg2Target)' : colors.target} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="実績" fill={isCyber ? 'url(#cg2Actual)' : colors.actual} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="見込" fill={isCyber ? 'url(#cg2Forecast)' : colors.forecast} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             {/* 数値サマリー */}

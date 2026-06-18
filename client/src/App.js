@@ -18,6 +18,7 @@ import './App.css';
 
 const THEMES = [
   { id: 'dark',  label: 'ダーク',   cls: 't-dark',  swatch: ['#0d1120','#1e2a45','#00d4ff'] },
+  { id: 'cyber', label: 'サイバー', cls: 't-cyber', swatch: ['#060a14','#0a0e1c','#00eaff'] },
   { id: 'excel', label: 'エクセル', cls: 't-excel', swatch: ['#1f3864','#ffffff','#2e75b6'] },
   { id: 'earth', label: 'アース',   cls: 't-earth', swatch: ['#3d2b1f','#faf6ef','#b5651d'] },
 ];

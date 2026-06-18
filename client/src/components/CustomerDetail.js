@@ -122,8 +122,8 @@ export default function CustomerDetail({ customerId, onBack, onNavigate }) {
 
   const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
   const totalAmount = deals.filter(d => ACTUAL_STATUSES.has(d.status)).reduce((sum, d) => sum + d.amount, 0);
-  const expectedAmount = deals.filter(d => d.status === 'done' || d.status === 'forecast').reduce((sum, d) => sum + d.amount, 0);
   const forecastAmount = deals.filter(d => d.status === 'forecast').reduce((sum, d) => sum + d.amount, 0);
+  const expectedAmount = totalAmount + forecastAmount;
   const fullAddress = [customer.postal_code ? `〒${customer.postal_code}` : null, customer.prefecture, customer.address, customer.building]
     .filter(Boolean).join(' ') || '-';
 
