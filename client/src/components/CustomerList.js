@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const API = 'http://localhost:3001';
+const ACTUAL_STATUSES = new Set(['won', 'done', 'monthly', 'shikakake']);
 
 const emptyForm = { company: '', phone: '', postal_code: '', prefecture: '', address: '', building: '', url: '', sasuke_id: '' };
 
@@ -9,11 +10,25 @@ export default function CustomerList({ onSelect }) {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [expectedMap, setExpectedMap] = useState({});
   const dragIndex = useRef(null);
 
   const load = () => fetch(`${API}/customers`).then(r => r.json()).then(setCustomers);
 
-  useEffect(() => { load(); }, []);
+  const loadDeals = () =>
+    fetch(`${API}/deals`).then(r => r.json()).then(deals => {
+      const map = {};
+      deals.forEach(d => {
+        if (!d.customer_id) return;
+        if (!map[d.customer_id]) map[d.customer_id] = 0;
+        if (ACTUAL_STATUSES.has(d.status) || d.status === 'forecast') {
+          map[d.customer_id] += Number(d.amount) || 0;
+        }
+      });
+      setExpectedMap(map);
+    });
+
+  useEffect(() => { load(); loadDeals(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +95,7 @@ export default function CustomerList({ onSelect }) {
       <div className="card">
         <table>
           <thead>
-            <tr><th></th><th>会社名</th><th>郵便番号</th><th>都道府県</th><th>住所</th><th>建物名</th><th>URL</th><th>サスケ顧客番号</th><th></th></tr>
+            <tr><th></th><th>会社名</th><th>郵便番号</th><th>都道府県</th><th>住所</th><th>建物名</th><th>URL</th><th style={{textAlign:'right'}}>今期受注予定額</th><th></th></tr>
           </thead>
           <tbody>
             {customers.map((c, index) => editId === c.id ? (
@@ -92,7 +107,7 @@ export default function CustomerList({ onSelect }) {
                 <td><input value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} /></td>
                 <td><input value={editForm.building} onChange={e => setEditForm({...editForm, building: e.target.value})} /></td>
                 <td><input value={editForm.url} onChange={e => setEditForm({...editForm, url: e.target.value})} /></td>
-                <td><input value={editForm.sasuke_id} onChange={e => setEditForm({...editForm, sasuke_id: e.target.value})} /></td>
+                <td style={{textAlign:'right', color:'var(--accent)', fontWeight:600}}>¥{(expectedMap[c.id] || 0).toLocaleString()}</td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditSave(c.id)}>保存</button>
                   <button className="btn-delete" onClick={() => setEditId(null)}>キャンセル</button>
@@ -114,7 +129,7 @@ export default function CustomerList({ onSelect }) {
                 <td>{c.address || '-'}</td>
                 <td>{c.building || '-'}</td>
                 <td>{c.url ? <a href={c.url} target="_blank" rel="noreferrer" style={{color:'#00d4ff'}}>{c.url}</a> : '-'}</td>
-                <td>{c.sasuke_id || '-'}</td>
+                <td style={{textAlign:'right', color:'var(--accent)', fontWeight:600}}>¥{(expectedMap[c.id] || 0).toLocaleString()}</td>
                 <td style={{whiteSpace:'nowrap'}}>
                   <button className="btn-edit" onClick={() => handleEditStart(c)}>修正</button>
                   <button className="btn-delete" onClick={() => handleDelete(c.id)}>削除</button>
@@ -122,6 +137,13 @@ export default function CustomerList({ onSelect }) {
               </tr>
             ))}
             {customers.length === 0 && <tr><td colSpan={9} style={{textAlign:'center',color:'#4a5f82'}}>顧客データがありません</td></tr>}
+            {customers.length > 0 && (
+              <tr>
+                <td colSpan={7} style={{textAlign:'right', color:'var(--text-muted)', fontSize:12, fontWeight:600, letterSpacing:'0.06em', paddingTop:14, borderTop:'1px solid var(--border-mid)'}}>合計</td>
+                <td style={{textAlign:'right', color:'var(--accent)', fontWeight:700, fontSize:15, paddingTop:14, borderTop:'1px solid var(--border-mid)'}}>¥{Object.values(expectedMap).reduce((s, v) => s + v, 0).toLocaleString()}</td>
+                <td style={{borderTop:'1px solid var(--border-mid)'}}></td>
+              </tr>
+            )}
           </tbody>
         </table>
         <form onSubmit={handleSubmit} style={{marginTop:'16px', marginBottom:0}}>
