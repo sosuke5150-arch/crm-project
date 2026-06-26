@@ -6,6 +6,10 @@ const API = 'http://localhost:3001';
 const MONTH_ORDER = ['9月検収','10月検収','11月検収','12月検収','1月検収','2月検収','3月検収','4月検収','5月検収','6月検収','7月検収','8月検収'];
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
+const Q1_MONTHS = ['9月','10月','11月'];
+const Q2_MONTHS = ['12月','1月','2月'];
+const Q3_MONTHS = ['3月','4月','5月'];
+const Q4_MONTHS = ['6月','7月','8月'];
 const ACTUAL_STS = new Set(['won','done','monthly','shikakake']);
 const FORECAST_STS = new Set(['forecast','developing','proposing','waiting']);
 const MONTH_LABEL = m => m.replace('検収', '');
@@ -75,6 +79,7 @@ export default function Dashboard() {
   const [customerData, setCustomerData] = useState([]);
   const [periodData, setPeriodData] = useState([]);
   const [monthlyPieData, setMonthlyPieData] = useState([]);
+  const [quarterData, setQuarterData] = useState([]);
 
   const theme = document.body.dataset.theme || 'dark';
   const colors = getChartColors();
@@ -144,6 +149,13 @@ export default function Dashboard() {
         { name: '上期', 予算: uBudget, 実績: uActual, 見込: uForecast },
         { name: '下期', 予算: lBudget, 実績: lActual, 見込: lForecast },
         { name: '通期', 予算: uBudget + lBudget, 実績: uActual + lActual, 見込: uForecast + lForecast },
+      ]);
+
+      setQuarterData([
+        { name: 'Q1（9-11月）', 予算: sumTgt(Q1_MONTHS), 実績: sumAct(Q1_MONTHS), 見込: sumFore(Q1_MONTHS) },
+        { name: 'Q2（12-2月）', 予算: sumTgt(Q2_MONTHS), 実績: sumAct(Q2_MONTHS), 見込: sumFore(Q2_MONTHS) },
+        { name: 'Q3（3-5月）',  予算: sumTgt(Q3_MONTHS), 実績: sumAct(Q3_MONTHS), 見込: sumFore(Q3_MONTHS) },
+        { name: 'Q4（6-8月）',  予算: sumTgt(Q4_MONTHS), 実績: sumAct(Q4_MONTHS), 見込: sumFore(Q4_MONTHS) },
       ]);
 
       // 月別予実円グラフ用データ
@@ -425,6 +437,112 @@ export default function Dashboard() {
                 </div>
               );
             })()}
+          </>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '20px' }}>四半期　予実対比</h3>
+        {quarterData.length === 0 ? (
+          <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>データがありません</p>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={quarterData} margin={{ top: 16, right: 24, left: 16, bottom: 4 }} barCategoryGap="30%">
+                {isCyber && (
+                  <defs>
+                    <linearGradient id="cg3Target" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7c5cfc" stopOpacity={0.85}/>
+                      <stop offset="95%" stopColor="#7c5cfc" stopOpacity={0.18}/>
+                    </linearGradient>
+                    <linearGradient id="cg3Actual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#00eaff" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#00eaff" stopOpacity={0.18}/>
+                    </linearGradient>
+                    <linearGradient id="cg3Forecast" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ff6eb0" stopOpacity={0.85}/>
+                      <stop offset="95%" stopColor="#ff6eb0" stopOpacity={0.18}/>
+                    </linearGradient>
+                  </defs>
+                )}
+                <CartesianGrid strokeDasharray="3 3" stroke={isCyber ? 'rgba(0,234,255,0.1)' : 'var(--border)'} />
+                <XAxis dataKey="name" tick={{ fill: 'var(--text-body)', fontSize: 13, fontWeight: 600 }} axisLine={{ stroke: isCyber ? 'rgba(0,234,255,0.15)' : 'var(--border)' }} tickLine={false} />
+                <YAxis tickFormatter={v => `${(v/10000).toFixed(0)}万`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  cursor={{ fill: cursorFill }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div style={tooltipStyle}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>{label}</p>
+                        {payload.filter(p => p.value > 0).map(p => (
+                          <p key={p.name} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
+                            {p.name}：¥{Number(p.value).toLocaleString()}
+                          </p>
+                        ))}
+                        {(() => {
+                          const d = payload[0]?.payload;
+                          if (!d) return null;
+                          const actual = d.実績 + d.見込;
+                          const diff = actual - d.予算;
+                          if (diff === 0) return null;
+                          return (
+                            <p style={{ color: diff > 0 ? colors.gain : colors.loss, fontWeight: 700, fontSize: 12, borderTop: '1px solid var(--border)', marginTop: 6, paddingTop: 6 }}>
+                              差異：{diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend content={() => (
+                  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', paddingTop: 8 }}>
+                    {[{ label: '予算', color: colors.target }, { label: '実績', color: colors.actual }, { label: '見込', color: colors.forecast }].map(i => (
+                      <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                        <div style={{ width: 12, height: 12, borderRadius: 2, background: i.color }} />
+                        {i.label}
+                      </div>
+                    ))}
+                  </div>
+                )} />
+                <Bar dataKey="予算" fill={isCyber ? 'url(#cg3Target)' : colors.target} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="実績" fill={isCyber ? 'url(#cg3Actual)' : colors.actual} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="見込" fill={isCyber ? 'url(#cg3Forecast)' : colors.forecast} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              {quarterData.map(d => {
+                const actual = d.実績 + d.見込;
+                const diff = actual - d.予算;
+                const rate = d.予算 > 0 ? Math.round(actual / d.予算 * 100) : 0;
+                return (
+                  <div key={d.name} style={{ flex: 1, background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 8, padding: '14px 16px' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em' }}>{d.name}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>予算</span>
+                        <span style={{ color: colors.target, fontWeight: 600 }}>¥{d.予算.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>実績{d.見込 > 0 ? '＋見込' : ''}</span>
+                        <span style={{ color: colors.actual, fontWeight: 600 }}>¥{actual.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid var(--border)', paddingTop: 4, marginTop: 2 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>差異</span>
+                        <span style={{ color: diff > 0 ? colors.gain : diff < 0 ? colors.loss : 'var(--text-muted)', fontWeight: 700 }}>
+                          {diff > 0 ? '+' : ''}¥{diff.toLocaleString()}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>達成率</span>
+                        <span style={{ color: rate >= 100 ? colors.gain : rate >= 80 ? colors.warn : colors.loss, fontWeight: 700 }}>{rate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </>
         )}
       </div>

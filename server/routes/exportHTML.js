@@ -6,6 +6,10 @@ const db      = require('../db');
 const MONTH_ORDER  = ['9月','10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月'];
 const UPPER_MONTHS = ['9月','10月','11月','12月','1月','2月'];
 const LOWER_MONTHS = ['3月','4月','5月','6月','7月','8月'];
+const Q1_MONTHS = ['9月','10月','11月'];
+const Q2_MONTHS = ['12月','1月','2月'];
+const Q3_MONTHS = ['3月','4月','5月'];
+const Q4_MONTHS = ['6月','7月','8月'];
 const ACT_STS  = new Set(['won','done','monthly','shikakake']);
 const FORE_STS = new Set(['forecast','developing','proposing','waiting']);
 const MAIN_IDS = new Set([5, 3]);
@@ -353,6 +357,17 @@ router.get('/', (req, res) => {
       { name:'通期', budget:uTarget+lTarget, actual:uActual+lActual, forecast:lForecast },
     ];
 
+    // ---- 四半期 予実対比データ ----
+    const sumAct  = ms => deals.filter(d => ACT_STS.has(d.status)  && ms.includes(toMonth(d.inspection_date))).reduce((s,d)=>s+(Number(d.amount)||0),0);
+    const sumFore = ms => deals.filter(d => FORE_STS.has(d.status) && ms.includes(toMonth(d.inspection_date))).reduce((s,d)=>s+(Number(d.amount)||0),0);
+    const sumTgt  = ms => targetRows.filter(r => ms.includes(r.month)).reduce((s,r)=>s+(Number(r.amount)||0),0);
+    const quarterData = [
+      { name:'Q1（9-11月）', budget:sumTgt(Q1_MONTHS), actual:sumAct(Q1_MONTHS), forecast:sumFore(Q1_MONTHS) },
+      { name:'Q2（12-2月）', budget:sumTgt(Q2_MONTHS), actual:sumAct(Q2_MONTHS), forecast:sumFore(Q2_MONTHS) },
+      { name:'Q3（3-5月）',  budget:sumTgt(Q3_MONTHS), actual:sumAct(Q3_MONTHS), forecast:sumFore(Q3_MONTHS) },
+      { name:'Q4（6-8月）',  budget:sumTgt(Q4_MONTHS), actual:sumAct(Q4_MONTHS), forecast:sumFore(Q4_MONTHS) },
+    ];
+
     // ---- 月別予実円グラフ用データ ----
     const monthlyPieArr = MONTH_ORDER.map((m, idx) => {
       const actual   = monthActual[idx];
@@ -630,6 +645,7 @@ router.get('/', (req, res) => {
       totalCount,
       yojitsuData,
       periodData,
+      quarterData,
       allCustomers,
       MONTH_ORDER,
       monthlyPieArr,
@@ -684,6 +700,11 @@ tr:hover td{background:${C.bgPanel}}
   .paged-hidden{display:block!important}
   #page-nav{display:none!important}
   .print-btn{display:none!important}
+  .topics-slide{zoom:0.72;page-break-inside:auto!important;break-inside:auto!important}
+  .topics-slide h2{font-size:14px!important;margin-bottom:6px!important}
+  .topics-slide .topics-header{margin-bottom:8px!important}
+  .topics-slide .topics-section{margin-bottom:6px!important}
+  .topics-slide .section-label{padding:3px 8px!important;font-size:11px!important}
 }
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:${C.scrollbarTrack}}
@@ -1035,6 +1056,47 @@ tr:hover td{background:${C.bgPanel}}
   </div>
 </div>
 
+<!-- Page: 四半期 予実対比 -->
+<div class="slide fit-page">
+  <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
+
+  <!-- 四半期 予実対比 グラフ -->
+  <div class="panel" style="margin-bottom:16px;padding:16px 20px;overflow:hidden">
+    <h3 style="font-size:13px;font-weight:600;color:${C.textHeading};margin-bottom:12px">四半期　予実対比</h3>
+    <canvas id="quarterBar" height="90"></canvas>
+  </div>
+
+  <!-- 四半期 サマリーカード -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+    ${quarterData.map(p => {
+      const actual = p.actual + p.forecast;
+      const diff   = actual - p.budget;
+      const rate   = p.budget > 0 ? Math.round(actual/p.budget*100) : 0;
+      const dColor = diff > 0 ? C.colorGain : diff < 0 ? C.colorLoss : C.textMuted;
+      const rColor = rate >= 100 ? C.colorGain : rate >= 80 ? C.colorWarn : C.colorLoss;
+      return `<div class="panel" style="padding:14px 16px;font-size:12px">
+        <div style="font-weight:700;font-size:12px;color:${C.textMuted};margin-bottom:10px">${p.name}</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:${C.textMuted}">予算</span>
+          <span style="color:${C.colorTarget};font-weight:600">¥${fmt(p.budget)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:${C.textMuted}">実績${p.forecast>0?'＋見込':''}</span>
+          <span style="color:${C.accent};font-weight:600">¥${fmt(actual)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;border-top:1px solid ${C.border};padding-top:4px;margin-top:2px">
+          <span style="color:${C.textMuted}">差異</span>
+          <span style="color:${dColor};font-weight:700">${diff>0?'+':''}¥${fmt(diff)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:${C.textMuted}">達成率</span>
+          <span style="color:${rColor};font-weight:700">${rate}%</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+</div>
+
 <!-- Page 3: Period Comparison -->
 <div class="slide fit-page">
   <h2 style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(90deg,${C.gradFrom},${C.gradTo});-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">DASHBOARD</h2>
@@ -1078,16 +1140,16 @@ tr:hover td{background:${C.bgPanel}}
 </div>
 
 <!-- Page 8: Topics -->
-<div class="slide" style="overflow:auto">
-  <div style="margin-bottom:20px">
+<div class="slide topics-slide" style="overflow:auto">
+  <div class="topics-header" style="margin-bottom:20px">
     <div style="font-size:11px;color:${C.textFaint};letter-spacing:3px;text-transform:uppercase">TOPICS</div>
     <h2 style="font-size:26px;margin-top:4px">トピックス</h2>
   </div>
   ${TOPICS_SECTIONS.map(section => {
     const sectionItems = topicsItems.filter(it => it.section === section);
     return `
-    <div style="margin-bottom:20px">
-      <div style="font-weight:700;font-size:13px;color:${C.accent};padding:6px 12px;background:${C.bgTh};border-bottom:1px solid ${C.border};letter-spacing:0.04em;margin-bottom:0">【${section}】</div>
+    <div class="topics-section" style="margin-bottom:20px">
+      <div class="section-label" style="font-weight:700;font-size:13px;color:${C.accent};padding:6px 12px;background:${C.bgTh};border-bottom:1px solid ${C.border};letter-spacing:0.04em;margin-bottom:0">【${section}】</div>
       <div class="panel" style="padding:0;margin-top:0">
         <table>
           <thead>
@@ -1616,6 +1678,33 @@ tr:hover td{background:${C.bgPanel}}
         scales: {
           x: { ticks: { color: '${C.chartTick}', font: { size: 11 } }, grid: { color: '${C.borderSubtle}' } },
           y: { ticks: { color: '${C.chartTick}', font: { size: 11 }, callback: function(v) { return '¥' + (v/10000).toFixed(0) + '万'; } }, grid: { color: '${C.borderSubtle}' } }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '${C.chartLegend}', font: { size: 11 }, boxWidth: 14, padding: 12 } },
+          tooltip: { backgroundColor: '${C.bgPanel}', titleColor: '${C.textHeading}', bodyColor: '${C.textBody}', borderColor: '${C.border}', borderWidth: 1, callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + '：¥' + Number(ctx.raw||0).toLocaleString(); } } }
+        }
+      }
+    });
+  }
+
+  // 四半期 予実対比 Bar
+  var quarterCtx = document.getElementById('quarterBar');
+  if (quarterCtx) {
+    new Chart(quarterCtx, {
+      type: 'bar',
+      data: {
+        labels: DATA.quarterData.map(function(p) { return p.name; }),
+        datasets: [
+          { label: '予算', data: DATA.quarterData.map(function(p) { return p.budget; }),   backgroundColor: '${C.chartTarget}', borderRadius: 4 },
+          { label: '実績', data: DATA.quarterData.map(function(p) { return p.actual; }),   backgroundColor: '${C.chartActual}', borderRadius: 4 },
+          { label: '見込', data: DATA.quarterData.map(function(p) { return p.forecast; }), backgroundColor: '${C.chartForecast}', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { ticks: { color: '${C.textBody}', font: { size: 13, weight: '600' } }, grid: { display: false } },
+          y: { ticks: { color: '${C.chartTick}', font: { size: 11 }, callback: function(v) { return (v/10000).toFixed(0) + '万'; } }, grid: { color: '${C.borderSubtle}' } }
         },
         plugins: {
           legend: { position: 'bottom', labels: { color: '${C.chartLegend}', font: { size: 11 }, boxWidth: 14, padding: 12 } },
