@@ -1167,10 +1167,12 @@ tr:hover td{background:${C.bgPanel}}
               ? `<tr><td colspan="6" style="text-align:center;color:${C.textFaint};padding:16px">データがありません</td></tr>`
               : sectionItems.map(item => {
                   const rs = topicsStatusStyle(item.status, theme);
-                  const statusTextColor = item.status === '失注' ? '#e53935' : null;
-                  const rc = statusTextColor ? `color:${statusTextColor};` : (item.row_color ? `color:${item.row_color};` : '');
+                  const statusTextColor = item.status === '失注' ? '#e53935' :
+                                          item.status === '受注' ? (theme === 'excel' || theme === 'earth' ? '#1565c0' : '#00bcd4') : null;
+                  const effectiveColor = item.row_color || statusTextColor;
+                  const rc = effectiveColor ? `color:${effectiveColor};` : '';
                   return `<tr style="${rs}">
-                    <td style="font-size:12px;color:${statusTextColor||item.row_color||C.textMid}">${topicsEsc(item.customer)||'-'}</td>
+                    <td style="font-size:12px;color:${item.row_color||statusTextColor||C.textMid}">${topicsEsc(item.customer)||'-'}</td>
                     <td style="${rc}">${topicsEsc(item.project)||'-'}</td>
                     <td style="font-size:12px;${rc}">${topicsEsc(item.status)||'-'}</td>
                     <td style="text-align:right;font-size:12px;${rc}">${topicsFmt(item.amount)}</td>
