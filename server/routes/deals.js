@@ -2,8 +2,31 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+// 会計年度（9月始まり）で past-month の forecast 案件を done に自動更新
+function autoUpdatePastForecasts() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const fiscalStartYear = m >= 9 ? y : y - 1;
+
+  const forecasts = db.prepare(
+    "SELECT id, inspection_date FROM deals WHERE status = 'forecast' AND inspection_date IS NOT NULL AND inspection_date != ''"
+  ).all();
+
+  for (const deal of forecasts) {
+    const month = parseInt(deal.inspection_date.replace('月検収', ''));
+    if (isNaN(month)) continue;
+    const dealYear = month >= 9 ? fiscalStartYear : fiscalStartYear + 1;
+    // 検収月が現在月より前なら done に更新
+    if (dealYear < y || (dealYear === y && month < m)) {
+      db.prepare("UPDATE deals SET status = 'done' WHERE id = ?").run(deal.id);
+    }
+  }
+}
+
 // 一覧取得（顧客名付き、customer_idでフィルタ可能）
 router.get('/', (req, res) => {
+  autoUpdatePastForecasts();
   const { customer_id } = req.query;
   const deals = customer_id
     ? db.prepare(`
