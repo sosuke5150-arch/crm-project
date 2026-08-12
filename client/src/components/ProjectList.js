@@ -101,6 +101,13 @@ export default function ProjectList({ onSelect }) {
     });
   };
 
+  const handleDelete = async (e, dealId) => {
+    e.stopPropagation();
+    if (!window.confirm('このプロジェクトを削除しますか？')) return;
+    await fetch(`${API}/deals/${dealId}`, { method: 'DELETE' });
+    loadProjects();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -230,12 +237,13 @@ export default function ProjectList({ onSelect }) {
               <th style={{ textAlign: 'right' }}>コスト合計</th>
               <th style={{ textAlign: 'right' }}>利益</th>
               <th style={{ textAlign: 'right' }}>消化率</th>
+              <th style={{ width: '48px' }}></th>
             </tr>
           </thead>
           <tbody>
             {filteredProjects.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: '#4a5f82', padding: '32px' }}>
+                <td colSpan={10} style={{ textAlign: 'center', color: '#4a5f82', padding: '32px' }}>
                   {isFiltered ? '条件に一致するプロジェクトがありません' : '50万円以上の案件がありません'}
                 </td>
               </tr>
@@ -288,6 +296,15 @@ export default function ProjectList({ onSelect }) {
                     <span style={{ color: progressColor, fontWeight: 600 }}>
                       {progress.toFixed(1)}%
                     </span>
+                  </td>
+                  <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={e => handleDelete(e, p.deal_id)}
+                      title="削除"
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6b7fa3', fontSize: '15px', padding: '2px 6px', borderRadius: '4px', lineHeight: 1 }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#ff4d6a'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#6b7fa3'}
+                    >🗑</button>
                   </td>
                 </tr>
               );

@@ -166,6 +166,12 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
   const estIndirect = Number(metaForm.estimated_indirect || 0);
   const estTotal = estDirectCost + estIndirect;
 
+  const handleDeleteProject = async () => {
+    if (!window.confirm(`「${deal?.title}」を削除しますか？この操作は元に戻せません。`)) return;
+    await fetch(`${API}/deals/${dealId}`, { method: 'DELETE' });
+    onBack();
+  };
+
   const deleteMeta = async () => {
     if (!window.confirm('見積原価をリセットしますか？')) return;
     const empty = { estimated_hours: 0, estimated_labor: 0, estimated_outsourcing: 0, estimated_expenses: 0, estimated_indirect: 0, notes: '' };
@@ -434,9 +440,10 @@ export default function ProjectDetail({ dealId, onBack, onNavigate }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <button className="btn-back" onClick={onBack}>← プロジェクト一覧に戻る</button>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button onClick={() => prevId && onNavigate(prevId)} disabled={!prevId} style={navBtnStyle(!!prevId)}>← 前の案件</button>
           <button onClick={() => nextId && onNavigate(nextId)} disabled={!nextId} style={navBtnStyle(!!nextId)}>次の案件 →</button>
+          <button onClick={handleDeleteProject} className="btn-delete" style={{ marginLeft: '8px' }}>このプロジェクトを削除</button>
         </div>
       </div>
       <h2>{deal.title}</h2>
