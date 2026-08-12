@@ -224,9 +224,9 @@ router.get('/', (req, res) => {
       return '';
     };
 
-    const csParseNum = v => { const n = Number(String(v || '').replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+    const csParseNum = v => { const s = String(v || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFF10 + 0x30)).replace(/,/g, ''); const n = Number(s); return isNaN(n) ? 0 : n; };
     const csFmtNum  = v => (v === '' || v == null) ? '—' : csParseNum(v).toLocaleString();
-    const csFmtPct  = (num, den) => (!den || !num) ? '—' : (csParseNum(num) / csParseNum(den) * 100).toFixed(2) + '%';
+    const csFmtPct  = (num, den) => { const d = csParseNum(den); return (!d || !num) ? '—' : (csParseNum(num) / d * 100).toFixed(2) + '%'; };
     const csFmtDiff = (a, b) => (a === '' || b === '') ? '—' : (csParseNum(a) - csParseNum(b)).toLocaleString();
     const csEsc     = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
     // リッチテキスト（HTMLを含む場合はそのまま出力、プレーンテキストは改行変換のみ）

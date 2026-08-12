@@ -54,7 +54,7 @@ function getSheetColors() {
 const toHalf   = s => String(s || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFF10 + 0x30));
 const parseNum = v => { const n = Number(toHalf(String(v)).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
 const fmtNum   = v => { if (v === '' || v == null) return ''; const h = toHalf(String(v)).replace(/,/g, ''); const n = Number(h); return isNaN(n) ? '' : n.toLocaleString(); };
-const fmtPct   = (num, den) => (!den || !num) ? '—' : (parseNum(num) / parseNum(den) * 100).toFixed(2) + '%';
+const fmtPct   = (num, den) => { const d = parseNum(den); return (!d || !num) ? '—' : (parseNum(num) / d * 100).toFixed(2) + '%'; };
 const fmtDiff  = (a, b) => (a === '' || b === '') ? '—' : (parseNum(a) - parseNum(b)).toLocaleString();
 
 const SECTIONS = [
@@ -75,7 +75,7 @@ function NumCell({ value, onChange, bg }) {
   const S = getSheetColors();
   return (
     <td style={{ border: S.border, padding: 0, background: bg, fontSize: '12px', color: S.text, textAlign: 'right', fontWeight: 700 }}>
-      <input type="text" value={fmtNum(value)} onChange={e => onChange(e.target.value.replace(/,/g, ''))}
+      <input type="text" value={fmtNum(value)} onChange={e => onChange(toHalf(e.target.value).replace(/,/g, ''))}
         onFocus={e => { e.target.style.outline = `1px solid ${S.calcColor}`; e.target.select(); }}
         onBlur={e => { e.target.style.outline = 'none'; }}
         style={{ width: '100%', padding: '5px 6px', border: 'none', outline: 'none', background: 'transparent',
