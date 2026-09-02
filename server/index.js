@@ -28,8 +28,8 @@ app.get('/summary', (req, res) => {
   const proposingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('proposing','planned')").get().count;
   const waitingCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status = 'waiting'").get().count;
   const forecastCount = db.prepare("SELECT COUNT(*) as count FROM deals WHERE is_project=0 AND status IN ('forecast','developing','proposing')").get().count;
-  const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('won','done','monthly','shikakake')").get().total || 0;
-  const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE status IN ('forecast','developing')").get().total || 0;
+  const totalAmount = db.prepare("SELECT SUM(amount) as total FROM deals WHERE is_project=0 AND status IN ('won','done','monthly','shikakake')").get().total || 0;
+  const totalForecast = db.prepare("SELECT SUM(amount) as total FROM deals WHERE is_project=0 AND status IN ('forecast','developing')").get().total || 0;
   const totalTarget = db.prepare("SELECT SUM(amount) as total FROM targets").get().total || 0;
   res.json({ customerCount, dealCount, doneCount, developingCount, proposingCount, waitingCount, forecastCount, totalAmount, totalForecast, totalTarget });
 });
