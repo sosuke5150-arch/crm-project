@@ -40,22 +40,22 @@ async function main() {
   const deals = [
     // 9月
     { customer_id: 5,       title: 'マイコンパス月次保守開発',                    amount: 3080000, status: 'monthly', inspection_date: '9月検収' },
-    { customer_id: 3,       title: 'B2-Online 定期開発',                          amount: 2500000, status: 'monthly', inspection_date: '9月検収' },
+    { customer_id: 3,       title: 'b2-Online 定期開発',                          amount: 2500000, status: 'monthly', inspection_date: '9月検収' },
     { customer_id: 6,       title: '高速ファイル伝送システム保守',                 amount: 75000,   status: 'done',    inspection_date: '9月検収' },
     { customer_id: jpId,    title: 'Webフォーム修正並びにhokan連携対応',           amount: 420000,  status: 'done',    inspection_date: '9月検収' },
     { customer_id: scalaId, title: '【Works】承認完了後に申請を差し戻す機能開発', amount: 500000,  status: 'done',    inspection_date: '9月検収' },
     // 10月
     { customer_id: 5, title: 'マイコンパス月次保守開発',     amount: 3080000, status: 'monthly', inspection_date: '10月検収' },
-    { customer_id: 3, title: 'B2-Online 定期開発',           amount: 2500000, status: 'monthly', inspection_date: '10月検収' },
+    { customer_id: 3, title: 'b2-Online 定期開発',           amount: 2500000, status: 'monthly', inspection_date: '10月検収' },
     { customer_id: 6, title: '高速ファイル伝送システム保守', amount: 75000,   status: 'done',    inspection_date: '10月検収' },
     // 11月
     { customer_id: 5, title: 'マイコンパス月次保守開発',                amount: 3080000, status: 'monthly', inspection_date: '11月検収' },
-    { customer_id: 3, title: 'B2-Online 定期開発',                      amount: 2500000, status: 'monthly', inspection_date: '11月検収' },
+    { customer_id: 3, title: 'b2-Online 定期開発',                      amount: 2500000, status: 'monthly', inspection_date: '11月検収' },
     { customer_id: 6, title: '高速ファイル伝送システム保守',             amount: 75000,   status: 'done',    inspection_date: '11月検収' },
     { customer_id: 8, title: '支店長TOP「見込みAB客進捗」関連改修',     amount: 360000,  status: 'done',    inspection_date: '11月検収' },
     // 12月
     { customer_id: 5,       title: 'マイコンパス月次保守開発',                 amount: 3080000, status: 'monthly', inspection_date: '12月検収' },
-    { customer_id: 3,       title: 'B2-Online 定期開発',                       amount: 2500000, status: 'monthly', inspection_date: '12月検収' },
+    { customer_id: 3,       title: 'b2-Online 定期開発',                       amount: 2500000, status: 'monthly', inspection_date: '12月検収' },
     { customer_id: 6,       title: '高速ファイル伝送システム保守',              amount: 75000,   status: 'done',    inspection_date: '12月検収' },
     { customer_id: 4,       title: '会員ユーザー向け駐車場機器ヘルプサイト構築', amount: 1860000, status: 'done',    inspection_date: '12月検収' },
     { customer_id: asahiId, title: 'データベースバージョンアップ業務',          amount: 250000,  status: 'done',    inspection_date: '12月検収' },

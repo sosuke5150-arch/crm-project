@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
       WHERE (
         (d.amount >= 500000
           AND d.title NOT LIKE 'マイコンパス月次保守開発%'
-          AND d.title NOT LIKE 'B2-Online%定期開発%'
+          AND d.title NOT LIKE 'b2-Online%定期開発%'
           AND d.status NOT IN ('proposing', 'planned', 'forecast'))
         OR d.is_project = 1
       )
